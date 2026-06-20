@@ -1,0 +1,168 @@
+// Handgeschreven types die het schema uit supabase/migrations/0001_init.sql
+// weerspiegelen. Wil je dit later genereren:
+//   supabase gen types typescript --project-id <id> > src/lib/types/database.ts
+
+export type Rol = "hoofdtrainer" | "assistent";
+export type DoelStatus = "open" | "bezig" | "behaald" | "gepauzeerd";
+
+export interface Speler {
+  id: string;
+  auth_user_id: string | null;
+  naam: string;
+  rugnummer: number | null;
+  positie_voorkeur: string | null;
+  foto_url: string | null;
+  geboortedatum: string | null;
+  created_at: string;
+}
+
+export interface Staf {
+  id: string;
+  auth_user_id: string | null;
+  naam: string;
+  rol: Rol;
+  created_at: string;
+}
+
+export interface Badge {
+  id: string;
+  speler_id: string;
+  type: string;
+  behaald_op: string;
+  created_at: string;
+}
+
+export interface Wedstrijd {
+  id: string;
+  datum: string;
+  tegenstander: string;
+  uitslag: string | null;
+  created_at: string;
+}
+
+export interface MvpStem {
+  id: string;
+  wedstrijd_id: string;
+  stemmer_speler_id: string;
+  gestemd_op_speler_id: string;
+  gestemd_op: string;
+}
+
+export interface Challenge {
+  id: string;
+  titel: string;
+  omschrijving: string | null;
+  week: number | null;
+  deadline: string | null;
+  created_at: string;
+}
+
+export interface ChallengeUpload {
+  id: string;
+  challenge_id: string;
+  speler_id: string;
+  video_url: string;
+  ingeleverd_op: string;
+}
+
+export interface Ontwikkeldoel {
+  id: string;
+  speler_id: string;
+  doel: string;
+  status: DoelStatus;
+  afgesproken_op: string;
+  coach_id: string | null;
+  created_at: string;
+}
+
+export interface StafNotitie {
+  id: string;
+  speler_id: string;
+  inschatting: string | null;
+  verwachting: string | null;
+  positie_inschatting: string | null;
+  coach_id: string | null;
+  created_at: string;
+}
+
+export interface SpelerRecord {
+  id: string;
+  speler_id: string;
+  soort: string;
+  waarde: number;
+  behaald_op: string;
+  created_at: string;
+}
+
+// Minimale Database-shape voor de Supabase client. Voor de MVP houden we het
+// pragmatisch; tabellen die we nog niet typen vallen terug op `any` via index.
+export interface Database {
+  public: {
+    Tables: {
+      spelers: {
+        Row: Speler;
+        Insert: Partial<Speler> & { naam: string };
+        Update: Partial<Speler>;
+      };
+      staf: {
+        Row: Staf;
+        Insert: Partial<Staf> & { naam: string };
+        Update: Partial<Staf>;
+      };
+      badges: {
+        Row: Badge;
+        Insert: Partial<Badge> & { speler_id: string; type: string };
+        Update: Partial<Badge>;
+      };
+      records: {
+        Row: SpelerRecord;
+        Insert: Partial<SpelerRecord> & { speler_id: string; soort: string; waarde: number };
+        Update: Partial<SpelerRecord>;
+      };
+      wedstrijden: {
+        Row: Wedstrijd;
+        Insert: Partial<Wedstrijd> & { datum: string; tegenstander: string };
+        Update: Partial<Wedstrijd>;
+      };
+      mvp_stemmen: {
+        Row: MvpStem;
+        Insert: Partial<MvpStem> & {
+          wedstrijd_id: string;
+          stemmer_speler_id: string;
+          gestemd_op_speler_id: string;
+        };
+        Update: Partial<MvpStem>;
+      };
+      challenges: {
+        Row: Challenge;
+        Insert: Partial<Challenge> & { titel: string };
+        Update: Partial<Challenge>;
+      };
+      challenge_uploads: {
+        Row: ChallengeUpload;
+        Insert: Partial<ChallengeUpload> & {
+          challenge_id: string;
+          speler_id: string;
+          video_url: string;
+        };
+        Update: Partial<ChallengeUpload>;
+      };
+      ontwikkeldoelen: {
+        Row: Ontwikkeldoel;
+        Insert: Partial<Ontwikkeldoel> & { speler_id: string; doel: string };
+        Update: Partial<Ontwikkeldoel>;
+      };
+      staf_notities: {
+        Row: StafNotitie;
+        Insert: Partial<StafNotitie> & { speler_id: string };
+        Update: Partial<StafNotitie>;
+      };
+    };
+    Views: Record<string, never>;
+    Functions: {
+      is_staf: { Args: Record<string, never>; Returns: boolean };
+      current_speler_id: { Args: Record<string, never>; Returns: string | null };
+    };
+    Enums: Record<string, never>;
+  };
+}
