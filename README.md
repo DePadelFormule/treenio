@@ -78,19 +78,31 @@ src/
     login/                        # e-mail/wachtwoord login (server action)
     paspoort/                     # speler: eigen kaartje + Laag 2-doelen
     staf/                         # stafdashboard + speler-detail (3 lagen)
+      wedstrijden/                # lijst + nieuwe wedstrijd (server action)
+      wedstrijd/[id]/registreren/ # iPad-tik invoer (per speler + keeper + team)
     geen-koppeling/               # ingelogd maar nog niet gekoppeld
     auth/signout/                 # POST signout route
   components/
     PlayerCard.tsx                # FIFA-achtig kaartje (geen OVR)
     SignOutButton.tsx
+    registratie/                  # Stepper, SpelerRegistratieKaart, KeeperPaneel, TeamStatsPaneel
   lib/
     auth.ts                       # server-side rolbepaling
+    constants.ts                  # positiecodes + afmeld-opties
     supabase/{client,server,middleware}.ts
     types/database.ts
 supabase/
   migrations/0001_init.sql        # tabellen + RLS per laag  ← review dit
   seed.sql
 ```
+
+### Invoer-UI (iPad-tiksysteem)
+
+`/staf/wedstrijden` → kies/maak een wedstrijd → `/staf/wedstrijd/[id]/registreren`.
+Per speler tik-knoppen (goals, assists, kaarten, overtredingen, balverlies),
+minuten, basis/wissel, positie-keuze en toggles (eruit gewisseld / ingevallen /
+90 min bank). Aparte panelen voor de **keeper** en de **team-stats**. Opslaan
+gebeurt per kaart via een server action met `upsert` (staf-only RLS).
 
 ## Status / volgende stap
 

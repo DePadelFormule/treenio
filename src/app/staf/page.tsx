@@ -30,6 +30,15 @@ export default async function StafPage() {
         <SignOutButton />
       </header>
 
+      <nav className="mb-8 flex flex-wrap gap-2">
+        <Link
+          href="/staf/wedstrijden"
+          className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark"
+        >
+          Wedstrijden registreren →
+        </Link>
+      </nav>
+
       <h2 className="mb-3 text-lg font-semibold text-neutral-800">Selectie</h2>
       <ul className="grid gap-3 sm:grid-cols-2">
         {((spelers ?? []) as Speler[]).map((s) => (
