@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Treenio — Stafdashboard (preview)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { pitch: { DEFAULT: "#0b6e4f", dark: "#08543c" }, gold: "#f5c542" } } },
+    };
+  </script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+  <!-- PREVIEW van src/app/staf/page.tsx (dummy-selectie) -->
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <header class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-pitch">Stafdashboard</h1>
+        <p class="text-sm text-neutral-500">Coach Demo · hoofdtrainer</p>
+      </div>
+      <button class="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100">Uitloggen</button>
+    </header>
+
+    <h2 class="mb-3 text-lg font-semibold text-neutral-800">Selectie</h2>
+    <ul class="grid gap-3 sm:grid-cols-2">
+      <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">1</div>
+        <div><a class="font-medium text-neutral-800 hover:text-pitch hover:underline">Kees Keeper</a><p class="text-xs text-neutral-400">keeper</p></div>
+      </li>
+      <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">4</div>
+        <div><a class="font-medium text-neutral-800 hover:text-pitch hover:underline">Vera Verdediger</a><p class="text-xs text-neutral-400">centrale verdediger</p></div>
+      </li>
+      <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">6</div>
+        <div><a class="font-medium text-neutral-800 hover:text-pitch hover:underline">Mo Middenveld</a><p class="text-xs text-neutral-400">controleur</p></div>
+      </li>
+      <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">9</div>
+        <div><a class="font-medium text-neutral-800 hover:text-pitch hover:underline">Sam Spits</a><p class="text-xs text-neutral-400">spits</p></div>
+      </li>
+      <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">11</div>
+        <div><a class="font-medium text-neutral-800 hover:text-pitch hover:underline">Wessel Wing</a><p class="text-xs text-neutral-400">linksbuiten</p></div>
+      </li>
+      <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">14</div>
+        <div><a class="font-medium text-neutral-800 hover:text-pitch hover:underline">Tim Talent</a><p class="text-xs text-neutral-400">rechtsback</p></div>
+      </li>
+    </ul>
+    <p class="mt-6 text-xs text-neutral-400">Klik op een speler → speler-detail met alle drie de lagen + registratie-aggregaten.</p>
+  </main>
+</body>
+</html>
