@@ -13,7 +13,27 @@ voor de staf.
 |------|--------------|-------------|
 | **1 — team-publiek** | hele team | badges, streaks, records, MVP-stemmen, challenges |
 | **2 — speler + coach** | staf + die ene speler | afgesproken ontwikkeldoelen (geen cijfers) |
-| **3 — staf-only** | uitsluitend staf | eerlijke inschatting, verwachting, positie-inschatting |
+| **3 — staf-only** | uitsluitend staf | eerlijke inschatting, verwachting, positie-inschatting, **alle ruwe trainings-/wedstrijdregistratie** |
+
+### Trainers-registratie (migratie 0002)
+
+De staf legt feiten vast (bedoeld voor het iPad-tiksysteem). **Alle ruwe
+registratie is staf-only** — spelers zien hun rauwe cijfers nooit. Naar Laag 1
+sijpelen uitsluitend positief-som afgeleiden (badges, records, awards).
+
+| Tabel | Scope | Inhoud |
+|-------|-------|--------|
+| `trainingen` | staf-only | trainingsmomenten |
+| `training_registraties` | staf-only | opkomst, op-tijd, afmeld-discipline (op_tijd/kort_dag/te_laat/niet_afgemeld), inzet-rating 1–5 |
+| `wedstrijd_registraties` | staf-only | speelminuten, basis/wissel, eruit gewisseld, ingevallen, 90 min bank, goals, assists, geel/rood, overtredingen ± |
+| `wedstrijd_team_stats` | staf-only | vrije trappen/corners tegen, goals & tegengoals uit spel vs. standaard |
+| `seizoen_awards` | **Laag 1** | speler van het jaar, meeste opkomst/inzet, meest verbeterd, beste op-tijd-afmelder |
+
+Staf-aggregatie-views (`v_training_opkomst`, `v_wedstrijd_totalen`) draaien met
+`security_invoker = on`, dus de staf-only RLS van de basistabellen blijft gelden.
+
+**Afmeld-discipline:** privé teller voor staf; publiek alleen de positieve badge
+"beste op-tijd-afmelder". Geen publiek minpunt → geen afrekenboard.
 
 Het functioneringsgesprek splitst in tweeën: afgesproken doelen → Laag 2,
 eerlijke inschatting → Laag 3.

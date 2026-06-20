@@ -4,6 +4,13 @@
 
 export type Rol = "hoofdtrainer" | "assistent";
 export type DoelStatus = "open" | "bezig" | "behaald" | "gepauzeerd";
+export type AfmeldStatus =
+  | "op_tijd"
+  | "kort_dag"
+  | "te_laat"
+  | "niet_afgemeld"
+  | "nvt";
+export type StarteAls = "basis" | "wissel" | "niet_in_selectie";
 
 export interface Speler {
   id: string;
@@ -83,6 +90,101 @@ export interface StafNotitie {
   positie_inschatting: string | null;
   coach_id: string | null;
   created_at: string;
+}
+
+// ---- Migratie 0002: staf-registratielaag + publieke awards ----------------
+
+export interface Training {
+  id: string;
+  datum: string;
+  type: string | null;
+  omschrijving: string | null;
+  created_at: string;
+}
+
+export interface TrainingRegistratie {
+  id: string;
+  training_id: string;
+  speler_id: string;
+  aanwezig: boolean;
+  op_tijd: boolean | null;
+  afmeld_status: AfmeldStatus;
+  afgemeld_op: string | null;
+  inzet: number | null;
+  opmerking: string | null;
+  created_at: string;
+}
+
+export interface WedstrijdRegistratie {
+  id: string;
+  wedstrijd_id: string;
+  speler_id: string;
+  op_tijd: boolean | null;
+  afmeld_status: AfmeldStatus;
+  startte_als: StarteAls;
+  speelminuten: number;
+  gewisseld_uit: boolean;
+  ingevallen: boolean;
+  volledige_bank: boolean;
+  goals: number;
+  assists: number;
+  gele_kaarten: number;
+  rode_kaart: boolean;
+  overtredingen_gemaakt: number;
+  overtredingen_tegen: number;
+  opmerking: string | null;
+  created_at: string;
+}
+
+export interface WedstrijdTeamStats {
+  id: string;
+  wedstrijd_id: string;
+  vrije_trappen_tegen: number;
+  corners_tegen: number;
+  goals_uit_spel: number;
+  goals_uit_standaard: number;
+  tegengoals_uit_spel: number;
+  tegengoals_uit_standaard: number;
+  created_at: string;
+}
+
+export interface SeizoenAward {
+  id: string;
+  seizoen: string;
+  categorie: string;
+  speler_id: string;
+  toelichting: string | null;
+  toegekend_op: string;
+  created_at: string;
+}
+
+// Staf-aggregatie-views (read-only)
+export interface TrainingOpkomstView {
+  speler_id: string;
+  speler_naam: string;
+  geregistreerd: number;
+  aanwezig: number;
+  opkomst_pct: number | null;
+  gem_inzet: number | null;
+  afgemeld_op_tijd: number;
+  afgemeld_te_laat: number;
+}
+
+export interface WedstrijdTotalenView {
+  speler_id: string;
+  speler_naam: string;
+  in_selectie: number;
+  basisplaatsen: number;
+  invalbeurten: number;
+  keer_uit_gewisseld: number;
+  keer_90_bank: number;
+  totaal_minuten: number;
+  goals: number;
+  assists: number;
+  gele_kaarten: number;
+  rode_kaarten: number;
+  overtredingen_gemaakt: number;
+  overtredingen_tegen: number;
 }
 
 export interface SpelerRecord {

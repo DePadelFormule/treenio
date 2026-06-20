@@ -9,6 +9,8 @@ import type {
   Speler,
   SpelerRecord,
   StafNotitie,
+  TrainingOpkomstView,
+  WedstrijdTotalenView,
 } from "@/lib/types/database";
 
 // Staf-only speler-detail. Toont alle drie de lagen READ-ONLY:
@@ -34,13 +36,24 @@ export default async function StafSpelerPage({
 
   if (!speler) notFound();
 
-  const [{ data: badges }, { data: records }, { data: doelen }, { data: notities }] =
-    await Promise.all([
-      supabase.from("badges").select("*").eq("speler_id", id),
-      supabase.from("records").select("*").eq("speler_id", id),
-      supabase.from("ontwikkeldoelen").select("*").eq("speler_id", id),
-      supabase.from("staf_notities").select("*").eq("speler_id", id),
-    ]);
+  const [
+    { data: badges },
+    { data: records },
+    { data: doelen },
+    { data: notities },
+    { data: opkomstRows },
+    { data: wedstrijdRows },
+  ] = await Promise.all([
+    supabase.from("badges").select("*").eq("speler_id", id),
+    supabase.from("records").select("*").eq("speler_id", id),
+    supabase.from("ontwikkeldoelen").select("*").eq("speler_id", id),
+    supabase.from("staf_notities").select("*").eq("speler_id", id),
+    supabase.from("v_training_opkomst").select("*").eq("speler_id", id),
+    supabase.from("v_wedstrijd_totalen").select("*").eq("speler_id", id),
+  ]);
+
+  const opkomst = (opkomstRows?.[0] ?? null) as TrainingOpkomstView | null;
+  const wedstrijd = (wedstrijdRows?.[0] ?? null) as WedstrijdTotalenView | null;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
@@ -100,6 +113,65 @@ export default async function StafSpelerPage({
           </section>
         </div>
       </div>
+
+      {/* Staf-only registratie-aggregaten (Laag 3-scope) */}
+      <section className="mt-10">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-red-600">
+          Laag 3 · Registratie (staf-only)
+        </h2>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h3 className="mb-3 text-sm font-semibold text-neutral-700">Trainingen</h3>
+            <dl className="grid grid-cols-2 gap-y-2 text-sm">
+              <Stat label="Opkomst" value={opkomst?.opkomst_pct != null ? `${opkomst.opkomst_pct}%` : "–"} />
+              <Stat label="Aanwezig" value={`${opkomst?.aanwezig ?? 0}/${opkomst?.geregistreerd ?? 0}`} />
+              <Stat label="Gem. inzet" value={opkomst?.gem_inzet != null ? `${opkomst.gem_inzet}/5` : "–"} />
+              <Stat label="Op tijd afgemeld" value={opkomst?.afgemeld_op_tijd ?? 0} />
+              <Stat label="Te laat afgemeld" value={opkomst?.afgemeld_te_laat ?? 0} alert />
+            </dl>
+          </div>
+
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <h3 className="mb-3 text-sm font-semibold text-neutral-700">Wedstrijden</h3>
+            <dl className="grid grid-cols-2 gap-y-2 text-sm">
+              <Stat label="In selectie" value={wedstrijd?.in_selectie ?? 0} />
+              <Stat label="Basisplaatsen" value={wedstrijd?.basisplaatsen ?? 0} />
+              <Stat label="Invalbeurten" value={wedstrijd?.invalbeurten ?? 0} />
+              <Stat label="90 min bank" value={wedstrijd?.keer_90_bank ?? 0} />
+              <Stat label="Eruit gewisseld" value={wedstrijd?.keer_uit_gewisseld ?? 0} />
+              <Stat label="Speelminuten" value={wedstrijd?.totaal_minuten ?? 0} />
+              <Stat label="Goals" value={wedstrijd?.goals ?? 0} />
+              <Stat label="Assists" value={wedstrijd?.assists ?? 0} />
+              <Stat label="Geel / rood" value={`${wedstrijd?.gele_kaarten ?? 0} / ${wedstrijd?.rode_kaarten ?? 0}`} />
+              <Stat label="Overtr. ± (maak/tegen)" value={`${wedstrijd?.overtredingen_gemaakt ?? 0} / ${wedstrijd?.overtredingen_tegen ?? 0}`} />
+            </dl>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-neutral-400">
+          Registratie gebeurt (straks) via het iPad-tiksysteem. Deze cijfers
+          zijn uitsluitend voor de staf — de speler ziet ze nooit.
+        </p>
+      </section>
     </main>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  alert,
+}: {
+  label: string;
+  value: string | number;
+  alert?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <dt className="text-xs text-neutral-400">{label}</dt>
+      <dd className={`font-semibold ${alert && value ? "text-red-600" : "text-neutral-800"}`}>
+        {value}
+      </dd>
+    </div>
   );
 }

@@ -3,7 +3,12 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PlayerCard } from "@/components/PlayerCard";
 import { SignOutButton } from "@/components/SignOutButton";
-import type { Badge, Ontwikkeldoel, SpelerRecord } from "@/lib/types/database";
+import type {
+  Badge,
+  Ontwikkeldoel,
+  SeizoenAward,
+  SpelerRecord,
+} from "@/lib/types/database";
 
 // Speler-paspoort: het eigen kaartje + de eigen ontwikkeldoelen (Laag 2).
 // Staf-only Laag 3 verschijnt hier bewust NIET — die tabel geeft via RLS
@@ -17,11 +22,13 @@ export default async function PaspoortPage() {
   const speler = gebruiker.speler;
   const supabase = await createClient();
 
-  const [{ data: badges }, { data: records }, { data: doelen }] = await Promise.all([
-    supabase.from("badges").select("*").eq("speler_id", speler.id).order("behaald_op", { ascending: false }),
-    supabase.from("records").select("*").eq("speler_id", speler.id).order("behaald_op", { ascending: false }),
-    supabase.from("ontwikkeldoelen").select("*").eq("speler_id", speler.id).order("afgesproken_op", { ascending: false }),
-  ]);
+  const [{ data: badges }, { data: records }, { data: doelen }, { data: awards }] =
+    await Promise.all([
+      supabase.from("badges").select("*").eq("speler_id", speler.id).order("behaald_op", { ascending: false }),
+      supabase.from("records").select("*").eq("speler_id", speler.id).order("behaald_op", { ascending: false }),
+      supabase.from("ontwikkeldoelen").select("*").eq("speler_id", speler.id).order("afgesproken_op", { ascending: false }),
+      supabase.from("seizoen_awards").select("*").eq("speler_id", speler.id).order("toegekend_op", { ascending: false }),
+    ]);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
@@ -42,7 +49,29 @@ export default async function PaspoortPage() {
           />
         </div>
 
-        <section>
+        <div className="space-y-8">
+          {awards && awards.length > 0 ? (
+            <section>
+              <h2 className="mb-3 text-lg font-semibold text-neutral-800">
+                Mijn prijzen 🏆
+              </h2>
+              <ul className="flex flex-wrap gap-2">
+                {(awards as SeizoenAward[]).map((a) => (
+                  <li
+                    key={a.id}
+                    className="rounded-xl border border-gold/60 bg-gold/10 px-3 py-2 text-sm"
+                  >
+                    <span className="font-semibold text-amber-700">
+                      {a.categorie.replaceAll("_", " ")}
+                    </span>
+                    <span className="ml-1 text-xs text-neutral-500">{a.seizoen}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <section>
           <h2 className="mb-3 text-lg font-semibold text-neutral-800">
             Mijn ontwikkeldoelen
           </h2>
@@ -70,7 +99,8 @@ export default async function PaspoortPage() {
               Nog geen doelen afgesproken. Die zet je samen met je coach.
             </p>
           )}
-        </section>
+          </section>
+        </div>
       </div>
     </main>
   );
