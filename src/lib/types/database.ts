@@ -132,6 +132,23 @@ export interface WedstrijdRegistratie {
   rode_kaart: boolean;
   overtredingen_gemaakt: number;
   overtredingen_tegen: number;
+  balverlies: number;
+  opmerking: string | null;
+  created_at: string;
+}
+
+export interface KeeperRegistratie {
+  id: string;
+  wedstrijd_id: string;
+  speler_id: string;
+  hoge_ballen_gepakt: number;
+  reddingen: number;
+  een_op_een_reddingen: number;
+  reddingen_buiten_16: number;
+  tegengoals: number;
+  clean_sheet: boolean;
+  uittrappen_lang: number;
+  opbouw_van_achteruit: number;
   opmerking: string | null;
   created_at: string;
 }
@@ -185,6 +202,21 @@ export interface WedstrijdTotalenView {
   rode_kaarten: number;
   overtredingen_gemaakt: number;
   overtredingen_tegen: number;
+  balverlies: number;
+}
+
+export interface KeeperTotalenView {
+  speler_id: string;
+  speler_naam: string;
+  wedstrijden_keep: number;
+  clean_sheets: number;
+  hoge_ballen_gepakt: number;
+  reddingen: number;
+  een_op_een_reddingen: number;
+  reddingen_buiten_16: number;
+  tegengoals: number;
+  uittrappen_lang: number;
+  opbouw_van_achteruit: number;
 }
 
 export interface SpelerRecord {
