@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Treenio — Login (preview)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { pitch: { DEFAULT: "#0b6e4f", dark: "#08543c" }, gold: "#f5c542" } } },
+    };
+  </script>
+</head>
+<body>
+  <!-- PREVIEW van src/app/login/page.tsx -->
+  <main class="flex min-h-screen items-center justify-center bg-pitch-dark p-4">
+    <div class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
+      <div class="mb-6 text-center">
+        <h1 class="text-3xl font-extrabold tracking-tight text-pitch">Treenio</h1>
+        <p class="mt-1 text-sm text-neutral-500">Log in om je paspoort te bekijken.</p>
+      </div>
+      <form class="space-y-4" onsubmit="return false">
+        <div>
+          <label class="block text-sm font-medium text-neutral-700">E-mail</label>
+          <input type="email" value="sam@treenio.nl"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-pitch focus:ring-2 focus:ring-pitch/30" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-700">Wachtwoord</label>
+          <input type="password" value="········"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-pitch focus:ring-2 focus:ring-pitch/30" />
+        </div>
+        <button type="submit"
+          class="w-full rounded-lg bg-pitch px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-pitch-dark">
+          Inloggen
+        </button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>
