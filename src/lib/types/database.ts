@@ -122,6 +122,7 @@ export interface WedstrijdRegistratie {
   op_tijd: boolean | null;
   afmeld_status: AfmeldStatus;
   startte_als: StarteAls;
+  positie: string | null;
   speelminuten: number;
   gewisseld_uit: boolean;
   ingevallen: boolean;
@@ -203,6 +204,12 @@ export interface WedstrijdTotalenView {
   overtredingen_gemaakt: number;
   overtredingen_tegen: number;
   balverlies: number;
+}
+
+export interface SpelerPositieView {
+  speler_id: string;
+  positie: string;
+  aantal: number;
 }
 
 export interface KeeperTotalenView {

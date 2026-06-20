@@ -25,7 +25,7 @@ sijpelen uitsluitend positief-som afgeleiden (badges, records, awards).
 |-------|-------|--------|
 | `trainingen` | staf-only | trainingsmomenten |
 | `training_registraties` | staf-only | opkomst, op-tijd, afmeld-discipline (op_tijd/kort_dag/te_laat/niet_afgemeld), inzet-rating 1–5 |
-| `wedstrijd_registraties` | staf-only | speelminuten, basis/wissel, eruit gewisseld, ingevallen, 90 min bank, goals, assists, geel/rood, overtredingen ±, balverlies |
+| `wedstrijd_registraties` | staf-only | gespeelde positie, speelminuten, basis/wissel, eruit gewisseld, ingevallen, 90 min bank, goals, assists, geel/rood, overtredingen ±, balverlies |
 | `keeper_registraties` | staf-only | hoge ballen gepakt, reddingen, 1-op-1 reddingen, saves buiten 16m, clean sheet, tegengoals, distributie (lang uittrappen vs. opbouw van achteruit) |
 | `wedstrijd_team_stats` | staf-only | vrije trappen/corners tegen, goals & tegengoals uit spel vs. standaard |
 | `seizoen_awards` | **Laag 1** | speler van het jaar, meeste opkomst/inzet, meest verbeterd, beste op-tijd-afmelder |

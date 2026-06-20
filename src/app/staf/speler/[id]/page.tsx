@@ -12,6 +12,7 @@ import type {
   TrainingOpkomstView,
   WedstrijdTotalenView,
   KeeperTotalenView,
+  SpelerPositieView,
 } from "@/lib/types/database";
 
 // Staf-only speler-detail. Toont alle drie de lagen READ-ONLY:
@@ -45,6 +46,7 @@ export default async function StafSpelerPage({
     { data: opkomstRows },
     { data: wedstrijdRows },
     { data: keeperRows },
+    { data: positieRows },
   ] = await Promise.all([
     supabase.from("badges").select("*").eq("speler_id", id),
     supabase.from("records").select("*").eq("speler_id", id),
@@ -53,11 +55,15 @@ export default async function StafSpelerPage({
     supabase.from("v_training_opkomst").select("*").eq("speler_id", id),
     supabase.from("v_wedstrijd_totalen").select("*").eq("speler_id", id),
     supabase.from("v_keeper_totalen").select("*").eq("speler_id", id),
+    supabase.from("v_speler_posities").select("*").eq("speler_id", id),
   ]);
 
   const opkomst = (opkomstRows?.[0] ?? null) as TrainingOpkomstView | null;
   const wedstrijd = (wedstrijdRows?.[0] ?? null) as WedstrijdTotalenView | null;
   const keeper = (keeperRows?.[0] ?? null) as KeeperTotalenView | null;
+  const posities = ((positieRows ?? []) as SpelerPositieView[])
+    .slice()
+    .sort((a, b) => b.aantal - a.aantal);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
@@ -123,6 +129,24 @@ export default async function StafSpelerPage({
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-red-600">
           Laag 3 · Registratie (staf-only)
         </h2>
+
+        {posities.length > 0 ? (
+          <div className="mb-4 rounded-xl border border-neutral-200 bg-white p-4">
+            <h3 className="mb-2 text-sm font-semibold text-neutral-700">
+              Gespeelde posities
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {posities.map((p) => (
+                <span
+                  key={p.positie}
+                  className="rounded-full bg-pitch/10 px-3 py-1 text-sm text-pitch"
+                >
+                  {p.positie} <span className="font-semibold">×{p.aantal}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-neutral-200 bg-white p-4">
