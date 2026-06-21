@@ -27,6 +27,19 @@ export interface WedstrijdRegPayload {
   overtredingen_gemaakt: number;
   overtredingen_tegen: number;
   balverlies: number;
+  man_of_the_match: boolean;
+  balcontacten_voor_assist: number;
+  duels_gewonnen: number;
+  duels_verloren: number;
+}
+
+export interface ScoutingPayload {
+  wedstrijd_id: string;
+  systeem_tegenstander: string | null;
+  drukzetten: string | null;
+  zwakke_schakel: string | null;
+  uitblinkers: string | null;
+  eigen_opmerking: string | null;
 }
 
 export interface KeeperRegPayload {
@@ -82,6 +95,21 @@ export async function upsertKeeperRegistratie(
   const { error } = await supabase
     .from("keeper_registraties")
     .upsert(payload as never, { onConflict: "wedstrijd_id,speler_id" });
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/staf/wedstrijd/${payload.wedstrijd_id}/registreren`);
+  return { ok: true };
+}
+
+export async function upsertScouting(
+  payload: ScoutingPayload,
+): Promise<ActieResultaat> {
+  if (!(await vereisStaf())) return { ok: false, error: "Geen toegang." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("wedstrijd_scouting")
+    .upsert(payload as never, { onConflict: "wedstrijd_id" });
 
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/staf/wedstrijd/${payload.wedstrijd_id}/registreren`);

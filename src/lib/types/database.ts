@@ -18,8 +18,31 @@ export interface Speler {
   naam: string;
   rugnummer: number | null;
   positie_voorkeur: string | null;
+  hoofdpositie: string | null;
+  alt_positie_1: string | null;
+  alt_positie_2: string | null;
   foto_url: string | null;
   geboortedatum: string | null;
+  created_at: string;
+}
+
+export interface Aandachtspunt {
+  id: string;
+  speler_id: string;
+  tekst: string;
+  opgelost: boolean;
+  coach_id: string | null;
+  created_at: string;
+}
+
+export interface WedstrijdScouting {
+  id: string;
+  wedstrijd_id: string;
+  systeem_tegenstander: string | null;
+  drukzetten: "hoog" | "inzakken" | "wisselend" | null;
+  zwakke_schakel: string | null;
+  uitblinkers: string | null;
+  eigen_opmerking: string | null;
   created_at: string;
 }
 
@@ -102,6 +125,10 @@ export interface WedstrijdRegistratie {
   overtredingen_gemaakt: number;
   overtredingen_tegen: number;
   balverlies: number;
+  man_of_the_match: boolean;
+  balcontacten_voor_assist: number;
+  duels_gewonnen: number;
+  duels_verloren: number;
   opmerking: string | null;
   created_at: string;
 }
@@ -162,6 +189,10 @@ export interface WedstrijdTotalenView {
   overtredingen_gemaakt: number;
   overtredingen_tegen: number;
   balverlies: number;
+  man_of_the_match: number;
+  balcontacten_voor_assist: number;
+  duels_gewonnen: number;
+  duels_verloren: number;
 }
 
 export interface SpelerPositieView {

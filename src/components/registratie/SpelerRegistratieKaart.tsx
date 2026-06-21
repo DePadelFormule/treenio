@@ -117,14 +117,18 @@ export function SpelerRegistratieKaart({
             <Toggle label="Ingevallen" actief={state.ingevallen} onClick={() => set("ingevallen", !state.ingevallen)} />
             <Toggle label="90 min bank" actief={state.volledige_bank} onClick={() => set("volledige_bank", !state.volledige_bank)} />
             <Toggle label="Rode kaart" actief={state.rode_kaart} onClick={() => set("rode_kaart", !state.rode_kaart)} kleur="rood" />
+            <Toggle label="⭐ Man of the Match" actief={state.man_of_the_match} onClick={() => set("man_of_the_match", !state.man_of_the_match)} kleur="goud" />
           </div>
 
           {/* Tellers */}
           <div className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
             <Stepper label="Goals" value={state.goals} onChange={(v) => set("goals", v)} />
             <Stepper label="Assists" value={state.assists} onChange={(v) => set("assists", v)} />
-            <Stepper label="Gele kaarten" value={state.gele_kaarten} onChange={(v) => set("gele_kaarten", v)} max={2} />
+            <Stepper label="Balcontact vóór assist" value={state.balcontacten_voor_assist} onChange={(v) => set("balcontacten_voor_assist", v)} />
+            <Stepper label="Duels gewonnen" value={state.duels_gewonnen} onChange={(v) => set("duels_gewonnen", v)} />
+            <Stepper label="Duels verloren" value={state.duels_verloren} onChange={(v) => set("duels_verloren", v)} />
             <Stepper label="Balverlies" value={state.balverlies} onChange={(v) => set("balverlies", v)} />
+            <Stepper label="Gele kaarten" value={state.gele_kaarten} onChange={(v) => set("gele_kaarten", v)} max={2} />
             <Stepper label="Overtredingen gemaakt" value={state.overtredingen_gemaakt} onChange={(v) => set("overtredingen_gemaakt", v)} />
             <Stepper label="Overtredingen tegen" value={state.overtredingen_tegen} onChange={(v) => set("overtredingen_tegen", v)} />
           </div>
@@ -177,9 +181,14 @@ function Toggle({
   label: string;
   actief: boolean;
   onClick: () => void;
-  kleur?: "groen" | "rood";
+  kleur?: "groen" | "rood" | "goud";
 }) {
-  const aanKleur = kleur === "rood" ? "bg-red-600 text-white" : "bg-pitch text-white";
+  const aanKleur =
+    kleur === "rood"
+      ? "bg-red-600 text-white"
+      : kleur === "goud"
+        ? "bg-gold text-neutral-900"
+        : "bg-pitch text-white";
   return (
     <button
       type="button"

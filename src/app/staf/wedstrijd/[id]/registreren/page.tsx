@@ -5,12 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { SpelerRegistratieKaart } from "@/components/registratie/SpelerRegistratieKaart";
 import { KeeperPaneel } from "@/components/registratie/KeeperPaneel";
 import { TeamStatsPaneel } from "@/components/registratie/TeamStatsPaneel";
+import { ScoutingPaneel } from "@/components/registratie/ScoutingPaneel";
 import type {
   Speler,
   Wedstrijd,
   WedstrijdRegistratie,
   KeeperRegistratie,
   WedstrijdTeamStats,
+  WedstrijdScouting,
 } from "@/lib/types/database";
 
 type RegBegin = Omit<WedstrijdRegistratie, "id" | "wedstrijd_id" | "speler_id" | "opmerking" | "created_at">;
@@ -31,6 +33,10 @@ const LEEG_REG: RegBegin = {
   overtredingen_gemaakt: 0,
   overtredingen_tegen: 0,
   balverlies: 0,
+  man_of_the_match: false,
+  balcontacten_voor_assist: 0,
+  duels_gewonnen: 0,
+  duels_verloren: 0,
 };
 
 export default async function RegistrerenPage({
@@ -54,12 +60,13 @@ export default async function RegistrerenPage({
   if (!wedstrijd) notFound();
   const w = wedstrijd as Wedstrijd;
 
-  const [{ data: spelers }, { data: regs }, { data: keepers }, { data: team }] =
+  const [{ data: spelers }, { data: regs }, { data: keepers }, { data: team }, { data: scouting }] =
     await Promise.all([
       supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
       supabase.from("wedstrijd_registraties").select("*").eq("wedstrijd_id", id),
       supabase.from("keeper_registraties").select("*").eq("wedstrijd_id", id),
       supabase.from("wedstrijd_team_stats").select("*").eq("wedstrijd_id", id).maybeSingle(),
+      supabase.from("wedstrijd_scouting").select("*").eq("wedstrijd_id", id).maybeSingle(),
     ]);
 
   const spelerLijst = (spelers ?? []) as Speler[];
@@ -92,6 +99,15 @@ export default async function RegistrerenPage({
     tegengoals_uit_standaard: t?.tegengoals_uit_standaard ?? 0,
   };
 
+  const sc = scouting as WedstrijdScouting | null;
+  const scoutingBegin = {
+    systeem_tegenstander: sc?.systeem_tegenstander ?? null,
+    drukzetten: sc?.drukzetten ?? null,
+    zwakke_schakel: sc?.zwakke_schakel ?? null,
+    uitblinkers: sc?.uitblinkers ?? null,
+    eigen_opmerking: sc?.eigen_opmerking ?? null,
+  };
+
   function beginVoor(spelerId: string): RegBegin {
     const r = regMap.get(spelerId);
     if (!r) return LEEG_REG;
@@ -111,6 +127,10 @@ export default async function RegistrerenPage({
       overtredingen_gemaakt: r.overtredingen_gemaakt,
       overtredingen_tegen: r.overtredingen_tegen,
       balverlies: r.balverlies,
+      man_of_the_match: r.man_of_the_match,
+      balcontacten_voor_assist: r.balcontacten_voor_assist,
+      duels_gewonnen: r.duels_gewonnen,
+      duels_verloren: r.duels_verloren,
     };
   }
 
@@ -131,6 +151,7 @@ export default async function RegistrerenPage({
       </header>
 
       <section className="mb-8 space-y-4">
+        <ScoutingPaneel wedstrijdId={id} begin={scoutingBegin} />
         <TeamStatsPaneel wedstrijdId={id} begin={teamBegin} />
         <KeeperPaneel wedstrijdId={id} spelers={spelerLijst.map((s) => ({ id: s.id, naam: s.naam }))} bestaand={keeperMap} />
       </section>

@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { POSITIE_CODES } from "@/lib/constants";
+import { nieuwAandachtspunt, toggleAandachtspunt, updatePosities } from "./actions";
 import type {
+  Aandachtspunt,
   Ontwikkeldoel,
   Speler,
   StafNotitie,
@@ -39,6 +42,7 @@ export default async function StafSpelerPage({
   const [
     { data: doelen },
     { data: notities },
+    { data: aandacht },
     { data: opkomstRows },
     { data: wedstrijdRows },
     { data: keeperRows },
@@ -46,6 +50,7 @@ export default async function StafSpelerPage({
   ] = await Promise.all([
     supabase.from("ontwikkeldoelen").select("*").eq("speler_id", id),
     supabase.from("staf_notities").select("*").eq("speler_id", id),
+    supabase.from("aandachtspunten").select("*").eq("speler_id", id).order("created_at", { ascending: false }),
     supabase.from("v_training_opkomst").select("*").eq("speler_id", id),
     supabase.from("v_wedstrijd_totalen").select("*").eq("speler_id", id),
     supabase.from("v_keeper_totalen").select("*").eq("speler_id", id),
@@ -73,10 +78,30 @@ export default async function StafSpelerPage({
         <div>
           <h1 className="text-2xl font-bold text-neutral-800">{sp.naam}</h1>
           <p className="text-sm text-neutral-400">
-            {sp.positie_voorkeur ?? "positie onbekend"}
+            {sp.hoofdpositie ? (
+              <>
+                <span className="font-semibold text-pitch">{sp.hoofdpositie}</span>
+                {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).length > 0 && (
+                  <span> · alt: {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).join(", ")}</span>
+                )}
+              </>
+            ) : (
+              "positie onbekend"
+            )}
           </p>
         </div>
       </header>
+
+      {/* Positie-beheer */}
+      <form action={updatePosities} className="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <input type="hidden" name="speler_id" value={sp.id} />
+        <PositieSelect label="Hoofdpositie" name="hoofdpositie" value={sp.hoofdpositie} />
+        <PositieSelect label="Alternatief 1" name="alt_positie_1" value={sp.alt_positie_1} />
+        <PositieSelect label="Alternatief 2" name="alt_positie_2" value={sp.alt_positie_2} />
+        <button type="submit" className="rounded-lg bg-pitch px-4 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark">
+          Posities opslaan
+        </button>
+      </form>
 
       <div className="mt-6 grid gap-8 md:grid-cols-2">
         <div className="space-y-6">
@@ -120,6 +145,52 @@ export default async function StafSpelerPage({
               <p className="text-sm text-neutral-400">Nog geen staf-notities.</p>
             )}
           </section>
+        </div>
+
+        {/* Aandachtspunten */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-pitch">
+            Aandachtspunten
+          </h2>
+
+          <form action={nieuwAandachtspunt} className="flex gap-2">
+            <input type="hidden" name="speler_id" value={sp.id} />
+            <input
+              type="text"
+              name="tekst"
+              placeholder="Nieuw aandachtspunt…"
+              required
+              className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
+            />
+            <button type="submit" className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark">
+              +
+            </button>
+          </form>
+
+          {aandacht && aandacht.length ? (
+            <ul className="space-y-2">
+              {(aandacht as Aandachtspunt[]).map((a) => (
+                <li
+                  key={a.id}
+                  className={`flex items-start justify-between gap-2 rounded-lg border p-3 text-sm ${
+                    a.opgelost ? "border-neutral-200 bg-neutral-50 text-neutral-400" : "border-amber-200 bg-amber-50"
+                  }`}
+                >
+                  <span className={a.opgelost ? "line-through" : ""}>{a.tekst}</span>
+                  <form action={toggleAandachtspunt}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <input type="hidden" name="speler_id" value={sp.id} />
+                    <input type="hidden" name="opgelost" value={(!a.opgelost).toString()} />
+                    <button type="submit" className="whitespace-nowrap text-xs text-neutral-500 hover:text-pitch">
+                      {a.opgelost ? "heropenen" : "✓ opgelost"}
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-neutral-400">Nog geen aandachtspunten.</p>
+          )}
         </div>
       </div>
 
@@ -170,6 +241,9 @@ export default async function StafSpelerPage({
               <Stat label="Speelminuten" value={wedstrijd?.totaal_minuten ?? 0} />
               <Stat label="Goals" value={wedstrijd?.goals ?? 0} />
               <Stat label="Assists" value={wedstrijd?.assists ?? 0} />
+              <Stat label="⭐ Man of the Match" value={wedstrijd?.man_of_the_match ?? 0} />
+              <Stat label="Balcontact vóór assist" value={wedstrijd?.balcontacten_voor_assist ?? 0} />
+              <Stat label="Duels (gew./verl.)" value={`${wedstrijd?.duels_gewonnen ?? 0} / ${wedstrijd?.duels_verloren ?? 0}`} />
               <Stat label="Geel / rood" value={`${wedstrijd?.gele_kaarten ?? 0} / ${wedstrijd?.rode_kaarten ?? 0}`} />
               <Stat label="Overtr. ± (maak/tegen)" value={`${wedstrijd?.overtredingen_gemaakt ?? 0} / ${wedstrijd?.overtredingen_tegen ?? 0}`} />
               <Stat label="Balverlies" value={wedstrijd?.balverlies ?? 0} />
@@ -200,6 +274,32 @@ export default async function StafSpelerPage({
         </p>
       </section>
     </main>
+  );
+}
+
+function PositieSelect({
+  label,
+  name,
+  value,
+}: {
+  label: string;
+  name: string;
+  value: string | null;
+}) {
+  return (
+    <label className="text-sm">
+      <span className="mb-1 block text-xs text-neutral-500">{label}</span>
+      <select
+        name={name}
+        defaultValue={value ?? ""}
+        className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
+      >
+        <option value="">—</option>
+        {POSITIE_CODES.map((p) => (
+          <option key={p} value={p}>{p}</option>
+        ))}
+      </select>
+    </label>
   );
 }
 
