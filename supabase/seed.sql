@@ -1,27 +1,42 @@
 -- ============================================================================
--- Treenio — optionele seed voor lokaal testen.
+-- Treenio — seed: Nivo Sparta JO17-2, seizoen 26-27
 -- ----------------------------------------------------------------------------
--- LET OP: dit koppelt NIET automatisch aan auth.users. Maak eerst gebruikers
--- aan via Supabase Auth (Dashboard → Authentication → Users), en vul daarna
--- de auth_user_id's hieronder in, of update ze via de app.
+-- Draai dit met de service role (SQL editor in het Supabase-dashboard).
 --
--- Draai dit met de service role (bv. via SQL editor in het dashboard).
+-- LET OP (auth): trainers loggen in met een eigen account. Maak per trainer
+-- een gebruiker aan via Authentication → Users en koppel daarna de
+-- auth_user_id, bv.:
+--   update public.staf set auth_user_id = '<uuid>' where naam = 'Dennis Baggerman';
+-- Spelers loggen NIET in; zij zijn puur gegevens.
 -- ============================================================================
 
--- Voorbeeld-staf (vul auth_user_id later in)
-insert into public.staf (naam, rol)
-values ('Coach Demo', 'hoofdtrainer')
+-- Trainersstaf
+insert into public.staf (naam, rol) values
+  ('Dennis Baggerman', 'hoofdtrainer'),
+  ('Jochem Burgers',   'assistent'),
+  ('Thierry Mooring',  'assistent'),
+  ('Peter van Hees',   'assistent')
 on conflict do nothing;
 
--- Voorbeeld-spelers
-insert into public.spelers (naam, rugnummer, positie_voorkeur)
-values
-  ('Sam Spits', 9, 'spits'),
-  ('Vera Verdediger', 4, 'centrale verdediger'),
-  ('Kees Keeper', 1, 'keeper')
-on conflict do nothing;
-
--- Voorbeeld-wedstrijd
-insert into public.wedstrijden (datum, tegenstander, uitslag)
-values (current_date - 7, 'FC Voorbeeld', '3-1')
+-- Selectie (rugnummer = nummer uit de teamlijst). Keeper: Amin Miaadi.
+insert into public.spelers (rugnummer, naam, positie_voorkeur) values
+  (1,  'Fabian Buwalda',      null),
+  (2,  'Rico Baggerman',      null),
+  (3,  'Osama Tarsha Kurdi',  null),
+  (4,  'Adam El Amraoui',     null),
+  (5,  'Myon van Hees',       null),
+  (6,  'Jan-Julius van Hees', null),
+  (7,  'Valentijn Kramer',    null),
+  (8,  'Teun van Dongen',     null),
+  (9,  'Neal Tsegay',         null),
+  (10, 'Finn Thuis',          null),
+  (11, 'Roan van Genderen',   null),
+  (12, 'Rayhan Ahmed',        null),
+  (13, 'Amin Miaadi',         'K'),
+  (14, 'Kovan Almjo',         null),
+  (15, 'Youssef Hammouti',    null),
+  (16, 'Yassin Azzaaoui',     null),
+  (17, 'Amir Shaaban',        null),
+  (18, 'Mateusz Wojtowicz',   null),
+  (19, 'Ghaith Tarsha',       null)
 on conflict do nothing;

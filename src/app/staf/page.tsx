@@ -35,7 +35,13 @@ export default async function StafPage() {
           href="/staf/wedstrijden"
           className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark"
         >
-          Wedstrijden registreren →
+          Wedstrijden →
+        </Link>
+        <Link
+          href="/staf/trainingen"
+          className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark"
+        >
+          Trainingen (presentie) →
         </Link>
       </nav>
 
