@@ -2,11 +2,9 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/lib/types/database";
+import { SUPABASE_URL, SUPABASE_KEY } from "./config";
 
-// Browser-side Supabase client (gebruikt de anon key + RLS).
+// Browser-side Supabase client (gebruikt de publishable/anon key + RLS).
 export function createClient() {
-  return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+  return createBrowserClient<Database>(SUPABASE_URL, SUPABASE_KEY);
 }
