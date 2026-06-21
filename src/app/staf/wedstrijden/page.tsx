@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { nieuweWedstrijd } from "./actions";
+import { ImporteerProgrammaKnop } from "@/components/ImporteerProgrammaKnop";
 import type { Wedstrijd } from "@/lib/types/database";
 
 export default async function WedstrijdenPage() {
@@ -22,7 +23,17 @@ export default async function WedstrijdenPage() {
         ← Terug naar dashboard
       </Link>
 
-      <h1 className="mt-4 mb-6 text-2xl font-bold text-pitch">Wedstrijden</h1>
+      <h1 className="mt-4 mb-4 text-2xl font-bold text-pitch">Wedstrijden</h1>
+
+      {/* Programma uit voetbal.nl (KNVB Dataservice) */}
+      <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-4">
+        <ImporteerProgrammaKnop />
+        <p className="mt-2 text-xs text-neutral-400">
+          Haalt het wedstrijdprogramma op uit de KNVB Dataservice (voetbal.nl).
+          Vereist een Club.Dataservice-key in de omgeving. Bestaande wedstrijden
+          worden bijgewerkt, niet gedupliceerd.
+        </p>
+      </div>
 
       {/* Snelle toevoeging */}
       <form action={nieuweWedstrijd} className="mb-8 grid gap-3 rounded-xl border border-neutral-200 bg-white p-4 sm:grid-cols-[auto_1fr_auto_auto]">

@@ -36,6 +36,7 @@ export interface Wedstrijd {
   datum: string;
   tegenstander: string;
   uitslag: string | null;
+  bron_id: string | null;
   created_at: string;
 }
 
