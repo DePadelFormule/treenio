@@ -96,11 +96,11 @@ export function ScoutingPaneel({ wedstrijdId, begin }: Props) {
           type="button"
           onClick={opslaan}
           disabled={bezig}
-          className="rounded-lg bg-pitch px-4 py-2 text-sm font-semibold text-white transition hover:bg-pitch-dark disabled:opacity-40"
+          className="rounded-lg bg-sparta px-4 py-2 text-sm font-semibold text-white transition hover:bg-sparta-dark disabled:opacity-40"
         >
           {bezig ? "Opslaan…" : "Scouting opslaan"}
         </button>
-        {status === "ok" && <span className="text-sm text-pitch">✓ Opgeslagen</span>}
+        {status === "ok" && <span className="text-sm text-sparta">✓ Opgeslagen</span>}
         {status === "fout" && <span className="text-sm text-red-600">Opslaan mislukt</span>}
       </div>
     </div>

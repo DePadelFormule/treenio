@@ -8,12 +8,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Treenio huisstijl — pas gerust aan
-        pitch: {
-          DEFAULT: "#0b6e4f",
-          dark: "#08543c",
+        // Nivo Sparta huisstijl: rood / zwart / wit
+        sparta: {
+          DEFAULT: "#C8102E", // clubrood
+          dark: "#8A0A1F", // donkerrood (hover/accent)
+          black: "#111111",
         },
-        gold: "#f5c542",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

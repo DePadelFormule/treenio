@@ -80,7 +80,7 @@ export function KeeperPaneel({ wedstrijdId, spelers, bestaand }: Props) {
               type="button"
               onClick={() => set("clean_sheet", !state.clean_sheet)}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                state.clean_sheet ? "bg-pitch text-white" : "bg-neutral-200 text-neutral-600"
+                state.clean_sheet ? "bg-sparta text-white" : "bg-neutral-200 text-neutral-600"
               }`}
             >
               Clean sheet
@@ -102,11 +102,11 @@ export function KeeperPaneel({ wedstrijdId, spelers, bestaand }: Props) {
               type="button"
               onClick={opslaan}
               disabled={bezig}
-              className="rounded-lg bg-pitch px-4 py-2 text-sm font-semibold text-white transition hover:bg-pitch-dark disabled:opacity-40"
+              className="rounded-lg bg-sparta px-4 py-2 text-sm font-semibold text-white transition hover:bg-sparta-dark disabled:opacity-40"
             >
               {bezig ? "Opslaan…" : "Keeper opslaan"}
             </button>
-            {status === "ok" && <span className="text-sm text-pitch">✓ Opgeslagen</span>}
+            {status === "ok" && <span className="text-sm text-sparta">✓ Opgeslagen</span>}
             {status === "fout" && <span className="text-sm text-red-600">Opslaan mislukt</span>}
           </div>
         </>

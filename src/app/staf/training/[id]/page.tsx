@@ -64,12 +64,12 @@ export default async function TrainingPresentiePage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <Link href="/staf/trainingen" className="text-sm text-neutral-500 hover:text-pitch hover:underline">
+      <Link href="/staf/trainingen" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
         ← Terug naar trainingen
       </Link>
 
       <header className="mt-4 mb-6">
-        <h1 className="text-2xl font-bold text-pitch">Presentie training</h1>
+        <h1 className="text-2xl font-bold text-sparta">Presentie training</h1>
         <p className="text-sm text-neutral-500">
           {t.datum}{t.type ? ` · ${t.type}` : ""} · {aanwezig}/{lijst.length} aanwezig
         </p>

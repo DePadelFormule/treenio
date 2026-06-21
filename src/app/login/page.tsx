@@ -8,12 +8,17 @@ export default async function LoginPage({
   const { error, next } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-pitch-dark p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
+    <main className="flex min-h-screen items-center justify-center bg-sparta-black p-4">
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="h-2 bg-sparta" />
+        <div className="p-8">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight text-pitch">
+          <h1 className="text-3xl font-extrabold tracking-tight text-sparta">
             Treenio
           </h1>
+          <p className="mt-1 text-sm font-semibold text-neutral-700">
+            Nivo Sparta JO17-2
+          </p>
           <p className="mt-1 text-sm text-neutral-500">
             Log in als trainer.
           </p>
@@ -37,7 +42,7 @@ export default async function LoginPage({
               type="email"
               autoComplete="email"
               required
-              className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-pitch focus:ring-2 focus:ring-pitch/30"
+              className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-sparta focus:ring-2 focus:ring-sparta/30"
             />
           </div>
           <div>
@@ -50,16 +55,17 @@ export default async function LoginPage({
               type="password"
               autoComplete="current-password"
               required
-              className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-pitch focus:ring-2 focus:ring-pitch/30"
+              className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-sparta focus:ring-2 focus:ring-sparta/30"
             />
           </div>
           <button
             type="submit"
-            className="w-full rounded-lg bg-pitch px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-pitch-dark"
+            className="w-full rounded-lg bg-sparta px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sparta-dark"
           >
             Inloggen
           </button>
         </form>
+        </div>
       </div>
     </main>
   );

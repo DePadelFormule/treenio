@@ -36,7 +36,7 @@ export function TrainingPresentieRij({ trainingId, spelerId, naam, rugnummer, be
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3">
       <div className="flex min-w-[11rem] items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pitch/10 text-sm font-bold text-pitch">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sparta/10 text-sm font-bold text-sparta">
           {rugnummer ?? "–"}
         </div>
         <span className="font-medium text-neutral-800">{naam}</span>
@@ -48,7 +48,7 @@ export function TrainingPresentieRij({ trainingId, spelerId, naam, rugnummer, be
           type="button"
           onClick={() => bewaar({ ...state, aanwezig: true, afmeld_status: "nvt" })}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-            state.aanwezig ? "bg-pitch text-white" : "bg-neutral-200 text-neutral-600"
+            state.aanwezig ? "bg-sparta text-white" : "bg-neutral-200 text-neutral-600"
           }`}
         >
           Aanwezig
@@ -87,7 +87,7 @@ export function TrainingPresentieRij({ trainingId, spelerId, naam, rugnummer, be
               type="button"
               onClick={() => bewaar({ ...state, inzet: state.inzet === n ? null : n })}
               className={`h-7 w-7 rounded-full text-sm font-semibold ${
-                state.inzet === n ? "bg-gold text-neutral-900" : "bg-neutral-200 text-neutral-600"
+                state.inzet === n ? "bg-neutral-900 text-white" : "bg-neutral-200 text-neutral-600"
               }`}
             >
               {n}
@@ -97,7 +97,7 @@ export function TrainingPresentieRij({ trainingId, spelerId, naam, rugnummer, be
       )}
 
       <span className="ml-auto text-xs">
-        {bezig ? <span className="text-neutral-400">…</span> : bewaard ? <span className="text-pitch">✓</span> : null}
+        {bezig ? <span className="text-neutral-400">…</span> : bewaard ? <span className="text-sparta">✓</span> : null}
       </span>
     </div>
   );

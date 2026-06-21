@@ -31,7 +31,7 @@ export function Stepper({ label, value, onChange, min = 0, max = 99 }: StepperPr
           type="button"
           onClick={omhoog}
           aria-label={`${label} omhoog`}
-          className="h-9 w-9 rounded-full bg-pitch text-lg font-bold text-white active:scale-95 disabled:opacity-40"
+          className="h-9 w-9 rounded-full bg-sparta text-lg font-bold text-white active:scale-95 disabled:opacity-40"
           disabled={value >= max}
         >
           +

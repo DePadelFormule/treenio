@@ -24,7 +24,7 @@ export default async function StafPage() {
     <main className="mx-auto max-w-4xl px-4 py-8">
       <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-pitch">Stafdashboard</h1>
+          <h1 className="text-2xl font-bold text-sparta">Stafdashboard</h1>
           <p className="text-sm text-neutral-500">
             {gebruiker.staf?.naam} · {gebruiker.staf?.rol}
           </p>
@@ -35,13 +35,13 @@ export default async function StafPage() {
       <nav className="mb-8 flex flex-wrap gap-2">
         <Link
           href="/staf/wedstrijden"
-          className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark"
+          className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
         >
           Wedstrijden →
         </Link>
         <Link
           href="/staf/trainingen"
-          className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark"
+          className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
         >
           Trainingen (presentie) →
         </Link>
@@ -56,13 +56,13 @@ export default async function StafPage() {
               key={s.id}
               className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sparta/10 font-bold text-sparta">
                 {s.rugnummer ?? "–"}
               </div>
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/staf/speler/${s.id}`}
-                  className="font-medium text-neutral-800 hover:text-pitch hover:underline"
+                  className="font-medium text-neutral-800 hover:text-sparta hover:underline"
                 >
                   {s.naam}
                 </Link>

@@ -136,12 +136,12 @@ export default async function RegistrerenPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <Link href="/staf/wedstrijden" className="text-sm text-neutral-500 hover:text-pitch hover:underline">
+      <Link href="/staf/wedstrijden" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
         ← Terug naar wedstrijden
       </Link>
 
       <header className="mt-4 mb-6">
-        <h1 className="text-2xl font-bold text-pitch">Wedstrijd registreren</h1>
+        <h1 className="text-2xl font-bold text-sparta">Wedstrijd registreren</h1>
         <p className="text-sm text-neutral-500">
           {w.datum} · {w.tegenstander}{w.uitslag ? ` · ${w.uitslag}` : ""}
         </p>

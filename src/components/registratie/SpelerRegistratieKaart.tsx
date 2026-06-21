@@ -59,7 +59,7 @@ export function SpelerRegistratieKaart({
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4">
       <div className="mb-3 flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-pitch/10 font-bold text-pitch">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sparta/10 font-bold text-sparta">
           {rugnummer ?? "–"}
         </div>
         <h3 className="font-semibold text-neutral-800">{naam}</h3>
@@ -160,11 +160,11 @@ export function SpelerRegistratieKaart({
           type="button"
           onClick={opslaan}
           disabled={bezig || !vies}
-          className="rounded-lg bg-pitch px-4 py-2 text-sm font-semibold text-white transition hover:bg-pitch-dark disabled:opacity-40"
+          className="rounded-lg bg-sparta px-4 py-2 text-sm font-semibold text-white transition hover:bg-sparta-dark disabled:opacity-40"
         >
           {bezig ? "Opslaan…" : "Opslaan"}
         </button>
-        {status === "ok" && !vies && <span className="text-sm text-pitch">✓ Opgeslagen</span>}
+        {status === "ok" && !vies && <span className="text-sm text-sparta">✓ Opgeslagen</span>}
         {status === "fout" && <span className="text-sm text-red-600">Opslaan mislukt</span>}
         {vies && status !== "fout" && <span className="text-sm text-amber-600">Niet opgeslagen wijzigingen</span>}
       </div>
@@ -187,8 +187,8 @@ function Toggle({
     kleur === "rood"
       ? "bg-red-600 text-white"
       : kleur === "goud"
-        ? "bg-gold text-neutral-900"
-        : "bg-pitch text-white";
+        ? "bg-neutral-900 text-white"
+        : "bg-sparta text-white";
   return (
     <button
       type="button"

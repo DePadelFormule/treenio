@@ -66,13 +66,13 @@ export default async function StafSpelerPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <Link href="/staf" className="text-sm text-neutral-500 hover:text-pitch hover:underline">
+      <Link href="/staf" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
         ← Terug naar selectie
       </Link>
 
       {/* Speler-kop */}
       <header className="mt-4 flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-pitch/10 text-xl font-bold text-pitch">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sparta/10 text-xl font-bold text-sparta">
           {sp.rugnummer ?? "–"}
         </div>
         <div>
@@ -80,7 +80,7 @@ export default async function StafSpelerPage({
           <p className="text-sm text-neutral-400">
             {sp.hoofdpositie ? (
               <>
-                <span className="font-semibold text-pitch">{sp.hoofdpositie}</span>
+                <span className="font-semibold text-sparta">{sp.hoofdpositie}</span>
                 {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).length > 0 && (
                   <span> · alt: {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).join(", ")}</span>
                 )}
@@ -98,7 +98,7 @@ export default async function StafSpelerPage({
         <PositieSelect label="Hoofdpositie" name="hoofdpositie" value={sp.hoofdpositie} />
         <PositieSelect label="Alternatief 1" name="alt_positie_1" value={sp.alt_positie_1} />
         <PositieSelect label="Alternatief 2" name="alt_positie_2" value={sp.alt_positie_2} />
-        <button type="submit" className="rounded-lg bg-pitch px-4 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark">
+        <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
           Posities opslaan
         </button>
       </form>
@@ -107,7 +107,7 @@ export default async function StafSpelerPage({
         <div className="space-y-6">
           {/* Ontwikkeldoelen (staf-only) */}
           <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pitch">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-sparta">
               Ontwikkeldoelen
             </h2>
             {doelen && doelen.length ? (
@@ -149,7 +149,7 @@ export default async function StafSpelerPage({
 
         {/* Aandachtspunten */}
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-pitch">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-sparta">
             Aandachtspunten
           </h2>
 
@@ -162,7 +162,7 @@ export default async function StafSpelerPage({
               required
               className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
             />
-            <button type="submit" className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark">
+            <button type="submit" className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
               +
             </button>
           </form>
@@ -181,7 +181,7 @@ export default async function StafSpelerPage({
                     <input type="hidden" name="id" value={a.id} />
                     <input type="hidden" name="speler_id" value={sp.id} />
                     <input type="hidden" name="opgelost" value={(!a.opgelost).toString()} />
-                    <button type="submit" className="whitespace-nowrap text-xs text-neutral-500 hover:text-pitch">
+                    <button type="submit" className="whitespace-nowrap text-xs text-neutral-500 hover:text-sparta">
                       {a.opgelost ? "heropenen" : "✓ opgelost"}
                     </button>
                   </form>
@@ -209,7 +209,7 @@ export default async function StafSpelerPage({
               {posities.map((p) => (
                 <span
                   key={p.positie}
-                  className="rounded-full bg-pitch/10 px-3 py-1 text-sm text-pitch"
+                  className="rounded-full bg-sparta/10 px-3 py-1 text-sm text-sparta"
                 >
                   {p.positie} <span className="font-semibold">×{p.aantal}</span>
                 </span>

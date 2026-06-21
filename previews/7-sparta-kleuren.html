@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Treenio — Nivo Sparta kleuren (preview)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        sparta: { DEFAULT: "#C8102E", dark: "#8A0A1F", black: "#111111" },
+      } } },
+    };
+  </script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+  <div class="grid gap-8 p-6 lg:grid-cols-2">
+
+    <!-- Login -->
+    <div>
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Login</p>
+      <div class="flex min-h-[22rem] items-center justify-center rounded-2xl bg-sparta-black p-6">
+        <div class="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl">
+          <div class="h-2 bg-sparta"></div>
+          <div class="p-8">
+            <div class="mb-6 text-center">
+              <h1 class="text-3xl font-extrabold tracking-tight text-sparta">Treenio</h1>
+              <p class="mt-1 text-sm font-semibold text-neutral-700">Nivo Sparta JO17-2</p>
+              <p class="mt-1 text-sm text-neutral-500">Log in als trainer.</p>
+            </div>
+            <div class="space-y-4">
+              <input placeholder="E-mail" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
+              <input placeholder="Wachtwoord" type="password" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm" />
+              <button class="w-full rounded-lg bg-sparta px-4 py-2.5 text-sm font-semibold text-white">Inloggen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div>
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">Stafdashboard</p>
+      <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-sparta">Stafdashboard</h1>
+            <p class="text-sm text-neutral-500">Dennis Baggerman · hoofdtrainer</p>
+          </div>
+          <button class="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-600">Uitloggen</button>
+        </div>
+        <div class="mb-6 flex flex-wrap gap-2">
+          <span class="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white">Wedstrijden →</span>
+          <span class="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white">Trainingen (presentie) →</span>
+        </div>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-800">Selectie</h2>
+        <ul class="grid gap-3 sm:grid-cols-2">
+          <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-sparta/10 font-bold text-sparta">9</div>
+            <div class="min-w-0 flex-1"><span class="font-medium text-neutral-800">Neal Tsegay</span><p class="text-xs text-neutral-400">ST · LV/AM</p></div>
+            <div class="text-right text-xs text-neutral-500"><span class="font-semibold text-neutral-800">7</span> G · <span class="font-semibold text-neutral-800">3</span> A</div>
+          </li>
+          <li class="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-sparta/10 font-bold text-sparta">13</div>
+            <div class="min-w-0 flex-1"><span class="font-medium text-neutral-800">Amin Miaadi</span><p class="text-xs text-neutral-400">K</p></div>
+            <div class="text-right text-xs text-neutral-500"><span class="font-semibold text-neutral-800">0</span> G · <span class="font-semibold text-neutral-800">0</span> A</div>
+          </li>
+        </ul>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <span class="rounded-full bg-neutral-900 px-3 py-1 text-sm text-white">⭐ Man of the Match</span>
+          <span class="rounded-full bg-sparta px-3 py-1 text-sm text-white">Basis</span>
+          <span class="rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-600">Wissel</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

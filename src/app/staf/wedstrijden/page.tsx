@@ -19,11 +19,11 @@ export default async function WedstrijdenPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <Link href="/staf" className="text-sm text-neutral-500 hover:text-pitch hover:underline">
+      <Link href="/staf" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
         ← Terug naar dashboard
       </Link>
 
-      <h1 className="mt-4 mb-4 text-2xl font-bold text-pitch">Wedstrijden</h1>
+      <h1 className="mt-4 mb-4 text-2xl font-bold text-sparta">Wedstrijden</h1>
 
       {/* Programma uit voetbal.nl (KNVB Dataservice) */}
       <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-4">
@@ -40,7 +40,7 @@ export default async function WedstrijdenPage() {
         <input type="date" name="datum" required className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
         <input type="text" name="tegenstander" placeholder="Tegenstander" required className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
         <input type="text" name="uitslag" placeholder="Uitslag (bijv. 3-1)" className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
-        <button type="submit" className="rounded-lg bg-pitch px-4 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark">
+        <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
           Toevoegen
         </button>
       </form>
@@ -54,7 +54,7 @@ export default async function WedstrijdenPage() {
             </div>
             <Link
               href={`/staf/wedstrijd/${w.id}/registreren`}
-              className="rounded-lg bg-pitch px-3 py-1.5 text-sm font-semibold text-white hover:bg-pitch-dark"
+              className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
             >
               Registreren →
             </Link>
