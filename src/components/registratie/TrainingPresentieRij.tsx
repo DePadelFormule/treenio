@@ -46,7 +46,7 @@ export function TrainingPresentieRij({ trainingId, spelerId, naam, rugnummer, be
       <div className="flex gap-1">
         <button
           type="button"
-          onClick={() => bewaar({ ...state, aanwezig: true, afmeld_status: "nvt" })}
+          onClick={() => bewaar({ ...state, aanwezig: true, afmeld_status: "nvt", op_tijd: true })}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
             state.aanwezig ? "bg-sparta text-white" : "bg-neutral-200 text-neutral-600"
           }`}
@@ -63,6 +63,19 @@ export function TrainingPresentieRij({ trainingId, spelerId, naam, rugnummer, be
           Afwezig
         </button>
       </div>
+
+      {/* Te laat (alleen bij aanwezig) */}
+      {state.aanwezig && (
+        <button
+          type="button"
+          onClick={() => bewaar({ ...state, op_tijd: state.op_tijd === false ? true : false })}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+            state.op_tijd === false ? "bg-neutral-900 text-white" : "bg-neutral-200 text-neutral-600"
+          }`}
+        >
+          Te laat
+        </button>
+      )}
 
       {/* Afmeld-status (alleen relevant bij afwezig) */}
       {!state.aanwezig && (

@@ -225,6 +225,7 @@ export default async function StafSpelerPage({
               <Stat label="Opkomst" value={opkomst?.opkomst_pct != null ? `${opkomst.opkomst_pct}%` : "–"} />
               <Stat label="Aanwezig" value={`${opkomst?.aanwezig ?? 0}/${opkomst?.geregistreerd ?? 0}`} />
               <Stat label="Gem. inzet" value={opkomst?.gem_inzet != null ? `${opkomst.gem_inzet}/5` : "–"} />
+              <Stat label="Te laat gekomen" value={opkomst?.te_laat_gekomen ?? 0} alert />
               <Stat label="Op tijd afgemeld" value={opkomst?.afgemeld_op_tijd ?? 0} />
               <Stat label="Te laat afgemeld" value={opkomst?.afgemeld_te_laat ?? 0} alert />
             </dl>

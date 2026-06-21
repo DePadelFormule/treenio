@@ -45,6 +45,7 @@ export default async function TeamOverzichtPage() {
               <th className="px-3 py-3">Naam</th>
               <th className="px-3 py-3">Positie</th>
               <th className="px-3 py-3 text-center">Opkomst</th>
+              <th className="px-3 py-3 text-center">Te laat</th>
               <th className="px-3 py-3 text-center">Speelmin.</th>
               <th className="px-3 py-3 text-center">Goals</th>
               <th className="px-3 py-3 text-center">Assists</th>
@@ -66,6 +67,9 @@ export default async function TeamOverzichtPage() {
                   </td>
                   <td className="px-3 py-2.5 text-neutral-600">{s.hoofdpositie ?? "—"}</td>
                   <td className="px-3 py-2.5 text-center">{o?.opkomst_pct != null ? `${o.opkomst_pct}%` : "—"}</td>
+                  <td className={`px-3 py-2.5 text-center ${o && o.te_laat_gekomen > 0 ? "font-semibold text-sparta" : ""}`}>
+                    {o?.te_laat_gekomen ?? 0}
+                  </td>
                   <td className="px-3 py-2.5 text-center">{t?.totaal_minuten ?? 0}</td>
                   <td className="px-3 py-2.5 text-center font-semibold">{t?.goals ?? 0}</td>
                   <td className="px-3 py-2.5 text-center font-semibold">{t?.assists ?? 0}</td>

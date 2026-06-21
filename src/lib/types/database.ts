@@ -171,6 +171,7 @@ export interface TrainingOpkomstView {
   gem_inzet: number | null;
   afgemeld_op_tijd: number;
   afgemeld_te_laat: number;
+  te_laat_gekomen: number;
 }
 
 export interface WedstrijdTotalenView {
