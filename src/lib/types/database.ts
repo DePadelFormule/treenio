@@ -31,45 +31,12 @@ export interface Staf {
   created_at: string;
 }
 
-export interface Badge {
-  id: string;
-  speler_id: string;
-  type: string;
-  behaald_op: string;
-  created_at: string;
-}
-
 export interface Wedstrijd {
   id: string;
   datum: string;
   tegenstander: string;
   uitslag: string | null;
   created_at: string;
-}
-
-export interface MvpStem {
-  id: string;
-  wedstrijd_id: string;
-  stemmer_speler_id: string;
-  gestemd_op_speler_id: string;
-  gestemd_op: string;
-}
-
-export interface Challenge {
-  id: string;
-  titel: string;
-  omschrijving: string | null;
-  week: number | null;
-  deadline: string | null;
-  created_at: string;
-}
-
-export interface ChallengeUpload {
-  id: string;
-  challenge_id: string;
-  speler_id: string;
-  video_url: string;
-  ingeleverd_op: string;
 }
 
 export interface Ontwikkeldoel {
@@ -92,7 +59,7 @@ export interface StafNotitie {
   created_at: string;
 }
 
-// ---- Migratie 0002: staf-registratielaag + publieke awards ----------------
+// ---- Staf-registratielaag (migraties 0002–0004) ---------------------------
 
 export interface Training {
   id: string;
@@ -166,16 +133,6 @@ export interface WedstrijdTeamStats {
   created_at: string;
 }
 
-export interface SeizoenAward {
-  id: string;
-  seizoen: string;
-  categorie: string;
-  speler_id: string;
-  toelichting: string | null;
-  toegekend_op: string;
-  created_at: string;
-}
-
 // Staf-aggregatie-views (read-only)
 export interface TrainingOpkomstView {
   speler_id: string;
@@ -226,15 +183,6 @@ export interface KeeperTotalenView {
   opbouw_van_achteruit: number;
 }
 
-export interface SpelerRecord {
-  id: string;
-  speler_id: string;
-  soort: string;
-  waarde: number;
-  behaald_op: string;
-  created_at: string;
-}
-
 // Minimale Database-shape voor de Supabase client. Voor de MVP houden we het
 // pragmatisch; tabellen die we nog niet typen vallen terug op `any` via index.
 export interface Database {
@@ -250,43 +198,10 @@ export interface Database {
         Insert: Partial<Staf> & { naam: string };
         Update: Partial<Staf>;
       };
-      badges: {
-        Row: Badge;
-        Insert: Partial<Badge> & { speler_id: string; type: string };
-        Update: Partial<Badge>;
-      };
-      records: {
-        Row: SpelerRecord;
-        Insert: Partial<SpelerRecord> & { speler_id: string; soort: string; waarde: number };
-        Update: Partial<SpelerRecord>;
-      };
       wedstrijden: {
         Row: Wedstrijd;
         Insert: Partial<Wedstrijd> & { datum: string; tegenstander: string };
         Update: Partial<Wedstrijd>;
-      };
-      mvp_stemmen: {
-        Row: MvpStem;
-        Insert: Partial<MvpStem> & {
-          wedstrijd_id: string;
-          stemmer_speler_id: string;
-          gestemd_op_speler_id: string;
-        };
-        Update: Partial<MvpStem>;
-      };
-      challenges: {
-        Row: Challenge;
-        Insert: Partial<Challenge> & { titel: string };
-        Update: Partial<Challenge>;
-      };
-      challenge_uploads: {
-        Row: ChallengeUpload;
-        Insert: Partial<ChallengeUpload> & {
-          challenge_id: string;
-          speler_id: string;
-          video_url: string;
-        };
-        Update: Partial<ChallengeUpload>;
       };
       ontwikkeldoelen: {
         Row: Ontwikkeldoel;
@@ -302,7 +217,6 @@ export interface Database {
     Views: Record<string, never>;
     Functions: {
       is_staf: { Args: Record<string, never>; Returns: boolean };
-      current_speler_id: { Args: Record<string, never>; Returns: string | null };
     };
     Enums: Record<string, never>;
   };

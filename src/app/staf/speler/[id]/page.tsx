@@ -2,12 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { PlayerCard } from "@/components/PlayerCard";
 import type {
-  Badge,
   Ontwikkeldoel,
   Speler,
-  SpelerRecord,
   StafNotitie,
   TrainingOpkomstView,
   WedstrijdTotalenView,
@@ -15,9 +12,8 @@ import type {
   SpelerPositieView,
 } from "@/lib/types/database";
 
-// Staf-only speler-detail. Toont alle drie de lagen READ-ONLY:
-//   Laag 1 (kaartje), Laag 2 (ontwikkeldoelen), Laag 3 (staf-notities).
-// De schrijf-flows (post-wedstrijd, functioneringsgesprek-split) volgen.
+// Staf-only speler-detail. Treenio is volledig staf-only: ontwikkeldoelen,
+// staf-notities en alle registratie-aggregaten zijn uitsluitend voor de staf.
 export default async function StafSpelerPage({
   params,
 }: {
@@ -38,9 +34,9 @@ export default async function StafSpelerPage({
 
   if (!speler) notFound();
 
+  const sp = speler as Speler;
+
   const [
-    { data: badges },
-    { data: records },
     { data: doelen },
     { data: notities },
     { data: opkomstRows },
@@ -48,8 +44,6 @@ export default async function StafSpelerPage({
     { data: keeperRows },
     { data: positieRows },
   ] = await Promise.all([
-    supabase.from("badges").select("*").eq("speler_id", id),
-    supabase.from("records").select("*").eq("speler_id", id),
     supabase.from("ontwikkeldoelen").select("*").eq("speler_id", id),
     supabase.from("staf_notities").select("*").eq("speler_id", id),
     supabase.from("v_training_opkomst").select("*").eq("speler_id", id),
@@ -71,20 +65,25 @@ export default async function StafSpelerPage({
         ← Terug naar selectie
       </Link>
 
-      <div className="mt-6 grid gap-8 md:grid-cols-[auto_1fr]">
-        <div className="flex justify-center">
-          <PlayerCard
-            speler={speler as Speler}
-            badges={(badges ?? []) as Badge[]}
-            records={(records ?? []) as SpelerRecord[]}
-          />
+      {/* Speler-kop */}
+      <header className="mt-4 flex items-center gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-pitch/10 text-xl font-bold text-pitch">
+          {sp.rugnummer ?? "–"}
         </div>
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-800">{sp.naam}</h1>
+          <p className="text-sm text-neutral-400">
+            {sp.positie_voorkeur ?? "positie onbekend"}
+          </p>
+        </div>
+      </header>
 
+      <div className="mt-6 grid gap-8 md:grid-cols-2">
         <div className="space-y-6">
-          {/* Laag 2 */}
+          {/* Ontwikkeldoelen (staf-only) */}
           <section>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-pitch">
-              Laag 2 · Ontwikkeldoelen (speler ziet dit)
+              Ontwikkeldoelen
             </h2>
             {doelen && doelen.length ? (
               <ul className="space-y-2">
@@ -100,10 +99,10 @@ export default async function StafSpelerPage({
             )}
           </section>
 
-          {/* Laag 3 */}
+          {/* Staf-notities */}
           <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-red-600">
-              Laag 3 · Staf-only (NOOIT zichtbaar voor speler)
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-700">
+              Staf-notities
             </h2>
             {notities && notities.length ? (
               <ul className="space-y-2">
@@ -124,10 +123,10 @@ export default async function StafSpelerPage({
         </div>
       </div>
 
-      {/* Staf-only registratie-aggregaten (Laag 3-scope) */}
+      {/* Registratie-aggregaten */}
       <section className="mt-10">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-red-600">
-          Laag 3 · Registratie (staf-only)
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-700">
+          Registratie
         </h2>
 
         {posities.length > 0 ? (
@@ -197,8 +196,7 @@ export default async function StafSpelerPage({
           ) : null}
         </div>
         <p className="mt-3 text-xs text-neutral-400">
-          Registratie gebeurt (straks) via het iPad-tiksysteem. Deze cijfers
-          zijn uitsluitend voor de staf — de speler ziet ze nooit.
+          Registratie gebeurt via het iPad-tiksysteem op het wedstrijdscherm.
         </p>
       </section>
     </main>

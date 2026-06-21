@@ -15,7 +15,7 @@ export default async function LoginPage({
             Treenio
           </h1>
           <p className="mt-1 text-sm text-neutral-500">
-            Log in om je paspoort te bekijken.
+            Log in als trainer.
           </p>
         </div>
 
