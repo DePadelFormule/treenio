@@ -1,92 +1,47 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/SignOutButton";
-import type { Speler, WedstrijdTotalenView } from "@/lib/types/database";
 
-// Staf-dashboard: overzicht van de selectie met goals/assists per speler.
+// Staf-dashboard: startpunt met de menu-onderdelen.
 export default async function StafPage() {
   const gebruiker = await getHuidigeGebruiker();
   if (!gebruiker) redirect("/login");
   if (gebruiker.rol !== "staf") redirect("/");
 
-  const supabase = await createClient();
-  const [{ data: spelers }, { data: totalen }] = await Promise.all([
-    supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
-    supabase.from("v_wedstrijd_totalen").select("*"),
-  ]);
-
-  const totaalMap = new Map<string, WedstrijdTotalenView>();
-  for (const t of (totalen ?? []) as WedstrijdTotalenView[]) totaalMap.set(t.speler_id, t);
+  const menu = [
+    { href: "/staf/team", titel: "Team-overzicht", uitleg: "Alle spelers in één tabel: opkomst, minuten, goals, assists, kaarten." },
+    { href: "/staf/spelers", titel: "Spelerskaarten", uitleg: "Per speler de volledige kaart met alle cijfers, doelen en notities." },
+    { href: "/staf/wedstrijden", titel: "Wedstrijden", uitleg: "Programma beheren en per wedstrijd registreren (stats, keeper, scouting)." },
+    { href: "/staf/trainingen", titel: "Trainingen", uitleg: "Presentielijst bijhouden: wie was er, afmeldingen en inzet." },
+  ];
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-sparta">Stafdashboard</h1>
+          <h1 className="text-2xl font-bold text-sparta">Treenio</h1>
           <p className="text-sm text-neutral-500">
-            {gebruiker.staf?.naam} · {gebruiker.staf?.rol}
+            Nivo Sparta JO17-2 · {gebruiker.staf?.naam}
           </p>
         </div>
         <SignOutButton />
       </header>
 
-      <nav className="mb-8 flex flex-wrap gap-2">
-        <Link
-          href="/staf/wedstrijden"
-          className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
-        >
-          Wedstrijden →
-        </Link>
-        <Link
-          href="/staf/trainingen"
-          className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
-        >
-          Trainingen (presentie) →
-        </Link>
-      </nav>
-
-      <h2 className="mb-3 text-lg font-semibold text-neutral-800">Selectie</h2>
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {((spelers ?? []) as Speler[]).map((s) => {
-          const tot = totaalMap.get(s.id);
-          return (
-            <li
-              key={s.id}
-              className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sparta/10 font-bold text-sparta">
-                {s.rugnummer ?? "–"}
-              </div>
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/staf/speler/${s.id}`}
-                  className="font-medium text-neutral-800 hover:text-sparta hover:underline"
-                >
-                  {s.naam}
-                </Link>
-                <p className="text-xs text-neutral-400">
-                  {s.hoofdpositie ?? "positie onbekend"}
-                  {[s.alt_positie_1, s.alt_positie_2].filter(Boolean).length > 0 &&
-                    ` · ${[s.alt_positie_1, s.alt_positie_2].filter(Boolean).join("/")}`}
-                </p>
-              </div>
-              <div className="text-right text-xs text-neutral-500">
-                <span className="font-semibold text-neutral-800">{tot?.goals ?? 0}</span> G
-                {" · "}
-                <span className="font-semibold text-neutral-800">{tot?.assists ?? 0}</span> A
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
-      {(!spelers || spelers.length === 0) && (
-        <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400">
-          Nog geen spelers. Voeg ze toe in Supabase of via een latere beheer-flow.
-        </p>
-      )}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {menu.map((m) => (
+          <Link
+            key={m.href}
+            href={m.href}
+            className="group rounded-xl border border-neutral-200 bg-white p-5 transition hover:border-sparta hover:shadow-sm"
+          >
+            <h2 className="text-lg font-semibold text-neutral-800 group-hover:text-sparta">
+              {m.titel} <span className="text-sparta">→</span>
+            </h2>
+            <p className="mt-1 text-sm text-neutral-500">{m.uitleg}</p>
+          </Link>
+        ))}
+      </div>
     </main>
   );
 }
