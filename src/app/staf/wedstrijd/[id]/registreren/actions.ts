@@ -116,6 +116,28 @@ export async function upsertScouting(
   return { ok: true };
 }
 
+export interface VerslagPayload {
+  wedstrijd_id: string;
+  ging_goed: string | null;
+  kan_beter: string | null;
+  voor_training: string | null;
+}
+
+export async function upsertVerslag(
+  payload: VerslagPayload,
+): Promise<ActieResultaat> {
+  if (!(await vereisStaf())) return { ok: false, error: "Geen toegang." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("wedstrijd_verslag")
+    .upsert(payload as never, { onConflict: "wedstrijd_id" });
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/staf/wedstrijd/${payload.wedstrijd_id}/registreren`);
+  return { ok: true };
+}
+
 export async function upsertTeamStats(
   payload: TeamStatsPayload,
 ): Promise<ActieResultaat> {

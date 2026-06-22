@@ -6,6 +6,7 @@ import { SpelerRegistratieKaart } from "@/components/registratie/SpelerRegistrat
 import { KeeperPaneel } from "@/components/registratie/KeeperPaneel";
 import { TeamStatsPaneel } from "@/components/registratie/TeamStatsPaneel";
 import { ScoutingPaneel } from "@/components/registratie/ScoutingPaneel";
+import { VerslagPaneel } from "@/components/registratie/VerslagPaneel";
 import type {
   Speler,
   Wedstrijd,
@@ -13,6 +14,7 @@ import type {
   KeeperRegistratie,
   WedstrijdTeamStats,
   WedstrijdScouting,
+  WedstrijdVerslag,
 } from "@/lib/types/database";
 
 type RegBegin = Omit<WedstrijdRegistratie, "id" | "wedstrijd_id" | "speler_id" | "opmerking" | "created_at">;
@@ -60,13 +62,14 @@ export default async function RegistrerenPage({
   if (!wedstrijd) notFound();
   const w = wedstrijd as Wedstrijd;
 
-  const [{ data: spelers }, { data: regs }, { data: keepers }, { data: team }, { data: scouting }] =
+  const [{ data: spelers }, { data: regs }, { data: keepers }, { data: team }, { data: scouting }, { data: verslag }] =
     await Promise.all([
       supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
       supabase.from("wedstrijd_registraties").select("*").eq("wedstrijd_id", id),
       supabase.from("keeper_registraties").select("*").eq("wedstrijd_id", id),
       supabase.from("wedstrijd_team_stats").select("*").eq("wedstrijd_id", id).maybeSingle(),
       supabase.from("wedstrijd_scouting").select("*").eq("wedstrijd_id", id).maybeSingle(),
+      supabase.from("wedstrijd_verslag").select("*").eq("wedstrijd_id", id).maybeSingle(),
     ]);
 
   const spelerLijst = (spelers ?? []) as Speler[];
@@ -106,6 +109,13 @@ export default async function RegistrerenPage({
     zwakke_schakel: sc?.zwakke_schakel ?? null,
     uitblinkers: sc?.uitblinkers ?? null,
     eigen_opmerking: sc?.eigen_opmerking ?? null,
+  };
+
+  const vs = verslag as WedstrijdVerslag | null;
+  const verslagBegin = {
+    ging_goed: vs?.ging_goed ?? null,
+    kan_beter: vs?.kan_beter ?? null,
+    voor_training: vs?.voor_training ?? null,
   };
 
   function beginVoor(spelerId: string): RegBegin {
@@ -175,6 +185,10 @@ export default async function RegistrerenPage({
           Nog geen spelers in de selectie.
         </p>
       )}
+
+      <div className="mt-8">
+        <VerslagPaneel wedstrijdId={id} begin={verslagBegin} />
+      </div>
     </main>
   );
 }

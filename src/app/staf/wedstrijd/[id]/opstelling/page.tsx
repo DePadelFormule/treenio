@@ -34,11 +34,15 @@ export default async function OpstellingPage({
     bank: o?.bank ?? [],
   };
 
-  const spelerLijst = ((spelers ?? []) as Speler[]).map((s) => ({
+  const alleSpelers = (spelers ?? []) as Speler[];
+  const spelerLijst = alleSpelers.map((s) => ({
     id: s.id,
     rugnummer: s.rugnummer,
     naam: s.naam,
+    status: s.beschikbaarheid,
   }));
+
+  const nietFit = alleSpelers.filter((s) => s.beschikbaarheid !== "fit");
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
@@ -52,6 +56,17 @@ export default async function OpstellingPage({
           {w.datum} · {w.tegenstander}
         </p>
       </header>
+
+      {nietFit.length > 0 && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
+          <span className="font-semibold text-amber-800">Let op — niet fit: </span>
+          {nietFit.map((s, i) => (
+            <span key={s.id} className="text-amber-800">
+              {i > 0 ? ", " : ""}{s.naam} {s.beschikbaarheid === "geblesseerd" ? "🔴" : "🟡"}
+            </span>
+          ))}
+        </div>
+      )}
 
       <OpstellingBord wedstrijdId={id} spelers={spelerLijst} begin={begin} />
 

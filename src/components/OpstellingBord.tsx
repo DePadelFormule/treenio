@@ -8,6 +8,13 @@ interface SpelerKort {
   id: string;
   rugnummer: number | null;
   naam: string;
+  status?: "fit" | "twijfel" | "geblesseerd";
+}
+
+function statusMarker(status?: string) {
+  if (status === "geblesseerd") return " 🔴";
+  if (status === "twijfel") return " 🟡";
+  return "";
 }
 
 interface Props {
@@ -130,7 +137,7 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
                   <option value="">— leeg —</option>
                   {spelers.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.rugnummer ? `${s.rugnummer} · ` : ""}{s.naam}
+                      {s.rugnummer ? `${s.rugnummer} · ` : ""}{s.naam}{statusMarker(s.status)}
                     </option>
                   ))}
                 </select>
@@ -163,7 +170,7 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
               <option value="">+ speler op de bank…</option>
               {beschikbaar.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.rugnummer ? `${s.rugnummer} · ` : ""}{s.naam}
+                  {s.rugnummer ? `${s.rugnummer} · ` : ""}{s.naam}{statusMarker(s.status)}
                 </option>
               ))}
             </select>

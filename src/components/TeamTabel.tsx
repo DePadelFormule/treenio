@@ -7,6 +7,7 @@ export interface TeamRij {
   id: string;
   rugnummer: number | null;
   naam: string;
+  status: "fit" | "twijfel" | "geblesseerd";
   positie: string | null;
   opkomst: number | null;
   teLaat: number;
@@ -80,6 +81,9 @@ export function TeamTabel({ rows }: { rows: TeamRij[] }) {
             <tr key={r.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
               <td className="px-3 py-2.5 font-bold text-sparta">{r.rugnummer ?? "–"}</td>
               <td className="px-3 py-2.5">
+                <span className="mr-1.5" title={r.status}>
+                  {r.status === "fit" ? "🟢" : r.status === "twijfel" ? "🟡" : "🔴"}
+                </span>
                 <Link href={`/staf/speler/${r.id}`} className="font-medium text-neutral-800 hover:text-sparta hover:underline">
                   {r.naam}
                 </Link>

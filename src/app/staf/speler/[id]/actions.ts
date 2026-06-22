@@ -33,6 +33,25 @@ export async function toggleAandachtspunt(formData: FormData) {
   revalidatePath(`/staf/speler/${speler_id}`);
 }
 
+export async function updateBeschikbaarheid(formData: FormData) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return;
+
+  const speler_id = String(formData.get("speler_id") ?? "");
+  if (!speler_id) return;
+
+  const beschikbaarheid = String(formData.get("beschikbaarheid") ?? "fit");
+  const blessure_notitie = String(formData.get("blessure_notitie") ?? "").trim() || null;
+
+  const supabase = await createClient();
+  await supabase
+    .from("spelers")
+    .update({ beschikbaarheid, blessure_notitie } as never)
+    .eq("id", speler_id);
+  revalidatePath(`/staf/speler/${speler_id}`);
+  revalidatePath("/staf/team");
+}
+
 export async function updatePosities(formData: FormData) {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return;

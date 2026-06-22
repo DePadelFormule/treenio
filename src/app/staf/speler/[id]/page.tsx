@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { POSITIE_CODES } from "@/lib/constants";
-import { nieuwAandachtspunt, toggleAandachtspunt, updatePosities } from "./actions";
+import { nieuwAandachtspunt, toggleAandachtspunt, updatePosities, updateBeschikbaarheid } from "./actions";
 import type {
   Aandachtspunt,
   Ontwikkeldoel,
@@ -100,6 +100,26 @@ export default async function StafSpelerPage({
         <PositieSelect label="Alternatief 2" name="alt_positie_2" value={sp.alt_positie_2} />
         <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
           Posities opslaan
+        </button>
+      </form>
+
+      {/* Beschikbaarheid / blessure */}
+      <form action={updateBeschikbaarheid} className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <input type="hidden" name="speler_id" value={sp.id} />
+        <label className="text-sm">
+          <span className="mb-1 block text-xs text-neutral-500">Status</span>
+          <select name="beschikbaarheid" defaultValue={sp.beschikbaarheid} className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm">
+            <option value="fit">🟢 Fit</option>
+            <option value="twijfel">🟡 Twijfel</option>
+            <option value="geblesseerd">🔴 Geblesseerd</option>
+          </select>
+        </label>
+        <label className="flex-1 text-sm">
+          <span className="mb-1 block text-xs text-neutral-500">Blessure-notitie</span>
+          <input type="text" name="blessure_notitie" defaultValue={sp.blessure_notitie ?? ""} placeholder="bijv. enkel, terug over 2 weken" className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
+          Status opslaan
         </button>
       </form>
 

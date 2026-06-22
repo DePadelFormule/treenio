@@ -35,6 +35,7 @@ export default async function TeamOverzichtPage() {
       id: s.id,
       rugnummer: s.rugnummer,
       naam: s.naam,
+      status: s.beschikbaarheid,
       positie: s.hoofdpositie,
       opkomst: o?.opkomst_pct ?? null,
       teLaat: o?.te_laat_gekomen ?? 0,

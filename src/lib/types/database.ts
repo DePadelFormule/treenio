@@ -11,6 +11,7 @@ export type AfmeldStatus =
   | "niet_afgemeld"
   | "nvt";
 export type StarteAls = "basis" | "wissel" | "niet_in_selectie";
+export type Beschikbaarheid = "fit" | "twijfel" | "geblesseerd";
 
 export interface Speler {
   id: string;
@@ -21,8 +22,19 @@ export interface Speler {
   hoofdpositie: string | null;
   alt_positie_1: string | null;
   alt_positie_2: string | null;
+  beschikbaarheid: Beschikbaarheid;
+  blessure_notitie: string | null;
   foto_url: string | null;
   geboortedatum: string | null;
+  created_at: string;
+}
+
+export interface WedstrijdVerslag {
+  id: string;
+  wedstrijd_id: string;
+  ging_goed: string | null;
+  kan_beter: string | null;
+  voor_training: string | null;
   created_at: string;
 }
 
