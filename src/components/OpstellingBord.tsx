@@ -151,30 +151,31 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
       <div className="mt-6">
         <h3 className="mb-2 text-sm font-semibold text-neutral-700">Bank / wissels</h3>
         <div className="flex flex-wrap items-center gap-2">
+          {bank.length === 0 && <span className="text-sm text-neutral-400">Niemand op de bank.</span>}
           {bank.map((id) => {
             const sp = spelerById.get(id);
             if (!sp) return null;
             return (
-              <span key={id} className="flex items-center gap-1 rounded-full bg-neutral-200 px-3 py-1 text-sm">
+              <span key={id} className="flex items-center gap-1 rounded-full bg-sparta/10 px-3 py-1 text-sm text-sparta">
                 {sp.rugnummer ? `${sp.rugnummer} · ` : ""}{voornaam(sp.naam)}
-                <button type="button" onClick={() => haalUitBank(id)} className="ml-1 text-neutral-500 hover:text-sparta">×</button>
+                <button type="button" onClick={() => haalUitBank(id)} className="ml-1 text-sparta/70 hover:text-sparta" title="Naar afwezig">×</button>
               </span>
             );
           })}
-          {beschikbaar.length > 0 && (
-            <select
-              value=""
-              onChange={(e) => voegBankToe(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-2 py-1 text-sm"
-            >
-              <option value="">+ speler op de bank…</option>
-              {beschikbaar.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.rugnummer ? `${s.rugnummer} · ` : ""}{s.naam}{statusMarker(s.status)}
-                </option>
-              ))}
-            </select>
-          )}
+        </div>
+      </div>
+
+      {/* Afwezig / niet in selectie */}
+      <div className="mt-4">
+        <h3 className="mb-2 text-sm font-semibold text-neutral-700">Afwezig / niet in selectie</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          {beschikbaar.length === 0 && <span className="text-sm text-neutral-400">Iedereen is opgesteld of staat op de bank.</span>}
+          {beschikbaar.map((s) => (
+            <span key={s.id} className="flex items-center gap-1 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-600">
+              {s.rugnummer ? `${s.rugnummer} · ` : ""}{voornaam(s.naam)}{statusMarker(s.status)}
+              <button type="button" onClick={() => voegBankToe(s.id)} className="ml-1 font-semibold text-neutral-500 hover:text-sparta" title="Naar bank">→ bank</button>
+            </span>
+          ))}
         </div>
       </div>
 
@@ -188,7 +189,7 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
         >
           {bezig ? "Opslaan…" : "Opstelling opslaan"}
         </button>
-        {status === "ok" && <span className="text-sm text-sparta">✓ Opgeslagen</span>}
+        {status === "ok" && <span className="text-sm text-sparta">✓ Opgeslagen — basis/wissel doorgezet</span>}
         {status === "fout" && <span className="text-sm text-red-600">Opslaan mislukt</span>}
       </div>
     </div>
