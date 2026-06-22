@@ -46,6 +46,15 @@ export interface WedstrijdScouting {
   created_at: string;
 }
 
+export interface WedstrijdOpstelling {
+  id: string;
+  wedstrijd_id: string;
+  formatie: string;
+  veld: Record<string, string>; // slotKey → speler_id
+  bank: string[]; // speler_id[]
+  created_at: string;
+}
+
 export interface Staf {
   id: string;
   auth_user_id: string | null;

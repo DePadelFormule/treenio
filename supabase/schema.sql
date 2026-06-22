@@ -1,5 +1,5 @@
 -- ============================================================================
--- Treenio — VOLLEDIG schema in één bestand (migraties 0001 t/m 0008 op volgorde)
+-- Treenio — VOLLEDIG schema in één bestand (migraties 0001 t/m 0009 op volgorde)
 -- ----------------------------------------------------------------------------
 -- Plak dit in de Supabase SQL editor en klik Run. Daarna supabase/seed.sql voor
 -- de selectie van Nivo Sparta JO17-2. Zie DEPLOY.md voor de volledige stappen.
@@ -1006,6 +1006,40 @@ select
 from public.spelers sp
 left join public.training_registraties tr on tr.speler_id = sp.id
 group by sp.id, sp.naam;
+
+notify pgrst, 'reload schema';
+
+
+-- ============================================================
+-- supabase/migrations/0009_opstelling.sql
+-- ============================================================
+-- ============================================================================
+-- Treenio — migratie 0009: opstelling / formatiebord per wedstrijd
+-- ----------------------------------------------------------------------------
+-- Eén opstelling per wedstrijd. veld = { slotKey: speler_id }, bank = [speler_id].
+-- Alles staf-only.
+-- ============================================================================
+
+create table if not exists public.wedstrijd_opstelling (
+  id            uuid primary key default gen_random_uuid(),
+  wedstrijd_id  uuid not null unique references public.wedstrijden (id) on delete cascade,
+  formatie      text not null default '4-3-3',
+  veld          jsonb not null default '{}'::jsonb,
+  bank          jsonb not null default '[]'::jsonb,
+  created_at    timestamptz not null default now()
+);
+
+alter table public.wedstrijd_opstelling enable row level security;
+
+create policy "opstelling_select_staf"
+  on public.wedstrijd_opstelling for select to authenticated using (public.is_staf());
+create policy "opstelling_insert_staf"
+  on public.wedstrijd_opstelling for insert to authenticated with check (public.is_staf());
+create policy "opstelling_update_staf"
+  on public.wedstrijd_opstelling for update to authenticated
+  using (public.is_staf()) with check (public.is_staf());
+create policy "opstelling_delete_staf"
+  on public.wedstrijd_opstelling for delete to authenticated using (public.is_staf());
 
 notify pgrst, 'reload schema';
 

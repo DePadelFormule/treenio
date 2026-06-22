@@ -52,12 +52,20 @@ export default async function WedstrijdenPage() {
               <p className="font-medium text-neutral-800">{w.tegenstander}</p>
               <p className="text-xs text-neutral-400">{w.datum}{w.uitslag ? ` · ${w.uitslag}` : ""}</p>
             </div>
-            <Link
-              href={`/staf/wedstrijd/${w.id}/registreren`}
-              className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
-            >
-              Registreren →
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href={`/staf/wedstrijd/${w.id}/opstelling`}
+                className="rounded-lg border border-sparta px-3 py-1.5 text-sm font-semibold text-sparta hover:bg-sparta hover:text-white"
+              >
+                Opstelling
+              </Link>
+              <Link
+                href={`/staf/wedstrijd/${w.id}/registreren`}
+                className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
+              >
+                Registreren →
+              </Link>
+            </div>
           </li>
         ))}
       </ul>
