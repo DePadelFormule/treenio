@@ -14,6 +14,7 @@ export default async function StafPage() {
     { href: "/staf/spelers", titel: "Spelerskaarten", uitleg: "Per speler de volledige kaart met alle cijfers, doelen en notities." },
     { href: "/staf/wedstrijden", titel: "Wedstrijden", uitleg: "Programma beheren en per wedstrijd registreren (stats, keeper, scouting)." },
     { href: "/staf/trainingen", titel: "Trainingen", uitleg: "Presentielijst bijhouden: wie was er, afmeldingen en inzet." },
+    { href: "/staf/spelsituaties", titel: "Spelsituaties", uitleg: "Tactisch tekenbord: magneetjes slepen, animatie maken en afspelen." },
   ];
 
   return (

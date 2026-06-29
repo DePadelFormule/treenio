@@ -67,6 +67,26 @@ export interface WedstrijdOpstelling {
   created_at: string;
 }
 
+export type BordTeam = "eigen" | "tegenstander" | "bal";
+export interface BordToken {
+  id: string;
+  team: BordTeam;
+  label: string;
+}
+export type BordFrame = Record<string, { x: number; y: number }>;
+export interface BordData {
+  tokens: BordToken[];
+  frames: BordFrame[];
+}
+export interface Spelsituatie {
+  id: string;
+  titel: string;
+  uitleg: string | null;
+  half_veld: boolean;
+  data: BordData;
+  created_at: string;
+}
+
 export interface Staf {
   id: string;
   auth_user_id: string | null;

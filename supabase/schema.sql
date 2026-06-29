@@ -1,5 +1,5 @@
 -- ============================================================================
--- Treenio — VOLLEDIG schema in één bestand (migraties 0001 t/m 0010 op volgorde)
+-- Treenio — VOLLEDIG schema in één bestand (migraties 0001 t/m 0011 op volgorde)
 -- ----------------------------------------------------------------------------
 -- Plak dit in de Supabase SQL editor en klik Run. Daarna supabase/seed.sql voor
 -- de selectie van Nivo Sparta JO17-2. Zie DEPLOY.md voor de volledige stappen.
@@ -1082,6 +1082,40 @@ create policy "verslag_update_staf"
   using (public.is_staf()) with check (public.is_staf());
 create policy "verslag_delete_staf"
   on public.wedstrijd_verslag for delete to authenticated using (public.is_staf());
+
+notify pgrst, 'reload schema';
+
+
+-- ============================================================
+-- supabase/migrations/0011_spelsituaties.sql
+-- ============================================================
+-- ============================================================================
+-- Treenio — migratie 0011: tactisch tekenbord / spelsituaties
+-- ----------------------------------------------------------------------------
+-- Eén rij per spelsituatie. data = { tokens:[...], frames:[{tokenId:{x,y}}] }.
+-- Staf-only.
+-- ============================================================================
+
+create table if not exists public.spelsituaties (
+  id          uuid primary key default gen_random_uuid(),
+  titel       text not null,
+  uitleg      text,
+  half_veld   boolean not null default false,
+  data        jsonb not null default '{"tokens":[],"frames":[{}]}'::jsonb,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.spelsituaties enable row level security;
+
+create policy "spelsituaties_select_staf"
+  on public.spelsituaties for select to authenticated using (public.is_staf());
+create policy "spelsituaties_insert_staf"
+  on public.spelsituaties for insert to authenticated with check (public.is_staf());
+create policy "spelsituaties_update_staf"
+  on public.spelsituaties for update to authenticated
+  using (public.is_staf()) with check (public.is_staf());
+create policy "spelsituaties_delete_staf"
+  on public.spelsituaties for delete to authenticated using (public.is_staf());
 
 notify pgrst, 'reload schema';
 
