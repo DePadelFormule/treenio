@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Treenio — Scoreverloop tik-test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{sparta:{DEFAULT:"#C8102E",dark:"#8A0A1F"}}}}}</script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+  <main class="mx-auto max-w-md px-4 py-6">
+    <h1 class="text-xl font-bold text-sparta">Scoreverloop — tik-test</h1>
+    <p class="mb-4 text-sm text-neutral-500">Alles met tikken, geen toetsenbord. Probeer een paar doelpunten toe te voegen.</p>
+
+    <!-- Stand + minuut -->
+    <div class="mb-4 flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-4">
+      <div>
+        <div class="text-xs text-neutral-400">Stand</div>
+        <div id="stand" class="text-3xl font-black text-neutral-900">0 - 0</div>
+      </div>
+      <div class="text-right">
+        <div class="text-xs text-neutral-400">Minuut</div>
+        <div class="flex items-center gap-2">
+          <button onclick="bumpMin(-1)" class="h-9 w-9 rounded-full bg-neutral-200 text-lg font-bold">−</button>
+          <span id="min" class="w-8 text-center text-xl font-bold">1</span>
+          <button onclick="bumpMin(1)" class="h-9 w-9 rounded-full bg-sparta text-lg font-bold text-white">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Twee grote knoppen -->
+    <div id="hoofdknoppen" class="grid grid-cols-2 gap-3">
+      <button onclick="startWij()" class="rounded-xl bg-sparta px-4 py-4 text-base font-bold text-white">⚽ Wij scoren</button>
+      <button onclick="tegendoelpunt()" class="rounded-xl bg-neutral-900 px-4 py-4 text-base font-bold text-white">⚽ Tegendoelpunt</button>
+    </div>
+
+    <!-- Stap-panel -->
+    <div id="panel" class="mt-3 hidden rounded-xl border border-sparta/30 bg-white p-4">
+      <div class="mb-2 flex items-center justify-between">
+        <h2 id="panelTitel" class="text-sm font-bold text-sparta">Wie scoorde?</h2>
+        <button onclick="annuleer()" class="text-xs text-neutral-400">annuleren</button>
+      </div>
+      <div id="panelKeuzes" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- Lijst -->
+    <h2 class="mt-6 mb-2 text-sm font-semibold text-neutral-700">Doelpunten</h2>
+    <ul id="lijst" class="space-y-2"></ul>
+    <p id="leeg" class="rounded-xl border border-dashed border-neutral-300 p-4 text-center text-sm text-neutral-400">Nog geen doelpunten — tik hierboven.</p>
+  </main>
+
+  <script>
+    const SPELERS = [
+      [9,"Neal"],[11,"Wessel"],[7,"Tim"],[10,"Finn"],[8,"Teun"],[6,"Jan-Julius"],
+      [4,"Adam"],[3,"Osama"],[5,"Myon"],[2,"Rico"],[1,"Fabian"],[14,"Kovan"],
+      [15,"Youssef"],[16,"Yassin"],[17,"Amir"],[18,"Mateusz"],[19,"Ghaith"],[12,"Rayhan"]
+    ];
+    const TYPES = [["voet","Voet"],["kop","Kop"],["vt","Vrije trap"],["ss","Strafschop"]];
+    let stand=[0,0], minuut=1, goals=[], flow=null;
+
+    function bumpMin(d){ minuut=Math.max(1,minuut+d); document.getElementById('min').textContent=minuut; }
+    function render(){
+      document.getElementById('stand').textContent = stand[0]+" - "+stand[1];
+      const ul=document.getElementById('lijst'); ul.innerHTML="";
+      document.getElementById('leeg').style.display = goals.length? "none":"block";
+      goals.forEach(g=>{
+        const li=document.createElement('li');
+        li.className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-3 text-sm";
+        if(g.voor){
+          li.innerHTML=`<span><b>${g.min}'</b> · ${g.stand} · <b>${g.maker}</b>${g.assist?` (assist ${g.assist})`:""} · ${g.type}</span>`;
+        }else{
+          li.innerHTML=`<span class="text-neutral-500"><b>${g.min}'</b> · ${g.stand} · tegendoelpunt</span>`;
+        }
+        ul.appendChild(li);
+      });
+    }
+    function chip(label,onclick,kleur){
+      const b=document.createElement('button');
+      b.className=`rounded-full px-3 py-2 text-sm font-semibold ${kleur||'bg-neutral-200 text-neutral-700'}`;
+      b.textContent=label; b.onclick=onclick; return b;
+    }
+    function toonPanel(titel,keuzes){
+      document.getElementById('panel').classList.remove('hidden');
+      document.getElementById('panelTitel').textContent=titel;
+      const k=document.getElementById('panelKeuzes'); k.innerHTML="";
+      keuzes.forEach(c=>k.appendChild(c));
+    }
+    function annuleer(){ flow=null; document.getElementById('panel').classList.add('hidden'); }
+
+    function startWij(){
+      flow={voor:true};
+      toonPanel("Wie scoorde?", SPELERS.map(([n,naam])=>chip(`${n} ${naam}`,()=>{ flow.maker=`${n} ${naam}`; kiesAssist(); },"bg-sparta/10 text-sparta")));
+    }
+    function kiesAssist(){
+      const keuzes=[chip("geen assist",()=>{ flow.assist=null; kiesType(); })];
+      SPELERS.forEach(([n,naam])=>keuzes.push(chip(`${n} ${naam}`,()=>{ flow.assist=`${n} ${naam}`; kiesType(); })));
+      toonPanel("Assist? (of geen)", keuzes);
+    }
+    function kiesType(){
+      toonPanel("Hoe gemaakt?", TYPES.map(([v,l])=>chip(l,()=>commitWij(l),"bg-neutral-900 text-white")));
+    }
+    function commitWij(typeLabel){
+      stand[0]++;
+      goals.push({voor:true,min:minuut,stand:stand[0]+"-"+stand[1],maker:flow.maker,assist:flow.assist,type:typeLabel});
+      annuleer(); render();
+    }
+    function tegendoelpunt(){
+      stand[1]++;
+      goals.push({voor:false,min:minuut,stand:stand[0]+"-"+stand[1]});
+      render();
+    }
+    render();
+  </script>
+</body>
+</html>
