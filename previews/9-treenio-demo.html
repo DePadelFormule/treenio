@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Treenio — klikbare demo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{sparta:{DEFAULT:"#C8102E",dark:"#8A0A1F"}}}}}</script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+<div class="mx-auto max-w-3xl px-4 py-5">
+
+  <!-- Topbar -->
+  <div class="mb-4 flex items-center justify-between">
+    <div>
+      <span class="text-xl font-black text-sparta">Treenio</span>
+      <span class="ml-2 text-sm text-neutral-500">Nivo Sparta JO17-2</span>
+    </div>
+    <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">DEMO · voorbeelddata</span>
+  </div>
+
+  <!-- Nav -->
+  <nav class="mb-5 flex flex-wrap gap-1.5">
+    <button data-nav="dash" class="nav rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white">Dashboard</button>
+    <button data-nav="team" class="nav rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold text-neutral-700">Team-overzicht</button>
+    <button data-nav="speler" class="nav rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold text-neutral-700">Spelerskaart</button>
+    <button data-nav="opstelling" class="nav rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold text-neutral-700">Opstelling</button>
+    <button data-nav="training" class="nav rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold text-neutral-700">Training</button>
+    <button data-nav="tekenbord" class="nav rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold text-neutral-700">Tekenbord</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <section data-screen="dash">
+    <h1 class="mb-1 text-2xl font-bold text-sparta">Stafdashboard</h1>
+    <p class="mb-4 text-sm text-neutral-500">Dennis Baggerman · hoofdtrainer</p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <a data-nav="team" class="nav block cursor-pointer rounded-xl border border-neutral-200 bg-white p-5 hover:border-sparta"><h2 class="font-semibold">Team-overzicht →</h2><p class="mt-1 text-sm text-neutral-500">Alle spelers in één tabel: opkomst, minuten, goals, assists, kaarten.</p></a>
+      <a data-nav="speler" class="nav block cursor-pointer rounded-xl border border-neutral-200 bg-white p-5 hover:border-sparta"><h2 class="font-semibold">Spelerskaarten →</h2><p class="mt-1 text-sm text-neutral-500">Per speler alle cijfers, doelen en notities.</p></a>
+      <a data-nav="opstelling" class="nav block cursor-pointer rounded-xl border border-neutral-200 bg-white p-5 hover:border-sparta"><h2 class="font-semibold">Wedstrijden →</h2><p class="mt-1 text-sm text-neutral-500">Programma, opstelling, registratie en verslag.</p></a>
+      <a data-nav="training" class="nav block cursor-pointer rounded-xl border border-neutral-200 bg-white p-5 hover:border-sparta"><h2 class="font-semibold">Trainingen →</h2><p class="mt-1 text-sm text-neutral-500">Presentie: wie was er, afmeldingen en inzet.</p></a>
+      <a data-nav="tekenbord" class="nav block cursor-pointer rounded-xl border border-neutral-200 bg-white p-5 hover:border-sparta"><h2 class="font-semibold">Spelsituaties →</h2><p class="mt-1 text-sm text-neutral-500">Tactisch tekenbord: magneetjes en animatie.</p></a>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section data-screen="team" hidden>
+    <h1 class="mb-1 text-2xl font-bold text-sparta">Team-overzicht</h1>
+    <p class="mb-4 text-sm text-neutral-500">Tik op een kolomkop om te sorteren.</p>
+    <div class="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+      <table class="w-full text-sm">
+        <thead><tr id="teamhead" class="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <th class="px-3 py-3">#</th><th class="px-3 py-3">Naam</th><th class="px-3 py-3">Pos</th>
+          <th class="cursor-pointer px-3 py-3 text-center" data-sort="opk">Opk%</th>
+          <th class="cursor-pointer px-3 py-3 text-center" data-sort="tl">Te laat</th>
+          <th class="cursor-pointer px-3 py-3 text-center" data-sort="min">Min</th>
+          <th class="cursor-pointer px-3 py-3 text-center" data-sort="g">G</th>
+          <th class="cursor-pointer px-3 py-3 text-center" data-sort="a">A</th>
+          <th class="cursor-pointer px-3 py-3 text-center" data-sort="geel">🟨</th>
+        </tr></thead>
+        <tbody id="teambody"></tbody>
+      </table>
+    </div>
+    <p class="mt-2 text-xs text-neutral-400">Cijfers tellen automatisch op uit de wedstrijden en trainingen.</p>
+  </section>
+
+  <!-- SPELER -->
+  <section data-screen="speler" hidden>
+    <header class="flex items-center gap-4">
+      <div class="flex h-14 w-14 items-center justify-center rounded-full bg-sparta/10 text-xl font-bold text-sparta">9</div>
+      <div><h1 class="text-2xl font-bold">Neal Tsegay</h1><p class="text-sm text-neutral-400"><span class="font-semibold text-sparta">ST</span> · alt: LV, AM · 🟢 fit</p></div>
+    </header>
+    <div class="mt-5 grid gap-5 md:grid-cols-2">
+      <div>
+        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-sparta">Ontwikkeldoelen</h2>
+        <div class="space-y-2 text-sm">
+          <div class="rounded-lg border border-neutral-200 bg-white p-3">Eerste balcontact richting de ruimte <span class="text-xs text-neutral-400">(bezig)</span></div>
+          <div class="rounded-lg border border-neutral-200 bg-white p-3">Vaker diepgaan op het juiste moment <span class="text-xs text-neutral-400">(open)</span></div>
+        </div>
+        <h2 class="mb-2 mt-4 text-sm font-semibold uppercase tracking-wide text-neutral-700">Staf-notities</h2>
+        <div class="rounded-lg border border-red-200 bg-red-50/50 p-3 text-sm"><b>Inschatting:</b> Sterke spits, moet fitter worden in de omschakeling.</div>
+      </div>
+      <div>
+        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-sparta">Aandachtspunten</h2>
+        <div class="space-y-2 text-sm">
+          <div class="rounded-lg border border-amber-200 bg-amber-50 p-3">Meer coachen naar de vleugels</div>
+          <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-neutral-400 line-through">Te laat afmelden (opgelost)</div>
+        </div>
+        <h2 class="mb-2 mt-4 text-sm font-semibold uppercase tracking-wide text-neutral-700">Cijfers dit seizoen</h2>
+        <div class="grid grid-cols-2 gap-y-2 rounded-lg border border-neutral-200 bg-white p-3 text-sm">
+          <div><span class="text-neutral-400 text-xs">Opkomst</span><br><b>92%</b></div>
+          <div><span class="text-neutral-400 text-xs">Speelminuten</span><br><b>1010</b></div>
+          <div><span class="text-neutral-400 text-xs">Goals</span><br><b>7</b></div>
+          <div><span class="text-neutral-400 text-xs">Assists</span><br><b>3</b></div>
+          <div><span class="text-neutral-400 text-xs">⭐ MOTM</span><br><b>2</b></div>
+          <div><span class="text-neutral-400 text-xs">Duels (w/v)</span><br><b>34 / 19</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPSTELLING -->
+  <section data-screen="opstelling" hidden>
+    <h1 class="mb-1 text-2xl font-bold text-sparta">Opstelling · 4-3-3</h1>
+    <p class="mb-4 text-sm text-neutral-500">In de app sleep je de spelers; basis/wissel gaat automatisch mee naar de registratie.</p>
+    <div class="relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl border-2 border-white/40 bg-gradient-to-b from-green-700 to-green-800" style="aspect-ratio:2/3">
+      <div class="pointer-events-none absolute inset-3 rounded-lg border-2 border-white/30"></div>
+      <div class="pointer-events-none absolute left-3 right-3 top-1/2 border-t-2 border-white/30"></div>
+      <div class="pointer-events-none absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/30"></div>
+      <div id="opstelbord"></div>
+    </div>
+    <div class="mt-4">
+      <h3 class="mb-1 text-sm font-semibold">Bank</h3>
+      <div class="flex flex-wrap gap-2 text-sm">
+        <span class="rounded-full bg-sparta/10 px-3 py-1 text-sparta">12 · Rayhan</span>
+        <span class="rounded-full bg-sparta/10 px-3 py-1 text-sparta">15 · Youssef</span>
+        <span class="rounded-full bg-sparta/10 px-3 py-1 text-sparta">1 · Fabian</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRAINING -->
+  <section data-screen="training" hidden>
+    <h1 class="mb-1 text-2xl font-bold text-sparta">Presentie training</h1>
+    <p class="mb-4 text-sm text-neutral-500">di 8 jul · veldtraining · 16/19 aanwezig</p>
+    <div id="trainlijst" class="space-y-2"></div>
+  </section>
+
+  <!-- TEKENBORD -->
+  <section data-screen="tekenbord" hidden>
+    <h1 class="mb-1 text-2xl font-bold text-sparta">Spelsituatie · Kantelen bij bal links</h1>
+    <p class="mb-3 text-sm text-neutral-500">Voorbeeld-animatie: druk op afspelen en de linie kantelt mee.</p>
+    <div id="tekenveld" class="relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl border-2 border-white/40 bg-gradient-to-b from-green-700 to-green-800" style="aspect-ratio:2/3">
+      <div class="pointer-events-none absolute inset-3 rounded-lg border-2 border-white/30"></div>
+      <div class="pointer-events-none absolute left-3 right-3 top-1/2 border-t-2 border-white/30"></div>
+    </div>
+    <button id="speelknop" class="mt-3 rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white">▶ Afspelen</button>
+  </section>
+
+</div>
+
+<script>
+  // ---- Navigatie ----
+  const screens = document.querySelectorAll('[data-screen]');
+  function ga(naam){
+    screens.forEach(s => s.hidden = s.dataset.screen !== naam);
+    document.querySelectorAll('nav .nav').forEach(b => {
+      const on = b.dataset.nav === naam;
+      b.className = 'nav rounded-lg px-3 py-1.5 text-sm font-semibold ' + (on ? 'bg-sparta text-white' : 'bg-neutral-200 text-neutral-700');
+    });
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('[data-nav]').forEach(el => el.addEventListener('click', () => ga(el.dataset.nav)));
+
+  // ---- Team-tabel ----
+  let team = [
+    {nr:9,naam:"Neal Tsegay",pos:"ST",st:"🟢",opk:92,tl:1,min:1010,g:7,a:3,geel:1},
+    {nr:11,naam:"Wessel Wing",pos:"LB",st:"🟢",opk:88,tl:0,min:940,g:4,a:6,geel:2},
+    {nr:7,naam:"Tim Talent",pos:"RB",st:"🟡",opk:80,tl:3,min:610,g:2,a:2,geel:0},
+    {nr:10,naam:"Finn Thuis",pos:"ACM",st:"🟢",opk:96,tl:0,min:1080,g:3,a:8,geel:1},
+    {nr:6,naam:"Jan-Julius van Hees",pos:"RCM",st:"🟢",opk:84,tl:1,min:990,g:1,a:2,geel:3},
+    {nr:4,naam:"Adam El Amraoui",pos:"RCV",st:"🔴",opk:76,tl:0,min:720,g:0,a:1,geel:2},
+    {nr:1,naam:"Fabian Buwalda",pos:"K",st:"🟢",opk:90,tl:0,min:540,g:0,a:0,geel:0},
+    {nr:13,naam:"Amin Miaadi",pos:"K",st:"🟢",opk:94,tl:0,min:990,g:0,a:0,geel:0},
+  ];
+  let sortKey='nr', sortDir=1;
+  function tekenTeam(){
+    const arr=[...team].sort((a,b)=> (a[sortKey]>b[sortKey]?1:-1)*sortDir);
+    document.getElementById('teambody').innerHTML = arr.map(p=>`
+      <tr class="border-b border-neutral-100 hover:bg-neutral-50">
+        <td class="px-3 py-2.5 font-bold text-sparta">${p.nr}</td>
+        <td class="px-3 py-2.5"><span class="mr-1">${p.st}</span>${p.naam}</td>
+        <td class="px-3 py-2.5 text-neutral-600">${p.pos}</td>
+        <td class="px-3 py-2.5 text-center">${p.opk}%</td>
+        <td class="px-3 py-2.5 text-center ${p.tl>0?'font-semibold text-sparta':''}">${p.tl}</td>
+        <td class="px-3 py-2.5 text-center">${p.min}</td>
+        <td class="px-3 py-2.5 text-center font-semibold">${p.g}</td>
+        <td class="px-3 py-2.5 text-center font-semibold">${p.a}</td>
+        <td class="px-3 py-2.5 text-center">${p.geel}</td>
+      </tr>`).join('');
+  }
+  document.querySelectorAll('#teamhead [data-sort]').forEach(th=>th.addEventListener('click',()=>{
+    const k=th.dataset.sort; if(k===sortKey) sortDir*=-1; else {sortKey=k; sortDir=-1;} tekenTeam();
+  }));
+  tekenTeam();
+
+  // ---- Opstelling (4-3-3, gevuld) ----
+  const opstel=[
+    {n:1,naam:"Fabian",x:50,y:90},{n:5,naam:"Myon",x:15,y:70},{n:3,naam:"Osama",x:39,y:73},
+    {n:4,naam:"Adam",x:61,y:73},{n:2,naam:"Rico",x:85,y:70},{n:8,naam:"Teun",x:33,y:53},
+    {n:6,naam:"Jan-J.",x:67,y:53},{n:10,naam:"Finn",x:50,y:37},{n:11,naam:"Wessel",x:18,y:20},
+    {n:9,naam:"Neal",x:50,y:15},{n:7,naam:"Tim",x:82,y:20},
+  ];
+  document.getElementById('opstelbord').innerHTML = opstel.map(t=>`
+    <div class="absolute -translate-x-1/2 -translate-y-1/2 text-center" style="left:${t.x}%;top:${t.y}%">
+      <div class="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-sparta shadow">${t.n}</div>
+      <div class="mt-0.5 text-[0.6rem] font-medium text-white">${t.naam}</div>
+    </div>`).join('');
+
+  // ---- Training presentie ----
+  const tr=[
+    {nr:9,naam:"Neal Tsegay",s:"aanwezig"},{nr:11,naam:"Wessel Wing",s:"telaat"},
+    {nr:7,naam:"Tim Talent",s:"afwezig"},{nr:10,naam:"Finn Thuis",s:"aanwezig"},
+    {nr:4,naam:"Adam El Amraoui",s:"afwezig"},{nr:1,naam:"Fabian Buwalda",s:"aanwezig"},
+  ];
+  const chip=(on,txt,kl)=>`<span class="rounded-lg px-3 py-1.5 text-sm font-medium ${on?kl:'bg-neutral-200 text-neutral-500'}">${txt}</span>`;
+  document.getElementById('trainlijst').innerHTML = tr.map(p=>`
+    <div class="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-200 bg-white p-3">
+      <div class="flex min-w-[10rem] items-center gap-2"><div class="flex h-8 w-8 items-center justify-center rounded-full bg-sparta/10 text-sm font-bold text-sparta">${p.nr}</div><span class="font-medium">${p.naam}</span></div>
+      ${chip(p.s==='aanwezig'||p.s==='telaat','Aanwezig','bg-sparta text-white')}
+      ${chip(p.s==='afwezig','Afwezig','bg-neutral-700 text-white')}
+      ${p.s==='telaat'?chip(true,'Te laat','bg-neutral-900 text-white'):''}
+      ${(p.s==='aanwezig'||p.s==='telaat')?'<span class="text-xs text-neutral-400">inzet</span>'+[1,2,3,4,5].map(n=>`<span class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${n===4?'bg-neutral-900 text-white':'bg-neutral-200 text-neutral-500'}">${n}</span>`).join(''):''}
+    </div>`).join('');
+
+  // ---- Tekenbord animatie (kantelen) ----
+  const veld=document.getElementById('tekenveld');
+  // eigen linie kantelt van rechts (A) naar links (B); bal beweegt naar links
+  const toks=[
+    {kl:'bg-sparta',a:{x:30,y:72},b:{x:16,y:70}},
+    {kl:'bg-sparta',a:{x:50,y:74},b:{x:38,y:73}},
+    {kl:'bg-sparta',a:{x:70,y:74},b:{x:58,y:73}},
+    {kl:'bg-sparta',a:{x:88,y:70},b:{x:80,y:70}},
+    {kl:'bg-neutral-900',a:{x:60,y:40},b:{x:35,y:38}},
+    {kl:'bg-white',a:{x:70,y:45},b:{x:22,y:42}},
+  ];
+  const els=toks.map(t=>{const d=document.createElement('div');d.className=`absolute -translate-x-1/2 -translate-y-1/2 rounded-full shadow ${t.kl} ${t.kl==='bg-white'?'h-4 w-4':'h-7 w-7'}`;veld.appendChild(d);return d;});
+  function plaats(f){els.forEach((el,i)=>{el.style.left=toks[i][f].x+'%';el.style.top=toks[i][f].y+'%';});}
+  plaats('a');
+  let animating=false;
+  document.getElementById('speelknop').addEventListener('click',()=>{
+    if(animating)return; animating=true; plaats('a');
+    let start=null;
+    function tick(ts){ if(!start)start=ts; const t=Math.min((ts-start)/1200,1);
+      els.forEach((el,i)=>{const A=toks[i].a,B=toks[i].b;el.style.left=(A.x+(B.x-A.x)*t)+'%';el.style.top=(A.y+(B.y-A.y)*t)+'%';});
+      if(t<1)requestAnimationFrame(tick); else {animating=false;}
+    }
+    requestAnimationFrame(tick);
+  });
+</script>
+</body>
+</html>
