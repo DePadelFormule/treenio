@@ -84,6 +84,19 @@ export interface BordData {
   tokens: BordToken[];
   frames: BordFrame[];
 }
+export type EventType =
+  | "goal" | "assist" | "geel" | "rood"
+  | "wissel_in" | "wissel_uit" | "tegengoal" | "einde";
+
+export interface WedstrijdEvent {
+  id: string;
+  wedstrijd_id: string;
+  speler_id: string | null;
+  type: EventType;
+  minuut: number;
+  created_at: string;
+}
+
 export interface Spelsituatie {
   id: string;
   titel: string;

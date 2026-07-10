@@ -60,10 +60,10 @@ export default async function WedstrijdenPage() {
                 Opstelling
               </Link>
               <Link
-                href={`/staf/wedstrijd/${w.id}/registreren`}
+                href={`/staf/wedstrijd/${w.id}/live`}
                 className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
               >
-                Registreren →
+                Live →
               </Link>
             </div>
           </li>
