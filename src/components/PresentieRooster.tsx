@@ -14,11 +14,11 @@ interface Props {
 }
 
 const STATUSSEN = [
-  { key: "aanwezig", label: "Aanwezig", licht: "bg-green-100 text-green-800 border-green-300" },
-  { key: "afwezig_met", label: "Afgemeld (met bericht)", licht: "bg-amber-100 text-amber-800 border-amber-300" },
-  { key: "afwezig_zonder", label: "Niet afgemeld", licht: "bg-red-100 text-red-800 border-red-300" },
-  { key: "blessure", label: "Blessure", licht: "bg-purple-100 text-purple-800 border-purple-300" },
-  { key: "vakantie", label: "Vakantie", licht: "bg-sky-100 text-sky-800 border-sky-300" },
+  { key: "aanwezig", kort: "A", label: "Aanwezig", licht: "bg-green-100 text-green-800 border-green-300", vol: "bg-green-600 text-white" },
+  { key: "afwezig_met", kort: "M", label: "Afgemeld (met bericht)", licht: "bg-amber-100 text-amber-800 border-amber-300", vol: "bg-amber-500 text-white" },
+  { key: "afwezig_zonder", kort: "Z", label: "Niet afgemeld", licht: "bg-red-100 text-red-800 border-red-300", vol: "bg-red-600 text-white" },
+  { key: "blessure", kort: "B", label: "Blessure", licht: "bg-purple-100 text-purple-800 border-purple-300", vol: "bg-purple-600 text-white" },
+  { key: "vakantie", kort: "V", label: "Vakantie", licht: "bg-sky-100 text-sky-800 border-sky-300", vol: "bg-sky-600 text-white" },
 ] as const;
 
 const MAANDEN = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
@@ -41,6 +41,7 @@ function dagLabel(datum: string) {
 export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Props) {
   const [maand, setMaand] = useState(startMaand);
   const [status, setStatus] = useState<Record<string, string>>(begin);
+  const [open, setOpen] = useState<{ t: string; s: string } | null>(null);
   const [, start] = useTransition();
 
   function gaMaand(delta: number) {
@@ -59,7 +60,10 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
   );
 
   function kleurVan(s: string | undefined) {
-    return STATUSSEN.find((x) => x.key === s)?.licht ?? "bg-white text-neutral-400 border-neutral-300";
+    return STATUSSEN.find((x) => x.key === s)?.licht ?? "border-neutral-300 bg-neutral-50 text-neutral-300";
+  }
+  function kortVan(s: string | undefined) {
+    return STATUSSEN.find((x) => x.key === s)?.kort ?? "·";
   }
 
   function kies(trainingId: string, spelerId: string, waarde: string) {
@@ -123,20 +127,14 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
                     <span className="ml-2 font-medium text-neutral-800">{sp.naam}</span>
                   </td>
                   {trainingenMaand.map((t) => {
-                    const s = status[`${t.id}:${sp.id}`] ?? "";
+                    const s = status[`${t.id}:${sp.id}`] || undefined;
                     return (
-                      <td key={t.id} className="px-1 py-1 text-center">
-                        <select
-                          value={s}
-                          onChange={(e) => kies(t.id, sp.id, e.target.value)}
-                          aria-label="status"
-                          className={`w-full min-w-[7rem] rounded-md border px-1 py-1.5 text-xs font-medium ${kleurVan(s || undefined)}`}
-                        >
-                          <option value="">—</option>
-                          {STATUSSEN.map((o) => (
-                            <option key={o.key} value={o.key}>{o.label}</option>
-                          ))}
-                        </select>
+                      <td key={t.id} className="px-0.5 py-1 text-center">
+                        <button
+                          onClick={() => setOpen({ t: t.id, s: sp.id })}
+                          className={`h-8 w-8 rounded-md border text-xs font-bold ${kleurVan(s)}`}
+                          aria-label="status kiezen"
+                        >{kortVan(s)}</button>
                       </td>
                     );
                   })}
@@ -150,9 +148,50 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
         </div>
       )}
 
+      {/* Legenda */}
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-neutral-500">
+        {STATUSSEN.map((o) => (
+          <span key={o.key} className={`rounded px-2 py-0.5 ${o.licht} border`}>{o.kort} = {o.label}</span>
+        ))}
+      </div>
+
       <p className="mt-2 text-xs text-neutral-400">
-        Tik een vakje om de gekozen status te zetten; tik nog eens om te wissen. De %-kolom is de opkomst in deze maand.
+        Tik een vakje → kies onderin de status. De %-kolom is de opkomst in deze maand.
       </p>
+
+      {/* Keuzemenu onderin */}
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setOpen(null)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-neutral-200 bg-white p-4 shadow-2xl">
+            <div className="mx-auto max-w-md">
+              <p className="mb-3 text-sm font-semibold text-neutral-700">
+                {spelers.find((x) => x.id === open.s)?.naam}
+                <span className="ml-2 text-neutral-400">
+                  · {(() => { const tr = trainingenMaand.find((x) => x.id === open.t); return tr ? dagLabel(tr.datum) : ""; })()}
+                </span>
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {STATUSSEN.map((o) => (
+                  <button
+                    key={o.key}
+                    onClick={() => { kies(open.t, open.s, o.key); setOpen(null); }}
+                    className={`rounded-lg px-4 py-3 text-sm font-semibold ${o.vol}`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { kies(open.t, open.s, ""); setOpen(null); }}
+                  className="rounded-lg bg-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-700"
+                >
+                  Wissen
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
