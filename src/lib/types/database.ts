@@ -12,6 +12,11 @@ export type AfmeldStatus =
   | "nvt";
 export type StarteAls = "basis" | "wissel" | "niet_in_selectie";
 export type Beschikbaarheid = "fit" | "twijfel" | "geblesseerd";
+export type PresentieStatus =
+  | "aanwezig"
+  | "afwezig_met"
+  | "afwezig_zonder"
+  | "blessure";
 
 export interface Speler {
   id: string;
@@ -139,12 +144,21 @@ export interface TrainingRegistratie {
   training_id: string;
   speler_id: string;
   aanwezig: boolean;
+  status: PresentieStatus | null;
   op_tijd: boolean | null;
   afmeld_status: AfmeldStatus;
   afgemeld_op: string | null;
   inzet: number | null;
   opmerking: string | null;
   created_at: string;
+}
+
+export interface TrainingOpkomstMaandView {
+  speler_id: string;
+  maand: string; // YYYY-MM
+  geregistreerd: number;
+  aanwezig: number;
+  opkomst_pct: number | null;
 }
 
 export interface WedstrijdRegistratie {
