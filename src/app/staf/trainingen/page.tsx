@@ -26,11 +26,13 @@ export default async function TrainingenPage({
 
   const trainLijst = ((trainingen ?? []) as { id: string; datum: string }[]);
 
-  // Startmaand: uit de URL, anders de eerste maand met trainingen, anders nu.
+  // Startmaand: uit de URL, anders de eerste maand met trainingen, anders de
+  // seizoensstart (augustus). Nooit vóór augustus.
   let startMaand = maand ?? "";
   if (!startMaand) {
-    startMaand = trainLijst[0]?.datum.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
+    startMaand = trainLijst[0]?.datum.slice(0, 7) ?? "2026-08";
   }
+  if (startMaand < "2026-08") startMaand = "2026-08";
 
   const begin: Record<string, string> = {};
   for (const r of (regs ?? []) as Pick<TrainingRegistratie, "training_id" | "speler_id" | "status">[]) {

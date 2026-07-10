@@ -22,6 +22,8 @@ const STATUSSEN = [
   { key: "vakantie", kort: "V", label: "Vakantie", licht: "bg-sky-100 text-sky-800 border-sky-300", vol: "bg-sky-600 text-white" },
 ] as const;
 
+// Seizoen 26-27 start in augustus; eerdere maanden tonen we niet.
+const MIN_MAAND = "2026-08";
 const MAANDEN = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
 const DAGEN = ["zo","ma","di","wo","do","vr","za"];
 
@@ -40,13 +42,14 @@ function dagLabel(datum: string) {
 }
 
 export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVerwijder }: Props) {
-  const [maand, setMaand] = useState(startMaand);
+  const [maand, setMaand] = useState(startMaand < MIN_MAAND ? MIN_MAAND : startMaand);
   const [status, setStatus] = useState<Record<string, string>>(begin);
   const [open, setOpen] = useState<{ t: string; s: string } | null>(null);
   const [, start] = useTransition();
 
   function gaMaand(delta: number) {
     const nieuw = schuifMaand(maand, delta);
+    if (nieuw < MIN_MAAND) return;
     setMaand(nieuw);
     try {
       const u = new URL(window.location.href);
@@ -93,7 +96,7 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVer
     <div>
       {/* Maand-navigatie */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <button onClick={() => gaMaand(-1)} className="rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold">◀</button>
+        <button onClick={() => gaMaand(-1)} disabled={maand <= MIN_MAAND} className="rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold disabled:opacity-30">◀</button>
         <span className="min-w-[9rem] text-center text-lg font-bold text-sparta">{maandLabel(maand)}</span>
         <button onClick={() => gaMaand(1)} className="rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold">▶</button>
         <form action={genereerMaand} className="ml-auto">
