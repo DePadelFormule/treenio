@@ -23,6 +23,7 @@ const LABEL: Record<string, string> = {
 export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, beginEvents }: Props) {
   const [events, setEvents] = useState<Ev[]>(beginEvents);
   const [picker, setPicker] = useState<{ type: string; groep: "selectie" | "veld" | "bank" } | null>(null);
+  const [melding, setMelding] = useState<string | null>(null);
   const [, start] = useTransition();
 
   const naamVan = useMemo(() => {
@@ -72,9 +73,11 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
 
   function log(type: string, speler_id: string | null) {
     const m = minuut;
+    setMelding(null);
     start(async () => {
       const res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id, type, minuut: m });
       if (res.ok && res.id) setEvents((e) => [...e, { id: res.id!, type, speler_id, minuut: m }]);
+      else setMelding("Kon niet opslaan. Is de wedstrijd_events-tabel al in Supabase aangemaakt?");
     });
   }
   function wis(id: string) {
@@ -101,6 +104,10 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
   return (
     <div>
       <p className="mb-3 text-sm text-neutral-500">{kop}</p>
+
+      {melding && (
+        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{melding}</p>
+      )}
 
       {/* Timer + score */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-neutral-900 p-4 text-white">
