@@ -5,6 +5,19 @@ import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { leesKnvbConfig, fetchProgramma } from "@/lib/knvb";
 
+export async function verwijderWedstrijd(formData: FormData) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const supabase = await createClient();
+  // Cascade ruimt opstelling, events en registraties automatisch op.
+  await supabase.from("wedstrijden").delete().eq("id", id);
+  revalidatePath("/staf/wedstrijden");
+  revalidatePath("/staf/team");
+}
+
 export interface ImportResultaat {
   ok: boolean;
   bericht: string;

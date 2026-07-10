@@ -4,6 +4,17 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
 
+export async function verwijderTraining(formData: FormData) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const supabase = await createClient();
+  await supabase.from("trainingen").delete().eq("id", id);
+  revalidatePath("/staf/trainingen");
+}
+
 // Presentie van één speler op één training zetten (of wissen bij status=null).
 export async function setPresentie(
   training_id: string,

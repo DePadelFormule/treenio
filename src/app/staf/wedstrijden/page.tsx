@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { nieuweWedstrijd } from "./actions";
+import { nieuweWedstrijd, verwijderWedstrijd } from "./actions";
 import { ImporteerProgrammaKnop } from "@/components/ImporteerProgrammaKnop";
+import { VerwijderKnop } from "@/components/VerwijderKnop";
 import type { Wedstrijd } from "@/lib/types/database";
 
 export default async function WedstrijdenPage() {
@@ -65,6 +66,11 @@ export default async function WedstrijdenPage() {
               >
                 Live →
               </Link>
+              <VerwijderKnop
+                action={verwijderWedstrijd}
+                id={w.id}
+                bevestig={`Wedstrijd tegen ${w.tegenstander} verwijderen? Ook de opstelling en alle genoteerde events gaan weg.`}
+              />
             </div>
           </li>
         ))}

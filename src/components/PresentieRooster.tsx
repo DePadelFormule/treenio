@@ -11,6 +11,7 @@ interface Props {
   trainingen: TrainingKort[];
   begin: Record<string, string>; // "trainingId:spelerId" -> status
   startMaand: string; // YYYY-MM
+  onVerwijder: (formData: FormData) => void | Promise<void>;
 }
 
 const STATUSSEN = [
@@ -38,7 +39,7 @@ function dagLabel(datum: string) {
   return `${DAGEN[d.getUTCDay()]} ${d.getUTCDate()}-${d.getUTCMonth() + 1}`;
 }
 
-export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Props) {
+export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVerwijder }: Props) {
   const [maand, setMaand] = useState(startMaand);
   const [status, setStatus] = useState<Record<string, string>>(begin);
   const [open, setOpen] = useState<{ t: string; s: string } | null>(null);
@@ -114,7 +115,13 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
               <tr className="border-b border-neutral-200">
                 <th className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-semibold text-neutral-500">Speler</th>
                 {trainingenMaand.map((t) => (
-                  <th key={t.id} className="px-1 py-2 text-center text-[0.7rem] font-medium text-neutral-500 whitespace-nowrap">{dagLabel(t.datum)}</th>
+                  <th key={t.id} className="px-1 py-2 text-center text-[0.7rem] font-medium text-neutral-500 whitespace-nowrap">
+                    <div>{dagLabel(t.datum)}</div>
+                    <form action={onVerwijder} onSubmit={(e) => { if (!confirm(`Training van ${dagLabel(t.datum)} verwijderen?`)) e.preventDefault(); }}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <button type="submit" className="text-neutral-300 hover:text-red-600" aria-label="training verwijderen">✕</button>
+                    </form>
+                  </th>
                 ))}
                 <th className="px-2 py-2 text-center text-[0.7rem] font-semibold text-sparta">%</th>
               </tr>

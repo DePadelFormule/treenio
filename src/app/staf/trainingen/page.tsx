@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PresentieRooster } from "@/components/PresentieRooster";
+import { verwijderTraining } from "./actions";
 import type { Speler, Training, TrainingRegistratie } from "@/lib/types/database";
 
 export default async function TrainingenPage({
@@ -52,6 +53,7 @@ export default async function TrainingenPage({
         trainingen={trainLijst}
         begin={begin}
         startMaand={startMaand}
+        onVerwijder={verwijderTraining}
       />
     </main>
   );
