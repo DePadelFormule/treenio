@@ -16,7 +16,8 @@ export type PresentieStatus =
   | "aanwezig"
   | "afwezig_met"
   | "afwezig_zonder"
-  | "blessure";
+  | "blessure"
+  | "vakantie";
 
 export interface Speler {
   id: string;

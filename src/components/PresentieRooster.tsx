@@ -14,10 +14,11 @@ interface Props {
 }
 
 const STATUSSEN = [
-  { key: "aanwezig", kort: "A", label: "Aanwezig", kleur: "bg-green-600 text-white" },
-  { key: "afwezig_met", kort: "M", label: "Afgemeld (met bericht)", kleur: "bg-amber-500 text-white" },
-  { key: "afwezig_zonder", kort: "Z", label: "Niet afgemeld", kleur: "bg-red-600 text-white" },
-  { key: "blessure", kort: "B", label: "Blessure", kleur: "bg-purple-600 text-white" },
+  { key: "aanwezig", label: "Aanwezig", licht: "bg-green-100 text-green-800 border-green-300" },
+  { key: "afwezig_met", label: "Afgemeld (met bericht)", licht: "bg-amber-100 text-amber-800 border-amber-300" },
+  { key: "afwezig_zonder", label: "Niet afgemeld", licht: "bg-red-100 text-red-800 border-red-300" },
+  { key: "blessure", label: "Blessure", licht: "bg-purple-100 text-purple-800 border-purple-300" },
+  { key: "vakantie", label: "Vakantie", licht: "bg-sky-100 text-sky-800 border-sky-300" },
 ] as const;
 
 const MAANDEN = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
@@ -39,7 +40,6 @@ function dagLabel(datum: string) {
 
 export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Props) {
   const [maand, setMaand] = useState(startMaand);
-  const [actief, setActief] = useState<string>("aanwezig");
   const [status, setStatus] = useState<Record<string, string>>(begin);
   const [, start] = useTransition();
 
@@ -59,15 +59,12 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
   );
 
   function kleurVan(s: string | undefined) {
-    return STATUSSEN.find((x) => x.key === s)?.kleur ?? "";
-  }
-  function kortVan(s: string | undefined) {
-    return STATUSSEN.find((x) => x.key === s)?.kort ?? "";
+    return STATUSSEN.find((x) => x.key === s)?.licht ?? "bg-white text-neutral-400 border-neutral-300";
   }
 
-  function tik(trainingId: string, spelerId: string) {
+  function kies(trainingId: string, spelerId: string, waarde: string) {
     const key = `${trainingId}:${spelerId}`;
-    const nieuw = status[key] === actief ? null : actief;
+    const nieuw = waarde || null;
     setStatus((s) => {
       const c = { ...s };
       if (nieuw) c[key] = nieuw; else delete c[key];
@@ -80,6 +77,7 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
     let geregistreerd = 0, aanwezig = 0;
     for (const t of trainingenMaand) {
       const s = status[`${t.id}:${spelerId}`];
+      // Elke ingevulde status telt mee (ook vakantie = afwezig).
       if (s) { geregistreerd++; if (s === "aanwezig") aanwezig++; }
     }
     if (geregistreerd === 0) return null;
@@ -99,20 +97,6 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
             + Genereer di/do trainingen
           </button>
         </form>
-      </div>
-
-      {/* Verf-modus: kies een status */}
-      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-neutral-100 p-2">
-        <span className="text-xs font-semibold text-neutral-500">Kies status, tik dan de vakjes:</span>
-        {STATUSSEN.map((s) => (
-          <button
-            key={s.key}
-            onClick={() => setActief(s.key)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${actief === s.key ? s.kleur : "bg-white text-neutral-600 border border-neutral-300"}`}
-          >
-            {s.kort} · {s.label}
-          </button>
-        ))}
       </div>
 
       {trainingenMaand.length === 0 ? (
@@ -139,14 +123,20 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand }: Pro
                     <span className="ml-2 font-medium text-neutral-800">{sp.naam}</span>
                   </td>
                   {trainingenMaand.map((t) => {
-                    const s = status[`${t.id}:${sp.id}`];
+                    const s = status[`${t.id}:${sp.id}`] ?? "";
                     return (
                       <td key={t.id} className="px-1 py-1 text-center">
-                        <button
-                          onClick={() => tik(t.id, sp.id)}
-                          className={`h-8 w-8 rounded-md text-xs font-bold ${s ? kleurVan(s) : "border border-neutral-300 bg-neutral-50 text-transparent"}`}
+                        <select
+                          value={s}
+                          onChange={(e) => kies(t.id, sp.id, e.target.value)}
                           aria-label="status"
-                        >{kortVan(s) || "·"}</button>
+                          className={`w-full min-w-[7rem] rounded-md border px-1 py-1.5 text-xs font-medium ${kleurVan(s || undefined)}`}
+                        >
+                          <option value="">—</option>
+                          {STATUSSEN.map((o) => (
+                            <option key={o.key} value={o.key}>{o.label}</option>
+                          ))}
+                        </select>
                       </td>
                     );
                   })}
