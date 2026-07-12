@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Treenio — Positie-inventarisatie (voorbeeld)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{sparta:{DEFAULT:"#C8102E",dark:"#8A0A1F"}}}}}</script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+<main class="mx-auto max-w-2xl px-4 py-6">
+  <h1 class="text-2xl font-bold text-sparta">Positie-inventarisatie · 4-3-3</h1>
+  <p class="mb-4 text-sm text-neutral-500">Voorbeeldscherm — vul per speler je 1e, 2e en 3e positie in.</p>
+
+  <!-- Veld -->
+  <div class="relative mx-auto mb-5 w-full max-w-sm overflow-hidden rounded-2xl border-2 border-white/40 bg-gradient-to-b from-green-700 to-green-800" style="aspect-ratio:3/4">
+    <div class="pointer-events-none absolute inset-3 rounded-lg border-2 border-white/30"></div>
+    <div class="pointer-events-none absolute left-3 right-3 top-[42%] border-t-2 border-white/25"></div>
+    <div class="pointer-events-none absolute left-1/2 top-[42%] h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/25"></div>
+    <div class="pointer-events-none absolute bottom-3 left-1/4 right-1/4 h-10 border-2 border-white/25"></div>
+    <div id="veld"></div>
+  </div>
+
+  <!-- Tabel -->
+  <div class="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <th class="px-3 py-2">Speler</th>
+          <th class="px-2 py-2">Positie 1</th>
+          <th class="px-2 py-2">Positie 2</th>
+          <th class="px-2 py-2">Positie 3</th>
+        </tr>
+      </thead>
+      <tbody id="tabel"></tbody>
+    </table>
+  </div>
+
+  <!-- Legenda -->
+  <h2 class="mt-6 mb-2 text-sm font-semibold text-neutral-700">Legenda</h2>
+  <div id="legenda" class="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2"></div>
+</main>
+
+<script>
+  const POSITIES = [
+    { nr: 1, code: "K",   naam: "Keeper",                          x: 50, y: 95 },
+    { nr: 2, code: "RA",  naam: "Rechtsachter",                    x: 92, y: 64 },
+    { nr: 4, code: "RCV", naam: "Rechter centrale verdediger",     x: 67, y: 87 },
+    { nr: 3, code: "LCV", naam: "Linker centrale verdediger",      x: 33, y: 87 },
+    { nr: 5, code: "LA",  naam: "Linksachter",                     x: 8,  y: 64 },
+    { nr: 6, code: "RCM", naam: "Rechter centrale middenvelder",   x: 70, y: 46 },
+    { nr: 8, code: "LCM", naam: "Linker centrale middenvelder",    x: 30, y: 46 },
+    { nr: 10,code: "AMC", naam: "Aanvallende middenvelder centraal",x: 50, y: 27 },
+    { nr: 7, code: "RB",  naam: "Rechtsbuiten",                     x: 90, y: 13 },
+    { nr: 11,code: "LB",  naam: "Linksbuiten",                      x: 10, y: 13 },
+    { nr: 9, code: "SP",  naam: "Spits",                           x: 50, y: 6  },
+  ];
+  const SPELERS = [
+    [1,"Fabian Buwalda"],[2,"Rico Baggerman"],[3,"Osama Tarsha Kurdi"],[4,"Adam El Amraoui"],
+    [5,"Myon van Hees"],[6,"Jan-Julius van Hees"],[7,"Valentijn Kramer"],[8,"Teun van Dongen"],
+    [9,"Neal Tsegay"],[10,"Finn Thuis"],[11,"Roan van Genderen"],[12,"Rayhan Ahmed"],
+    [13,"Amin Miaadi"],[14,"Kovan Almjo"],[15,"Youssef Hammouti"],[16,"Yassin Azzaaoui"],
+    [17,"Amir Shaaban"],[18,"Mateusz Wojtowicz"],[19,"Ghaith Tarsha"],
+  ];
+
+  // Veld vullen
+  document.getElementById("veld").innerHTML = POSITIES.map(p=>`
+    <div class="absolute -translate-x-1/2 -translate-y-1/2" style="left:${p.x}%;top:${p.y}%">
+      <div class="flex h-9 w-9 items-center justify-center rounded-full bg-sparta text-sm font-bold text-white shadow ring-2 ring-white/60">${p.nr}</div>
+      <div class="mt-0.5 text-center text-[0.6rem] font-semibold text-white">${p.code}</div>
+    </div>`).join("");
+
+  // Dropdown-opties
+  const opties = '<option value="">—</option>' + POSITIES.map(p=>`<option>${p.code}</option>`).join("");
+  const sel = () => `<select class="w-full rounded-lg border border-neutral-300 px-1.5 py-1.5 text-sm">${opties}</select>`;
+
+  // Tabel vullen
+  document.getElementById("tabel").innerHTML = SPELERS.map(([nr,naam])=>`
+    <tr class="border-b border-neutral-100">
+      <td class="px-3 py-1.5 whitespace-nowrap"><span class="font-semibold text-neutral-400">${nr}</span> <span class="font-medium">${naam}</span></td>
+      <td class="px-2 py-1.5">${sel()}</td>
+      <td class="px-2 py-1.5">${sel()}</td>
+      <td class="px-2 py-1.5">${sel()}</td>
+    </tr>`).join("");
+
+  // Legenda
+  document.getElementById("legenda").innerHTML = POSITIES
+    .slice().sort((a,b)=>a.nr-b.nr)
+    .map(p=>`<div class="rounded-lg border border-neutral-200 bg-white px-2 py-1">
+       <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sparta text-[0.65rem] font-bold text-white">${p.nr}</span>
+       <span class="ml-1 font-semibold">${p.code}</span> — ${p.naam}</div>`).join("");
+</script>
+</body>
+</html>
