@@ -9,8 +9,14 @@
 </head>
 <body class="bg-neutral-50 text-neutral-900">
 <main class="mx-auto max-w-2xl px-4 py-6">
-  <h1 class="text-2xl font-bold text-sparta">Positie-inventarisatie · 4-3-3</h1>
-  <p class="mb-4 text-sm text-neutral-500">Voorbeeldscherm — vul per speler je 1e, 2e en 3e positie in.</p>
+  <h1 class="text-2xl font-bold text-sparta">Positie-inventarisatie</h1>
+  <p class="mb-3 text-sm text-neutral-500">Vul per speler je 1e, 2e en 3e positie in — voor elk systeem.</p>
+
+  <!-- Tabs -->
+  <div class="mb-4 flex gap-2">
+    <button data-sys="4-3-3" class="tab rounded-lg bg-sparta px-4 py-2 text-sm font-semibold text-white">4-3-3</button>
+    <button data-sys="4-4-2" class="tab rounded-lg bg-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700">4-4-2</button>
+  </div>
 
   <!-- Veld -->
   <div class="relative mx-auto mb-5 w-full max-w-sm overflow-hidden rounded-2xl border-2 border-white/40 bg-gradient-to-b from-green-700 to-green-800" style="aspect-ratio:3/4">
@@ -42,19 +48,34 @@
 </main>
 
 <script>
-  const POSITIES = [
-    { nr: 1, code: "K",   naam: "Keeper",                          x: 50, y: 95 },
-    { nr: 2, code: "RA",  naam: "Rechtsachter",                    x: 92, y: 64 },
-    { nr: 4, code: "RCV", naam: "Rechter centrale verdediger",     x: 67, y: 87 },
-    { nr: 3, code: "LCV", naam: "Linker centrale verdediger",      x: 33, y: 87 },
-    { nr: 5, code: "LA",  naam: "Linksachter",                     x: 8,  y: 64 },
-    { nr: 6, code: "RCM", naam: "Rechter centrale middenvelder",   x: 70, y: 46 },
-    { nr: 8, code: "LCM", naam: "Linker centrale middenvelder",    x: 30, y: 46 },
-    { nr: 10,code: "AMC", naam: "Aanvallende middenvelder centraal",x: 50, y: 27 },
-    { nr: 7, code: "RB",  naam: "Rechtsbuiten",                     x: 90, y: 13 },
-    { nr: 11,code: "LB",  naam: "Linksbuiten",                      x: 10, y: 13 },
-    { nr: 9, code: "SP",  naam: "Spits",                           x: 50, y: 6  },
-  ];
+  const FORMATIES = {
+    "4-3-3": [
+      { nr: 1, code: "K",   naam: "Keeper",                            x: 50, y: 95 },
+      { nr: 2, code: "RA",  naam: "Rechtsachter",                      x: 92, y: 64 },
+      { nr: 4, code: "RCV", naam: "Rechter centrale verdediger",       x: 67, y: 87 },
+      { nr: 3, code: "LCV", naam: "Linker centrale verdediger",        x: 33, y: 87 },
+      { nr: 5, code: "LA",  naam: "Linksachter",                       x: 8,  y: 64 },
+      { nr: 6, code: "RCM", naam: "Rechter centrale middenvelder",     x: 70, y: 46 },
+      { nr: 8, code: "LCM", naam: "Linker centrale middenvelder",      x: 30, y: 46 },
+      { nr: 10,code: "AMC", naam: "Aanvallende middenvelder centraal", x: 50, y: 27 },
+      { nr: 7, code: "RB",  naam: "Rechtsbuiten",                       x: 90, y: 13 },
+      { nr: 11,code: "LB",  naam: "Linksbuiten",                        x: 10, y: 13 },
+      { nr: 9, code: "SP",  naam: "Spits",                             x: 50, y: 6  },
+    ],
+    "4-4-2": [
+      { nr: 1, code: "K",   naam: "Keeper",                            x: 50, y: 95 },
+      { nr: 2, code: "RA",  naam: "Rechtsachter",                      x: 93, y: 72 },
+      { nr: 4, code: "RCV", naam: "Rechter centrale verdediger",       x: 70, y: 88 },
+      { nr: 3, code: "LCV", naam: "Linker centrale verdediger",        x: 28, y: 88 },
+      { nr: 5, code: "LA",  naam: "Linksachter",                       x: 7,  y: 72 },
+      { nr: 6, code: "CVM", naam: "Controlerende middenvelder",        x: 50, y: 58 },
+      { nr: 8, code: "LM",  naam: "Linkermiddenvelder",                x: 6,  y: 40 },
+      { nr: 7, code: "RM",  naam: "Rechtermiddenvelder",               x: 92, y: 40 },
+      { nr: 10,code: "AMC", naam: "Aanvallende middenvelder centraal", x: 50, y: 28 },
+      { nr: 11,code: "SP",  naam: "Spits (links)",                     x: 31, y: 9  },
+      { nr: 9, code: "SP",  naam: "Spits (rechts)",                    x: 64, y: 9  },
+    ],
+  };
   const SPELERS = [
     [1,"Fabian Buwalda"],[2,"Rico Baggerman"],[3,"Osama Tarsha Kurdi"],[4,"Adam El Amraoui"],
     [5,"Myon van Hees"],[6,"Jan-Julius van Hees"],[7,"Valentijn Kramer"],[8,"Teun van Dongen"],
@@ -63,32 +84,42 @@
     [17,"Amir Shaaban"],[18,"Mateusz Wojtowicz"],[19,"Ghaith Tarsha"],
   ];
 
-  // Veld vullen
-  document.getElementById("veld").innerHTML = POSITIES.map(p=>`
-    <div class="absolute -translate-x-1/2 -translate-y-1/2" style="left:${p.x}%;top:${p.y}%">
-      <div class="flex h-9 w-9 items-center justify-center rounded-full bg-sparta text-sm font-bold text-white shadow ring-2 ring-white/60">${p.nr}</div>
-      <div class="mt-0.5 text-center text-[0.6rem] font-semibold text-white">${p.code}</div>
-    </div>`).join("");
+  let sys = "4-3-3";
 
-  // Dropdown-opties
-  const opties = '<option value="">—</option>' + POSITIES.map(p=>`<option>${p.code}</option>`).join("");
-  const sel = () => `<select class="w-full rounded-lg border border-neutral-300 px-1.5 py-1.5 text-sm">${opties}</select>`;
+  function teken() {
+    const posities = FORMATIES[sys];
 
-  // Tabel vullen
-  document.getElementById("tabel").innerHTML = SPELERS.map(([nr,naam])=>`
-    <tr class="border-b border-neutral-100">
-      <td class="px-3 py-1.5 whitespace-nowrap"><span class="font-semibold text-neutral-400">${nr}</span> <span class="font-medium">${naam}</span></td>
-      <td class="px-2 py-1.5">${sel()}</td>
-      <td class="px-2 py-1.5">${sel()}</td>
-      <td class="px-2 py-1.5">${sel()}</td>
-    </tr>`).join("");
+    document.getElementById("veld").innerHTML = posities.map(p=>`
+      <div class="absolute -translate-x-1/2 -translate-y-1/2" style="left:${p.x}%;top:${p.y}%">
+        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-sparta text-sm font-bold text-white shadow ring-2 ring-white/60">${p.nr}</div>
+        <div class="mt-0.5 text-center text-[0.6rem] font-semibold text-white">${p.code}</div>
+      </div>`).join("");
 
-  // Legenda
-  document.getElementById("legenda").innerHTML = POSITIES
-    .slice().sort((a,b)=>a.nr-b.nr)
-    .map(p=>`<div class="rounded-lg border border-neutral-200 bg-white px-2 py-1">
-       <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sparta text-[0.65rem] font-bold text-white">${p.nr}</span>
-       <span class="ml-1 font-semibold">${p.code}</span> — ${p.naam}</div>`).join("");
+    const uniek = [...new Set(posities.map(p=>p.code))];
+    const opties = '<option value="">—</option>' + uniek.map(c=>`<option>${c}</option>`).join("");
+    const sel = () => `<select class="w-full rounded-lg border border-neutral-300 px-1.5 py-1.5 text-sm">${opties}</select>`;
+
+    document.getElementById("tabel").innerHTML = SPELERS.map(([nr,naam])=>`
+      <tr class="border-b border-neutral-100">
+        <td class="px-3 py-1.5 whitespace-nowrap"><span class="font-semibold text-neutral-400">${nr}</span> <span class="font-medium">${naam}</span></td>
+        <td class="px-2 py-1.5">${sel()}</td>
+        <td class="px-2 py-1.5">${sel()}</td>
+        <td class="px-2 py-1.5">${sel()}</td>
+      </tr>`).join("");
+
+    document.getElementById("legenda").innerHTML = posities.map(p=>`
+      <div class="rounded-lg border border-neutral-200 bg-white px-2 py-1">
+        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sparta text-[0.65rem] font-bold text-white">${p.nr}</span>
+        <span class="ml-1 font-semibold">${p.code}</span> — ${p.naam}</div>`).join("");
+
+    document.querySelectorAll(".tab").forEach(b=>{
+      const on = b.dataset.sys === sys;
+      b.className = "tab rounded-lg px-4 py-2 text-sm font-semibold " + (on ? "bg-sparta text-white" : "bg-neutral-200 text-neutral-700");
+    });
+  }
+
+  document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click", ()=>{ sys = b.dataset.sys; teken(); }));
+  teken();
 </script>
 </body>
 </html>
