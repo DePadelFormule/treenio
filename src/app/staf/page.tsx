@@ -9,7 +9,11 @@ export default async function StafPage() {
   if (!gebruiker) redirect("/login");
   if (gebruiker.rol !== "staf") redirect("/");
 
-  const menu = [
+  // Volledige toegang = mag_conclusie. Assistenten zonder dat vlaggetje zien
+  // alleen de positie-inventarisatie (en hun eigen account, in de header).
+  const magAlles = gebruiker.staf?.mag_conclusie ?? false;
+
+  const volledigMenu = [
     { href: "/staf/team", titel: "Team-overzicht", uitleg: "Alle spelers in één tabel: opkomst, minuten, goals, assists, kaarten." },
     { href: "/staf/spelers", titel: "Spelerskaarten", uitleg: "Per speler de volledige kaart met alle cijfers, doelen en notities." },
     { href: "/staf/wedstrijden", titel: "Wedstrijden", uitleg: "Programma beheren en per wedstrijd registreren (stats, keeper, scouting)." },
@@ -17,6 +21,10 @@ export default async function StafPage() {
     { href: "/staf/spelsituaties", titel: "Spelsituaties", uitleg: "Tactisch tekenbord: magneetjes slepen, animatie maken en afspelen." },
     { href: "/staf/posities", titel: "Positie-inventarisatie", uitleg: "Vul per speler je 1e/2e/3e positie in voor 4-3-3 en 4-4-2." },
   ];
+  const beperktMenu = [
+    { href: "/staf/posities", titel: "Positie-inventarisatie", uitleg: "Vul per speler je 1e/2e/3e positie in voor 4-3-3 en 4-4-2." },
+  ];
+  const menu = magAlles ? volledigMenu : beperktMenu;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
