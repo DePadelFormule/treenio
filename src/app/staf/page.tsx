@@ -27,7 +27,15 @@ export default async function StafPage() {
             Nivo Sparta JO17-2 · {gebruiker.staf?.naam}
           </p>
         </div>
-        <SignOutButton />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/staf/account"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+          >
+            Mijn account
+          </Link>
+          <SignOutButton />
+        </div>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
