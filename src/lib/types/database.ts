@@ -111,6 +111,20 @@ export interface Staf {
   auth_user_id: string | null;
   naam: string;
   rol: Rol;
+  mag_conclusie: boolean;
+  created_at: string;
+}
+
+export type Systeem = "4-3-3" | "4-4-2";
+
+export interface PositieVoorkeur {
+  id: string;
+  staf_id: string;
+  speler_id: string;
+  systeem: Systeem;
+  positie_1: string | null;
+  positie_2: string | null;
+  positie_3: string | null;
   created_at: string;
 }
 
