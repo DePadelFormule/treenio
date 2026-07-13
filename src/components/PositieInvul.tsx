@@ -83,45 +83,40 @@ export function PositieInvul({ spelers, begin }: Props) {
 
       <VeldDiagram systeem={systeem} />
 
-      {/* Tabel */}
-      <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
-              <th className="px-3 py-2">Speler</th>
-              <th className="px-2 py-2">Positie 1</th>
-              <th className="px-2 py-2">Positie 2</th>
-              <th className="px-2 py-2">Positie 3</th>
-            </tr>
-          </thead>
-          <tbody>
-            {spelers.map((sp) => {
-              const h = huidig(sp.id);
-              return (
-                <tr key={sp.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="whitespace-nowrap px-3 py-1.5">
-                    <span className="font-semibold text-neutral-400">{sp.rugnummer ?? "–"}</span>{" "}
-                    <span className="font-medium">{sp.naam}</span>
-                  </td>
-                  {(["positie_1", "positie_2", "positie_3"] as const).map((veld) => (
-                    <td key={veld} className="px-2 py-1.5">
-                      <select
-                        value={h[veld] ?? ""}
-                        onChange={(e) => kies(sp.id, veld, e.target.value)}
-                        className="w-full rounded-lg border border-neutral-300 px-1.5 py-1.5 text-sm"
-                      >
-                        <option value="">—</option>
-                        {codes.map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* Kaartjes per speler — leest prettig op mobiel */}
+      <div className="space-y-2">
+        {spelers.map((sp) => {
+          const h = huidig(sp.id);
+          return (
+            <div key={sp.id} className="rounded-xl border border-neutral-200 bg-white p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-bold text-neutral-500">
+                  {sp.rugnummer ?? "–"}
+                </span>
+                <span className="font-semibold text-neutral-800">{sp.naam}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["positie_1", "positie_2", "positie_3"] as const).map((veld, i) => (
+                  <label key={veld} className="block">
+                    <span className="mb-1 block text-[0.7rem] font-medium uppercase tracking-wide text-neutral-400">
+                      {["1e keus", "2e keus", "3e keus"][i]}
+                    </span>
+                    <select
+                      value={h[veld] ?? ""}
+                      onChange={(e) => kies(sp.id, veld, e.target.value)}
+                      className="w-full rounded-lg border border-neutral-300 px-2 py-2 text-base"
+                    >
+                      <option value="">—</option>
+                      {codes.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Legenda */}
