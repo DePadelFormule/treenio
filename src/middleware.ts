@@ -7,7 +7,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Alles behalve statische assets en afbeeldingen.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Alles behalve statische assets, afbeeldingen en de PWA-bestanden
+    // (manifest, service worker en app-iconen). Die laatste MOETEN publiek
+    // bereikbaar zijn, anders kan de browser de app niet installeren.
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
