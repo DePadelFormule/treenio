@@ -99,7 +99,7 @@ export function TrainingPresentieRij({ trainingId, spelerId, naam, rugnummer, be
               key={n}
               type="button"
               onClick={() => bewaar({ ...state, inzet: state.inzet === n ? null : n })}
-              className={`h-7 w-7 rounded-full text-sm font-semibold ${
+              className={`h-9 w-9 rounded-full text-sm font-semibold ${
                 state.inzet === n ? "bg-neutral-900 text-white" : "bg-neutral-200 text-neutral-600"
               }`}
             >

@@ -204,7 +204,7 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
                 type="button"
                 onPointerDown={(e) => { e.stopPropagation(); }}
                 onClick={() => verwijderToken(tok.id)}
-                className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[0.6rem] font-bold text-red-600 shadow"
+                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-red-600 shadow"
                 aria-label="verwijder"
               >×</button>
             )}
