@@ -48,12 +48,12 @@ export default async function WedstrijdenPage() {
 
       <ul className="space-y-2">
         {((wedstrijden ?? []) as Wedstrijd[]).map((w) => (
-          <li key={w.id} className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-4">
-            <div>
+          <li key={w.id} className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
               <p className="font-medium text-neutral-800">{w.tegenstander}</p>
               <p className="text-xs text-neutral-400">{w.datum}{w.uitslag ? ` · ${w.uitslag}` : ""}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Link
                 href={`/staf/wedstrijd/${w.id}/opstelling`}
                 className="rounded-lg border border-sparta px-3 py-1.5 text-sm font-semibold text-sparta hover:bg-sparta hover:text-white"

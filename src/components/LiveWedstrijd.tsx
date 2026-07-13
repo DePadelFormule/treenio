@@ -171,7 +171,7 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
               <p className="mb-3 text-sm font-semibold text-neutral-700">
                 {LABEL[picker.type]} · {minuut}&apos; — kies speler
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {pickerSpelers().map((s) => (
                   <button
                     key={s.id}
@@ -182,7 +182,7 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
                     <span className="truncate">{s.naam.split(" ")[0]}</span>
                   </button>
                 ))}
-                {pickerSpelers().length === 0 && <p className="col-span-3 text-sm text-neutral-400">Geen spelers beschikbaar voor deze actie.</p>}
+                {pickerSpelers().length === 0 && <p className="col-span-2 text-sm text-neutral-400 sm:col-span-3">Geen spelers beschikbaar voor deze actie.</p>}
               </div>
               <button onClick={() => setPicker(null)} className="mt-3 w-full rounded-lg bg-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700">Annuleren</button>
             </div>

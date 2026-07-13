@@ -122,7 +122,7 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVer
                     <div>{dagLabel(t.datum)}</div>
                     <form action={onVerwijder} onSubmit={(e) => { if (!confirm(`Training van ${dagLabel(t.datum)} verwijderen?`)) e.preventDefault(); }}>
                       <input type="hidden" name="id" value={t.id} />
-                      <button type="submit" className="text-neutral-300 hover:text-red-600" aria-label="training verwijderen">✕</button>
+                      <button type="submit" className="p-1 text-neutral-300 hover:text-red-600" aria-label="training verwijderen">✕</button>
                     </form>
                   </th>
                 ))}
@@ -142,7 +142,7 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVer
                       <td key={t.id} className="px-0.5 py-1 text-center">
                         <button
                           onClick={() => setOpen({ t: t.id, s: sp.id })}
-                          className={`h-8 w-8 rounded-md border text-xs font-bold ${kleurVan(s)}`}
+                          className={`h-9 w-9 rounded-md border text-sm font-bold ${kleurVan(s)}`}
                           aria-label="status kiezen"
                         >{kortVan(s)}</button>
                       </td>

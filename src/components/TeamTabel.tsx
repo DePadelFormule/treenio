@@ -68,7 +68,13 @@ export function TeamTabel({ rows }: { rows: TeamRij[] }) {
               <th
                 key={k.key}
                 onClick={() => klikKolom(k.key, k.type)}
-                className={`cursor-pointer select-none px-3 py-3 hover:text-sparta ${k.center ? "text-center" : ""}`}
+                className={`cursor-pointer select-none px-2 py-2.5 hover:text-sparta ${k.center ? "text-center" : ""} ${
+                  k.key === "rugnummer"
+                    ? "sticky left-0 z-20 w-9 bg-white"
+                    : k.key === "naam"
+                      ? "sticky left-9 z-20 bg-white"
+                      : ""
+                }`}
               >
                 {k.label}
                 {sortKey === k.key && <span className="ml-1">{dir === "asc" ? "▲" : "▼"}</span>}
@@ -78,9 +84,9 @@ export function TeamTabel({ rows }: { rows: TeamRij[] }) {
         </thead>
         <tbody>
           {gesorteerd.map((r) => (
-            <tr key={r.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
-              <td className="px-3 py-2.5 font-bold text-sparta">{r.rugnummer ?? "–"}</td>
-              <td className="px-3 py-2.5">
+            <tr key={r.id} className="border-b border-neutral-100 last:border-0">
+              <td className="sticky left-0 z-10 w-9 bg-white px-2 py-2.5 font-bold text-sparta">{r.rugnummer ?? "–"}</td>
+              <td className="sticky left-9 z-10 whitespace-nowrap bg-white px-2 py-2.5">
                 <span className="mr-1.5" title={r.status}>
                   {r.status === "fit" ? "🟢" : r.status === "twijfel" ? "🟡" : "🔴"}
                 </span>
@@ -88,14 +94,14 @@ export function TeamTabel({ rows }: { rows: TeamRij[] }) {
                   {r.naam}
                 </Link>
               </td>
-              <td className="px-3 py-2.5 text-neutral-600">{r.positie ?? "—"}</td>
-              <td className="px-3 py-2.5 text-center">{r.opkomst != null ? `${r.opkomst}%` : "—"}</td>
-              <td className={`px-3 py-2.5 text-center ${r.teLaat > 0 ? "font-semibold text-sparta" : ""}`}>{r.teLaat}</td>
-              <td className="px-3 py-2.5 text-center">{r.minuten}</td>
-              <td className="px-3 py-2.5 text-center font-semibold">{r.goals}</td>
-              <td className="px-3 py-2.5 text-center font-semibold">{r.assists}</td>
-              <td className="px-3 py-2.5 text-center">{r.geel}</td>
-              <td className="px-3 py-2.5 text-center">{r.rood}</td>
+              <td className="px-2 py-2.5 text-neutral-600">{r.positie ?? "—"}</td>
+              <td className="px-2 py-2.5 text-center">{r.opkomst != null ? `${r.opkomst}%` : "—"}</td>
+              <td className={`px-2 py-2.5 text-center ${r.teLaat > 0 ? "font-semibold text-sparta" : ""}`}>{r.teLaat}</td>
+              <td className="px-2 py-2.5 text-center">{r.minuten}</td>
+              <td className="px-2 py-2.5 text-center font-semibold">{r.goals}</td>
+              <td className="px-2 py-2.5 text-center font-semibold">{r.assists}</td>
+              <td className="px-2 py-2.5 text-center">{r.geel}</td>
+              <td className="px-2 py-2.5 text-center">{r.rood}</td>
             </tr>
           ))}
         </tbody>
