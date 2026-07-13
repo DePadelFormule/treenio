@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { login } from "./actions";
+import { WachtwoordVeld } from "@/components/WachtwoordVeld";
 
 export default async function LoginPage({
   searchParams,
@@ -45,19 +47,7 @@ export default async function LoginPage({
               className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-sparta focus:ring-2 focus:ring-sparta/30"
             />
           </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-neutral-700">
-              Wachtwoord
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-sparta focus:ring-2 focus:ring-sparta/30"
-            />
-          </div>
+          <WachtwoordVeld id="password" name="password" label="Wachtwoord" autoComplete="current-password" required />
           <button
             type="submit"
             className="w-full rounded-lg bg-sparta px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sparta-dark"
@@ -65,6 +55,12 @@ export default async function LoginPage({
             Inloggen
           </button>
         </form>
+
+        <p className="mt-4 text-center text-sm">
+          <Link href="/login/wachtwoord-vergeten" className="text-neutral-500 hover:text-sparta hover:underline">
+            Wachtwoord vergeten?
+          </Link>
+        </p>
         </div>
       </div>
     </main>
