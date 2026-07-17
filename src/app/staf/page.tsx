@@ -19,6 +19,7 @@ export default async function StafPage() {
     { href: "/staf/wedstrijden", titel: "Wedstrijden", uitleg: "Programma beheren en per wedstrijd registreren (stats, keeper, scouting)." },
     { href: "/staf/trainingen", titel: "Trainingen", uitleg: "Presentielijst bijhouden: wie was er, afmeldingen en inzet." },
     { href: "/staf/spelsituaties", titel: "Spelsituaties", uitleg: "Tactisch tekenbord: magneetjes slepen, animatie maken en afspelen." },
+    { href: "/staf/lesgenerator", titel: "AI-lesgenerator", uitleg: "Laat de AI een complete training schrijven op basis van thema, duur en niveau." },
     { href: "/staf/posities", titel: "Positie-inventarisatie", uitleg: "Vul per speler je 1e/2e/3e positie in voor 4-3-3 en 4-4-2." },
   ];
   const beperktMenu = [
