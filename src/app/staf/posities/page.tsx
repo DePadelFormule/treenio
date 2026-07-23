@@ -41,12 +41,20 @@ export default async function PositiesPage() {
           </p>
         </div>
         {gebruiker.staf.mag_conclusie && (
-          <Link
-            href="/staf/posities/conclusie"
-            className="shrink-0 rounded-lg bg-sparta px-3 py-2 text-sm font-semibold text-white hover:bg-sparta-dark"
-          >
-            Conclusie →
-          </Link>
+          <div className="flex shrink-0 flex-col gap-2">
+            <Link
+              href="/staf/posities/overzicht"
+              className="rounded-lg border border-sparta px-3 py-2 text-center text-sm font-semibold text-sparta hover:bg-sparta hover:text-white"
+            >
+              Alle keuzes →
+            </Link>
+            <Link
+              href="/staf/posities/conclusie"
+              className="rounded-lg bg-sparta px-3 py-2 text-center text-sm font-semibold text-white hover:bg-sparta-dark"
+            >
+              Conclusie →
+            </Link>
+          </div>
         )}
       </div>
 

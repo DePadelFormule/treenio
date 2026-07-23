@@ -100,8 +100,13 @@ export default async function ConclusiePage() {
           ← Terug naar invullen
         </Link>
         <h1 className="mb-1 mt-4 text-2xl font-bold text-sparta">Conclusie — ideaal elftal</h1>
-        <p className="mb-5 text-sm text-neutral-500">
+        <p className="mb-2 text-sm text-neutral-500">
           De voorkeuren van alle trainers samengevoegd tot één opstelling per systeem.
+        </p>
+        <p className="mb-5 text-sm">
+          <Link href="/staf/posities/overzicht" className="font-semibold text-sparta hover:underline">
+            Bekijk de losse keuzes per trainer →
+          </Link>
         </p>
       </div>
 
