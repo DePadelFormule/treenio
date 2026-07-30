@@ -46,7 +46,7 @@ export default async function PositiesPage() {
               href="/staf/posities/overzicht"
               className="rounded-lg border border-sparta px-3 py-2 text-center text-sm font-semibold text-sparta hover:bg-sparta hover:text-white"
             >
-              Alle keuzes →
+              Uitkomst per speler →
             </Link>
             <Link
               href="/staf/posities/conclusie"

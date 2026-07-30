@@ -105,7 +105,7 @@ export default async function ConclusiePage() {
         </p>
         <p className="mb-5 text-sm">
           <Link href="/staf/posities/overzicht" className="font-semibold text-sparta hover:underline">
-            Bekijk de losse keuzes per trainer →
+            Bekijk de uitkomst per speler →
           </Link>
         </p>
       </div>
