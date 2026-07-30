@@ -18,9 +18,16 @@ export interface SlotConclusie {
 
 export type ConclusiePerSysteem = Record<Systeem, SlotConclusie[]>;
 
-function achternaam(naam: string) {
-  const delen = naam.trim().split(" ");
-  return delen.length > 1 ? delen.slice(1).join(" ") : naam;
+// Stemmen per speler: hoe vaak elke positie is gekozen, ongeacht 1e/2e/3e keus.
+export interface StemRij {
+  speler: string;
+  rugnummer: number | null;
+  posities: { code: string; keer: number }[];
+}
+export type StemmenPerSysteem = Record<Systeem, StemRij[]>;
+
+function voornaam(naam: string) {
+  return naam.trim().split(" ")[0] || naam;
 }
 
 function Veld({ slots }: { slots: SlotConclusie[] }) {
@@ -39,7 +46,7 @@ function Veld({ slots }: { slots: SlotConclusie[] }) {
             {p.nr}
           </div>
           <div className="mt-0.5 max-w-[5.5rem] truncate text-[0.62rem] font-semibold text-white drop-shadow">
-            {p.speler ? achternaam(p.speler) : "—"}
+            {p.speler ? voornaam(p.speler) : "—"}
           </div>
         </div>
       ))}
@@ -47,9 +54,18 @@ function Veld({ slots }: { slots: SlotConclusie[] }) {
   );
 }
 
-export function ConclusieWeergave({ data, aantalTrainers }: { data: ConclusiePerSysteem; aantalTrainers: number }) {
+export function ConclusieWeergave({
+  data,
+  stemmen,
+  aantalTrainers,
+}: {
+  data: ConclusiePerSysteem;
+  stemmen: StemmenPerSysteem;
+  aantalTrainers: number;
+}) {
   const [systeem, setSysteem] = useState<Systeem>("4-3-3");
   const slots = data[systeem];
+  const stemRijen = stemmen[systeem];
 
   return (
     <div>
@@ -91,9 +107,9 @@ export function ConclusieWeergave({ data, aantalTrainers }: { data: ConclusiePer
           <thead>
             <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
               <th className="px-3 py-2">Positie</th>
-              <th className="px-2 py-2">Keuze</th>
-              <th className="px-2 py-2 text-right">Punten</th>
-              <th className="px-2 py-2">Alternatieven</th>
+              <th className="px-2 py-2">1e keuze</th>
+              <th className="px-2 py-2">2e keuze</th>
+              <th className="px-2 py-2">3e keuze</th>
             </tr>
           </thead>
           <tbody>
@@ -106,18 +122,79 @@ export function ConclusieWeergave({ data, aantalTrainers }: { data: ConclusiePer
                   <span className="ml-1.5 font-semibold">{p.code}</span>
                   <span className="ml-1 text-xs text-neutral-400">{p.naam}</span>
                 </td>
-                <td className="whitespace-nowrap px-2 py-1.5 font-medium">{p.speler ?? "—"}</td>
-                <td className="px-2 py-1.5 text-right tabular-nums text-neutral-600">{p.punten || ""}</td>
-                <td className="px-2 py-1.5 text-xs text-neutral-500">
-                  {p.kandidaten.length > 0
-                    ? p.kandidaten.map((k) => `${k.naam} (${k.punten})`).join(", ")
-                    : "—"}
+                <td className="whitespace-nowrap px-2 py-1.5 font-medium">
+                  {p.speler ?? "—"}
+                  {p.speler && <span className="ml-1 text-xs font-normal text-neutral-400">{p.punten} pt</span>}
                 </td>
+                {[0, 1].map((i) => {
+                  const k = p.kandidaten[i];
+                  return (
+                    <td key={i} className="whitespace-nowrap px-2 py-1.5 text-neutral-600">
+                      {k ? (
+                        <>
+                          {k.naam}
+                          <span className="ml-1 text-xs text-neutral-400">{k.punten} pt</span>
+                        </>
+                      ) : (
+                        <span className="text-neutral-300">—</span>
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <p className="mt-2 text-xs text-neutral-400">
+        2e en 3e keuze: de beste overige kandidaten voor die positie op punten. Een speler kan bij
+        meerdere posities als kandidaat staan; in het elftal zelf staat iedereen maar één keer.
+      </p>
+
+      {/* Stemmen per speler: ruwe telling, ongeacht 1e/2e/3e keus */}
+      {stemRijen.length > 0 && (
+        <section className="mt-6 print:break-inside-avoid">
+          <h3 className="mb-1 font-semibold text-neutral-800">Stemmen per speler</h3>
+          <p className="mb-2 text-xs text-neutral-500">
+            Hoe vaak trainers een positie voor de speler kozen, ongeacht of het de 1e, 2e of 3e keus was.
+          </p>
+          <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wide text-neutral-500">
+                  <th className="px-3 py-2">Speler</th>
+                  <th className="px-2 py-2">Posities (aantal stemmen)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stemRijen.map((r) => (
+                  <tr key={r.speler} className="border-b border-neutral-100 last:border-0 align-top">
+                    <td className="whitespace-nowrap px-3 py-1.5">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-100 text-[0.65rem] font-bold text-neutral-500">
+                        {r.rugnummer ?? "–"}
+                      </span>
+                      <span className="ml-1.5 font-medium">{r.speler}</span>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <div className="flex flex-wrap gap-1">
+                        {r.posities.map((p) => (
+                          <span
+                            key={p.code}
+                            className="inline-flex items-baseline gap-1 rounded bg-neutral-100 px-1.5 py-0.5 text-neutral-700"
+                          >
+                            <span className="font-semibold">{p.code}</span>
+                            <span className="text-xs text-neutral-500">{p.keer}×</span>
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
