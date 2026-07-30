@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,13 +10,22 @@ export default function WachtwoordVergetenPage() {
   const [verstuurd, setVerstuurd] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
 
+  // Kwam je hier terug via een mislukte herstellink (verlopen of al gebruikt),
+  // leg dan uit wat er aan de hand is in plaats van een kale fout.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("fout") === "link") {
+      setFout("De herstellink is verlopen of al gebruikt. Vraag hieronder een nieuwe aan.");
+    }
+  }, []);
+
   async function versturen(e: React.FormEvent) {
     e.preventDefault();
     setFout(null);
     setBezig(true);
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login/nieuw-wachtwoord`,
+      redirectTo: `${window.location.origin}/auth/confirm?next=/login/nieuw-wachtwoord`,
     });
     setBezig(false);
     if (error) {
