@@ -4,7 +4,7 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { FORMATIES, SYSTEMEN } from "@/lib/posities";
 import { ConclusieWeergave } from "@/components/ConclusieWeergave";
-import type { ConclusiePerSysteem, SlotConclusie } from "@/components/ConclusieWeergave";
+import type { ConclusiePerSysteem, SlotConclusie, StemRij, StemmenPerSysteem } from "@/components/ConclusieWeergave";
 import type { PositieVoorkeur, Speler, Systeem } from "@/lib/types/database";
 
 // Greedy toewijzing: bereken per (speler, code) een puntentotaal en vul elke
@@ -67,6 +67,35 @@ function ideaalElftal(
   });
 }
 
+// Ruwe telling per speler: hoe vaak elke positie is gekozen, waarbij 1e, 2e en
+// 3e keus allemaal even zwaar tellen (1 stem).
+function stemmenPerSpeler(
+  systeem: Systeem,
+  voorkeuren: PositieVoorkeur[],
+  naamVan: Map<string, string>,
+  rugVan: Map<string, number | null>,
+): StemRij[] {
+  const per = new Map<string, Map<string, number>>();
+  for (const v of voorkeuren) {
+    if (v.systeem !== systeem) continue;
+    for (const code of [v.positie_1, v.positie_2, v.positie_3]) {
+      if (!code) continue;
+      if (!per.has(v.speler_id)) per.set(v.speler_id, new Map());
+      const m = per.get(v.speler_id)!;
+      m.set(code, (m.get(code) ?? 0) + 1);
+    }
+  }
+  const rijen: StemRij[] = [...per.entries()].map(([sid, m]) => ({
+    speler: naamVan.get(sid) ?? "?",
+    rugnummer: rugVan.get(sid) ?? null,
+    posities: [...m.entries()]
+      .map(([code, keer]) => ({ code, keer }))
+      .sort((a, b) => b.keer - a.keer || a.code.localeCompare(b.code)),
+  }));
+  rijen.sort((a, b) => (a.rugnummer ?? 999) - (b.rugnummer ?? 999) || a.speler.localeCompare(b.speler));
+  return rijen;
+}
+
 export default async function ConclusiePage() {
   const gebruiker = await getHuidigeGebruiker();
   if (!gebruiker) redirect("/login");
@@ -91,7 +120,11 @@ export default async function ConclusiePage() {
   const aantalTrainers = new Set(vk.map((v) => v.staf_id)).size;
 
   const data = {} as ConclusiePerSysteem;
-  for (const s of SYSTEMEN) data[s] = ideaalElftal(s, vk, naamVan, rugVan);
+  const stemmen = {} as StemmenPerSysteem;
+  for (const s of SYSTEMEN) {
+    data[s] = ideaalElftal(s, vk, naamVan, rugVan);
+    stemmen[s] = stemmenPerSpeler(s, vk, naamVan, rugVan);
+  }
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 print:py-2">
@@ -115,7 +148,7 @@ export default async function ConclusiePage() {
           Nog geen enkele trainer heeft posities ingevuld.
         </p>
       ) : (
-        <ConclusieWeergave data={data} aantalTrainers={aantalTrainers} />
+        <ConclusieWeergave data={data} stemmen={stemmen} aantalTrainers={aantalTrainers} />
       )}
     </main>
   );
