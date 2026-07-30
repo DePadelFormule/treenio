@@ -23,6 +23,14 @@ export default async function OverzichtPage() {
   const naamVanTrainer = new Map<string, string>();
   for (const s of (staf ?? []) as Pick<Staf, "id" | "naam">[]) naamVanTrainer.set(s.id, s.naam);
 
+  // Wie heeft er (iets) ingevuld en wie nog helemaal niets?
+  const ingevuldIds = new Set(((voorkeuren ?? []) as PositieVoorkeur[]).map((v) => v.staf_id));
+  const ingevuld: string[] = [];
+  const nietIngevuld: string[] = [];
+  for (const s of (staf ?? []) as Pick<Staf, "id" | "naam">[]) {
+    (ingevuldIds.has(s.id) ? ingevuld : nietIngevuld).push(s.naam);
+  }
+
   // Index: speler_id → systeem → staf_id → codes
   const idx = new Map<string, Map<Systeem, Map<string, [string | null, string | null, string | null]>>>();
   for (const v of (voorkeuren ?? []) as PositieVoorkeur[]) {
@@ -58,9 +66,10 @@ export default async function OverzichtPage() {
 
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="mb-1 text-2xl font-bold text-sparta">Keuzes per trainer</h1>
+          <h1 className="mb-1 text-2xl font-bold text-sparta">Uitkomst per speler</h1>
           <p className="text-sm text-neutral-500">
-            Per speler zie je wat elke trainer koos (1e · 2e · 3e). Wissel bovenaan van systeem.
+            Per speler de opgetelde uitkomst van alle trainers, met een badge die toont hoe
+            eensgezind ze zijn. Klap &quot;Per trainer&quot; open voor de losse keuzes.
           </p>
         </div>
         <Link
@@ -73,7 +82,7 @@ export default async function OverzichtPage() {
 
       <div className="mt-5">
         {heeftKeuzes ? (
-          <OverzichtWeergave rijen={rijen} />
+          <OverzichtWeergave rijen={rijen} ingevuld={ingevuld} nietIngevuld={nietIngevuld} />
         ) : (
           <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400">
             Nog geen enkele trainer heeft posities ingevuld.
