@@ -70,7 +70,7 @@ Vouw **Environment Variables** open en voeg toe:
 | `NEXT_PUBLIC_SUPABASE_URL` | je Project URL uit stap 4 |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | je anon public key uit stap 4 |
 
-(De KNVB-variabelen en Resend zijn optioneel; die kun je later toevoegen.)
+(Resend is optioneel; die kun je later toevoegen.)
 
 ### 8. Deployen
 Klik **Deploy**. Na ~1 minuut krijg je een adres als
@@ -81,9 +81,6 @@ stap 5 → je komt op het stafdashboard. 🎉
 
 ## Optioneel (later)
 
-- **Wedstrijdprogramma uit voetbal.nl**: zet `KNVB_PROGRAMMA_URL` (+ evt.
-  `KNVB_TEAM_CODE`) als env-var zodra de club een Club.Dataservice-key heeft.
-  Daarna werkt de knop "Programma ophalen" op `/staf/wedstrijden`.
 - **Eigen domein** (bijv. `treenio.nl`, ~€10/jaar): Vercel → Project →
   **Domains** → toevoegen en de DNS volgen.
 - **Supabase pauzeert** na ~7 dagen niets-doen op het gratis plan. Je hervat het
