@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
+import { NAAR_KAARTCODE } from "@/lib/posities";
 import type { PositieVoorkeur, Systeem } from "@/lib/types/database";
 
 // Eén rij (speler + systeem) van de ingelogde trainer opslaan. De staf_id
@@ -68,14 +69,26 @@ export async function zetConclusieInSpelerskaarten(): Promise<{
     return { ok: false, bericht: "Er zijn nog geen ingevulde posities." };
   }
 
-  // punten per speler per positiecode, over beide systemen heen
+  // Punten per speler per positiecode, alleen uit het 4-3-3-systeem. De codes
+  // worden vertaald naar de spelerskaart-codes (NAAR_KAARTCODE), want de
+  // inventarisatie gebruikt een andere lijst (RB is daar rechtsbuiten, op de
+  // kaart rechtsback; SP wordt ST, RCM/LCM worden CM).
   const score = new Map<string, Map<string, number>>();
+  const tel = (spelerId: string, code: string | null, punten: number) => {
+    if (!code) return;
+    const kaartcode = NAAR_KAARTCODE[code] ?? code;
+    const m = score.get(spelerId) ?? new Map<string, number>();
+    m.set(kaartcode, (m.get(kaartcode) ?? 0) + punten);
+    score.set(spelerId, m);
+  };
   for (const v of vk) {
-    const m = score.get(v.speler_id) ?? new Map<string, number>();
-    if (v.positie_1) m.set(v.positie_1, (m.get(v.positie_1) ?? 0) + 3);
-    if (v.positie_2) m.set(v.positie_2, (m.get(v.positie_2) ?? 0) + 2);
-    if (v.positie_3) m.set(v.positie_3, (m.get(v.positie_3) ?? 0) + 1);
-    score.set(v.speler_id, m);
+    if (v.systeem !== "4-3-3") continue;
+    tel(v.speler_id, v.positie_1, 3);
+    tel(v.speler_id, v.positie_2, 2);
+    tel(v.speler_id, v.positie_3, 1);
+  }
+  if (score.size === 0) {
+    return { ok: false, bericht: "Er zijn nog geen 4-3-3-posities ingevuld." };
   }
 
   let bijgewerkt = 0;

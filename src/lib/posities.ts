@@ -51,3 +51,28 @@ export function codesVan(systeem: Systeem): string[] {
 export function slotVanCode(systeem: Systeem, code: string): Slot | undefined {
   return FORMATIES[systeem].find((s) => s.code === code);
 }
+
+// Vertaling van de inventarisatie-codes (hierboven) naar de positiecodes van
+// de spelerskaart (POSITIE_CODES in constants.ts). Let op de valse vrienden:
+// in de inventarisatie is RB rechtsbuiten en LB linksbuiten, op de kaart zijn
+// dat rechtsback en linksback. Meerdere inventarisatie-codes kunnen op
+// dezelfde kaartcode uitkomen (RCM/LCM → CM, SP/SPL/SPR → ST); punten worden
+// dan opgeteld.
+export const NAAR_KAARTCODE: Record<string, string> = {
+  K: "K",
+  RA: "RB",   // rechtsachter → rechtsback
+  RCV: "RCV",
+  LCV: "LCV",
+  LA: "LB",   // linksachter → linksback
+  RCM: "CM",
+  LCM: "CM",
+  CVM: "CVM",
+  AMC: "AM",
+  RM: "RM",
+  LM: "LM",
+  RB: "RV",   // rechtsbuiten → rechtervleugel
+  LB: "LV",   // linksbuiten → linkervleugel
+  SP: "ST",
+  SPL: "ST",
+  SPR: "ST",
+};
