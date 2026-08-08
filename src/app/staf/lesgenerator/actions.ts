@@ -24,7 +24,10 @@ export type LesResultaat =
 
 export async function genereerLes(invoer: LesInvoer): Promise<LesResultaat> {
   const gebruiker = await getHuidigeGebruiker();
-  if (gebruiker?.rol !== "staf") return { ok: false, fout: "Geen toegang." };
+  // Alleen de hoofdtrainer: elke aanroep kost API-tegoed.
+  if (gebruiker?.rol !== "staf" || !gebruiker.staf?.mag_conclusie) {
+    return { ok: false, fout: "Geen toegang." };
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

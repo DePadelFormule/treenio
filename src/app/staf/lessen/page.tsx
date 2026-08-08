@@ -10,6 +10,7 @@ export default async function LessenPage() {
   const gebruiker = await getHuidigeGebruiker();
   if (!gebruiker) redirect("/login");
   if (gebruiker.rol !== "staf") redirect("/");
+  if (!gebruiker.staf?.mag_conclusie) redirect("/staf");
 
   const supabase = await createClient();
   const { data: lessen } = await supabase
