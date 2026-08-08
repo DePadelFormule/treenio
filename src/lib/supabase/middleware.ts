@@ -48,28 +48,26 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Beperkte toegang: assistenten zonder `mag_conclusie` mogen alleen bij het
-  // dashboard, hun account en de positie-inventarisatie. De rest van de app
-  // (team, wedstrijden, trainingen, spelsituaties, spelerskaarten) is voor wie
-  // volledige toegang heeft. We schermen dit hier centraal af, niet alleen in
-  // het menu, zodat directe URL's ook geblokkeerd worden.
-  if (user && path.startsWith("/staf")) {
-    const altijdToegankelijk =
-      path === "/staf" ||
-      path.startsWith("/staf/account") ||
-      path.startsWith("/staf/posities");
-    if (!altijdToegankelijk) {
-      const { data: staf } = await supabase
-        .from("staf")
-        .select("mag_conclusie")
-        .eq("auth_user_id", user.id)
-        .maybeSingle();
-      if (!(staf as { mag_conclusie: boolean } | null)?.mag_conclusie) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/staf/posities";
-        url.search = "";
-        return NextResponse.redirect(url);
-      }
+  // Alleen voor de hoofdtrainer (mag_conclusie): de afgeronde positie-
+  // inventarisatie en de AI-lesgenerator (kost geld per gegenereerde les) met
+  // het lessenarchief. Alle andere staf-pagina's zijn voor alle trainers.
+  // We schermen dit hier centraal af, niet alleen in het menu, zodat directe
+  // URL's ook geblokkeerd worden.
+  const alleenHoofdtrainer =
+    path.startsWith("/staf/posities") ||
+    path.startsWith("/staf/lesgenerator") ||
+    path.startsWith("/staf/lessen");
+  if (user && alleenHoofdtrainer) {
+    const { data: staf } = await supabase
+      .from("staf")
+      .select("mag_conclusie")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+    if (!(staf as { mag_conclusie: boolean } | null)?.mag_conclusie) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/staf";
+      url.search = "";
+      return NextResponse.redirect(url);
     }
   }
 

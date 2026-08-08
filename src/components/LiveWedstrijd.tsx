@@ -13,6 +13,8 @@ interface Props {
   basisIds: string[];
   bankIds: string[];
   beginEvents: Ev[];
+  // Seizoenstotaal speelminuten per speler-id, voor eerlijk wisselen.
+  minutenSeizoen?: Record<string, number>;
 }
 
 const LABEL: Record<string, string> = {
@@ -20,7 +22,7 @@ const LABEL: Record<string, string> = {
   wissel_in: "🔺 Wissel in", wissel_uit: "🔻 Wissel uit", tegengoal: "⚽ Tegen", einde: "⏱️ Einde",
 };
 
-export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, beginEvents }: Props) {
+export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, beginEvents, minutenSeizoen = {} }: Props) {
   const [events, setEvents] = useState<Ev[]>(beginEvents);
   const [picker, setPicker] = useState<{ type: string; groep: "selectie" | "veld" | "bank" } | null>(null);
   const [melding, setMelding] = useState<string | null>(null);
@@ -186,10 +188,22 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
     setPicker({ type, groep });
   }
 
+  // Bij wissels sorteren we op seizoensminuten zodat eerlijk verdelen vanzelf
+  // gaat: "wissel in" toont wie het minst speelde bovenaan, "wissel uit" wie
+  // het meest speelde bovenaan.
+  const isWisselPicker = picker?.type === "wissel_in" || picker?.type === "wissel_uit";
+  const minVan = (id: string) => minutenSeizoen[id] ?? 0;
+
   function pickerSpelers() {
     if (!picker) return [];
-    if (picker.groep === "veld") return spelers.filter((s) => onField.has(s.id));
-    if (picker.groep === "bank") return spelers.filter((s) => selectieIds.includes(s.id) && !onField.has(s.id));
+    if (picker.groep === "veld") {
+      const veld = spelers.filter((s) => onField.has(s.id));
+      return picker.type === "wissel_uit" ? [...veld].sort((a, b) => minVan(b.id) - minVan(a.id)) : veld;
+    }
+    if (picker.groep === "bank") {
+      const bank = spelers.filter((s) => selectieIds.includes(s.id) && !onField.has(s.id));
+      return picker.type === "wissel_in" ? [...bank].sort((a, b) => minVan(a.id) - minVan(b.id)) : bank;
+    }
     return spelers.filter((s) => selectieIds.includes(s.id));
   }
 
@@ -271,6 +285,11 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
               <p className="mb-3 text-sm font-semibold text-neutral-700">
                 {LABEL[picker.type]} · {minuut}&apos; — kies speler
               </p>
+              {isWisselPicker && (
+                <p className="-mt-2 mb-3 text-xs text-neutral-400">
+                  Gesorteerd op speelminuten dit seizoen — {picker.type === "wissel_in" ? "minste" : "meeste"} eerst.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {pickerSpelers().map((s) => (
                   <button
@@ -280,6 +299,9 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
                   >
                     <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-sparta/10 text-xs font-bold text-sparta">{s.rugnummer ?? "–"}</span>
                     <span className="truncate">{s.naam.split(" ")[0]}</span>
+                    {isWisselPicker && (
+                      <span className="ml-auto flex-none text-xs tabular-nums text-neutral-400">{minVan(s.id)}&apos;</span>
+                    )}
                   </button>
                 ))}
                 {pickerSpelers().length === 0 && <p className="col-span-2 text-sm text-neutral-400 sm:col-span-3">Geen spelers beschikbaar voor deze actie.</p>}

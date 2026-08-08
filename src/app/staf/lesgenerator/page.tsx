@@ -10,6 +10,8 @@ export default async function LesGeneratorPage() {
   const gebruiker = await getHuidigeGebruiker();
   if (!gebruiker) redirect("/login");
   if (gebruiker.rol !== "staf") redirect("/");
+  // Alleen de hoofdtrainer: elke gegenereerde les kost geld (API-tegoed).
+  if (!gebruiker.staf?.mag_conclusie) redirect("/staf");
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">

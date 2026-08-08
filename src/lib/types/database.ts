@@ -350,6 +350,7 @@ export interface Database {
     Views: Record<string, never>;
     Functions: {
       is_staf: { Args: Record<string, never>; Returns: boolean };
+      check_registratie_code: { Args: { code: string }; Returns: boolean };
     };
     Enums: Record<string, never>;
   };
