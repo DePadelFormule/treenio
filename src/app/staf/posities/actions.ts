@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
-import { NAAR_KAARTCODE } from "@/lib/posities";
 import type { PositieVoorkeur, Systeem } from "@/lib/types/database";
 
 // Eén rij (speler + systeem) van de ingelogde trainer opslaan. De staf_id
@@ -69,16 +68,14 @@ export async function zetConclusieInSpelerskaarten(): Promise<{
     return { ok: false, bericht: "Er zijn nog geen ingevulde posities." };
   }
 
-  // Punten per speler per positiecode, alleen uit het 4-3-3-systeem. De codes
-  // worden vertaald naar de spelerskaart-codes (NAAR_KAARTCODE), want de
-  // inventarisatie gebruikt een andere lijst (RB is daar rechtsbuiten, op de
-  // kaart rechtsback; SP wordt ST, RCM/LCM worden CM).
+  // Punten per speler per positiecode, alleen uit het 4-3-3-systeem. De
+  // spelerskaart gebruikt dezelfde afkortingen, dus de codes gaan één-op-één
+  // over.
   const score = new Map<string, Map<string, number>>();
   const tel = (spelerId: string, code: string | null, punten: number) => {
     if (!code) return;
-    const kaartcode = NAAR_KAARTCODE[code] ?? code;
     const m = score.get(spelerId) ?? new Map<string, number>();
-    m.set(kaartcode, (m.get(kaartcode) ?? 0) + punten);
+    m.set(code, (m.get(code) ?? 0) + punten);
     score.set(spelerId, m);
   };
   for (const v of vk) {

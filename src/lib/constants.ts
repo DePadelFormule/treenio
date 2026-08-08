@@ -1,21 +1,19 @@
 // Gedeelde keuzelijsten voor de invoer-UI.
 
-// Vaste positiecodes zodat de groepering schoon blijft (v_speler_posities).
+// Vaste positiecodes — dezelfde afkortingen als de positie-inventarisatie
+// (4-3-3), zodat de hele app één taal spreekt.
 export const POSITIE_CODES = [
   "K",   // keeper
-  "RB",  // rechtsback
+  "RA",  // rechtsachter
   "RCV", // rechter centrale verdediger
-  "CV",  // centrale verdediger
   "LCV", // linker centrale verdediger
-  "LB",  // linksback
-  "CVM", // controlerende middenvelder
-  "CM",  // centrale middenvelder
-  "AM",  // aanvallende middenvelder
-  "RM",  // rechtermidden
-  "LM",  // linkermidden
-  "RV",  // rechtervleugel
-  "LV",  // linkervleugel
-  "ST",  // spits
+  "LA",  // linksachter
+  "RCM", // rechter centrale middenvelder
+  "AMC", // aanvallende middenvelder centraal
+  "LCM", // linker centrale middenvelder
+  "LB",  // linksbuiten
+  "SP",  // spits
+  "RB",  // rechtsbuiten
 ] as const;
 
 export const AFMELD_OPTIES: { value: string; label: string }[] = [

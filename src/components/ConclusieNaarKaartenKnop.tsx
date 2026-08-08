@@ -13,7 +13,7 @@ export function ConclusieNaarKaartenKnop() {
   function klik() {
     if (
       !confirm(
-        "De drie sterkste 4-3-3-posities per speler worden op de spelerskaarten gezet (hoofdpositie + 2 alternatieven, vertaald naar de kaart-afkortingen). Bestaande positievelden worden overschreven. Doorgaan?",
+        "De drie sterkste 4-3-3-posities per speler worden op de spelerskaarten gezet (hoofdpositie + 2 alternatieven). Bestaande positievelden worden overschreven. Doorgaan?",
       )
     )
       return;
