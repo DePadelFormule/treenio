@@ -90,8 +90,23 @@ export default async function StafPage() {
         </div>
       </header>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        {menu.map((m) => (
+          <Link
+            key={m.href}
+            href={m.href}
+            className="group rounded-xl border border-neutral-200 bg-white p-5 transition hover:border-sparta hover:shadow-sm"
+          >
+            <h2 className="text-lg font-semibold text-neutral-800 group-hover:text-sparta">
+              {m.titel} <span className="text-sparta">→</span>
+            </h2>
+            <p className="mt-1 text-sm text-neutral-500">{m.uitleg}</p>
+          </Link>
+        ))}
+      </div>
+
       {magAlles && ingevuld.length > 0 && (
-        <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-4">
+        <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold text-neutral-800">Posities ingevuld</h2>
             <Link href="/staf/posities/overzicht" className="text-sm font-semibold text-sparta hover:underline">
@@ -119,21 +134,6 @@ export default async function StafPage() {
           </ul>
         </div>
       )}
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {menu.map((m) => (
-          <Link
-            key={m.href}
-            href={m.href}
-            className="group rounded-xl border border-neutral-200 bg-white p-5 transition hover:border-sparta hover:shadow-sm"
-          >
-            <h2 className="text-lg font-semibold text-neutral-800 group-hover:text-sparta">
-              {m.titel} <span className="text-sparta">→</span>
-            </h2>
-            <p className="mt-1 text-sm text-neutral-500">{m.uitleg}</p>
-          </Link>
-        ))}
-      </div>
     </main>
   );
 }
