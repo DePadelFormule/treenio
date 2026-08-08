@@ -4,6 +4,7 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { FORMATIES, SYSTEMEN } from "@/lib/posities";
 import { ConclusieWeergave } from "@/components/ConclusieWeergave";
+import { ConclusieNaarKaartenKnop } from "@/components/ConclusieNaarKaartenKnop";
 import type { ConclusiePerSysteem, SlotConclusie, StemRij, StemmenPerSysteem } from "@/components/ConclusieWeergave";
 import type { PositieVoorkeur, Speler, Systeem } from "@/lib/types/database";
 
@@ -136,11 +137,14 @@ export default async function ConclusiePage() {
         <p className="mb-2 text-sm text-neutral-500">
           De voorkeuren van alle trainers samengevoegd tot één opstelling per systeem.
         </p>
-        <p className="mb-5 text-sm">
+        <p className="mb-3 text-sm">
           <Link href="/staf/posities/overzicht" className="font-semibold text-sparta hover:underline">
             Bekijk de uitkomst per speler →
           </Link>
         </p>
+        <div className="mb-5">
+          <ConclusieNaarKaartenKnop />
+        </div>
       </div>
 
       {aantalTrainers === 0 ? (
