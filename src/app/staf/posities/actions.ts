@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
+import { POSITIE_CODES } from "@/lib/constants";
 import type { PositieVoorkeur, Systeem } from "@/lib/types/database";
 
 // Eén rij (speler + systeem) van de ingelogde trainer opslaan. De staf_id
@@ -105,10 +106,21 @@ export async function zetConclusieInSpelerskaarten(): Promise<{
     if (!error) bijgewerkt++;
   }
 
+  // Opruimen: verouderde afkortingen (uit eerdere versies, zoals CVM/CM/ST)
+  // die niet in de huidige lijst staan leegmaken — ook bij spelers die
+  // hierboven niet zijn bijgewerkt omdat er geen 4-3-3-stemmen op ze zijn.
+  const geldig = `(${POSITIE_CODES.join(",")})`;
+  for (const kolom of ["hoofdpositie", "alt_positie_1", "alt_positie_2"] as const) {
+    await supabase
+      .from("spelers")
+      .update({ [kolom]: null } as never)
+      .not(kolom, "in", geldig);
+  }
+
   revalidatePath("/staf/spelers");
   revalidatePath("/staf/team");
   return {
     ok: true,
-    bericht: `Posities ingevuld op ${bijgewerkt} spelerskaart${bijgewerkt === 1 ? "" : "en"}.`,
+    bericht: `Posities ingevuld op ${bijgewerkt} spelerskaart${bijgewerkt === 1 ? "" : "en"}; verouderde codes opgeruimd.`,
   };
 }
