@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { logEvent, verwijderEvent } from "@/app/staf/wedstrijd/[id]/live/actions";
 
 interface SpelerKort { id: string; naam: string; rugnummer: number | null; }
@@ -33,6 +33,72 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
   }, [spelers]);
 
   const selectieIds = basisIds.length || bankIds.length ? [...new Set([...basisIds, ...bankIds])] : spelers.map((s) => s.id);
+
+  // ---- Offline-wachtrij ----
+  // Langs de lijn is het bereik vaak matig. Events die niet verstuurd kunnen
+  // worden gaan in een wachtrij (ook bewaard in de browser, dus een app-herstart
+  // overleeft het) en worden automatisch alsnog verstuurd zodra er verbinding is.
+  const QKEY = `treenio-eventqueue-${wedstrijdId}`;
+  interface WachtItem { tempId: string; type: string; speler_id: string | null; minuut: number; }
+  const wachtrijRef = useRef<WachtItem[]>([]);
+  const [wachtAantal, setWachtAantal] = useState(0);
+  const bezigMetVersturen = useRef(false);
+
+  const syncWachtrij = useCallback(() => {
+    try {
+      if (wachtrijRef.current.length) localStorage.setItem(QKEY, JSON.stringify(wachtrijRef.current));
+      else localStorage.removeItem(QKEY);
+    } catch {}
+    setWachtAantal(wachtrijRef.current.length);
+  }, [QKEY]);
+
+  const verstuurWachtrij = useCallback(async () => {
+    if (bezigMetVersturen.current) return;
+    bezigMetVersturen.current = true;
+    try {
+      while (wachtrijRef.current.length > 0) {
+        const item = wachtrijRef.current[0];
+        let res: { ok: boolean; id?: string };
+        try {
+          res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id: item.speler_id, type: item.type, minuut: item.minuut });
+        } catch {
+          break; // nog steeds geen verbinding; later opnieuw proberen
+        }
+        if (res.ok && res.id) {
+          const nieuwId = res.id;
+          setEvents((e) => e.map((x) => (x.id === item.tempId ? { ...x, id: nieuwId } : x)));
+        } else {
+          // Server bereikt maar geweigerd: item laten vallen zodat de rij niet blokkeert.
+          setEvents((e) => e.filter((x) => x.id !== item.tempId));
+          setMelding("Eén gebeurtenis kon niet worden opgeslagen en is verwijderd.");
+        }
+        wachtrijRef.current = wachtrijRef.current.slice(1);
+        syncWachtrij();
+      }
+    } finally {
+      bezigMetVersturen.current = false;
+    }
+  }, [wedstrijdId, syncWachtrij]);
+
+  // Bij openen: wachtrij uit de browser laden en tonen; daarna periodiek en bij
+  // terugkerende verbinding opnieuw proberen te versturen.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QKEY);
+      if (raw) {
+        const items = JSON.parse(raw) as WachtItem[];
+        if (items.length) {
+          wachtrijRef.current = items;
+          setWachtAantal(items.length);
+          setEvents((e) => [...e, ...items.map((i) => ({ id: i.tempId, type: i.type, speler_id: i.speler_id, minuut: i.minuut }))]);
+        }
+      }
+    } catch {}
+    const bijOnline = () => { void verstuurWachtrij(); };
+    window.addEventListener("online", bijOnline);
+    const iv = setInterval(() => { if (wachtrijRef.current.length) void verstuurWachtrij(); }, 10000);
+    return () => { window.removeEventListener("online", bijOnline); clearInterval(iv); };
+  }, [QKEY, verstuurWachtrij]);
 
   // ---- Timer (bewaard in de browser) ----
   const TKEY = `treenio-timer-${wedstrijdId}`;
@@ -74,14 +140,42 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
   function log(type: string, speler_id: string | null) {
     const m = minuut;
     setMelding(null);
+    // Direct tonen (optimistisch); daarna versturen of in de wachtrij zetten.
+    const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setEvents((e) => [...e, { id: tempId, type, speler_id, minuut: m }]);
     start(async () => {
-      const res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id, type, minuut: m });
-      if (res.ok && res.id) setEvents((e) => [...e, { id: res.id!, type, speler_id, minuut: m }]);
-      else setMelding("Kon niet opslaan. Is de wedstrijd_events-tabel al in Supabase aangemaakt?");
+      // Staat er al iets in de wachtrij, dan sluit dit event achteraan aan
+      // zodat de volgorde op de server klopt.
+      if (wachtrijRef.current.length > 0) {
+        wachtrijRef.current = [...wachtrijRef.current, { tempId, type, speler_id, minuut: m }];
+        syncWachtrij();
+        void verstuurWachtrij();
+        return;
+      }
+      try {
+        const res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id, type, minuut: m });
+        if (res.ok && res.id) {
+          const nieuwId = res.id;
+          setEvents((e) => e.map((x) => (x.id === tempId ? { ...x, id: nieuwId } : x)));
+        } else {
+          setEvents((e) => e.filter((x) => x.id !== tempId));
+          setMelding("Kon niet opslaan. Is de wedstrijd_events-tabel al in Supabase aangemaakt?");
+        }
+      } catch {
+        // Geen verbinding: in de wachtrij; wordt automatisch alsnog verstuurd.
+        wachtrijRef.current = [...wachtrijRef.current, { tempId, type, speler_id, minuut: m }];
+        syncWachtrij();
+      }
     });
   }
   function wis(id: string) {
     setEvents((e) => e.filter((x) => x.id !== id));
+    if (id.startsWith("local-")) {
+      // Zat nog in de wachtrij; alleen lokaal weghalen.
+      wachtrijRef.current = wachtrijRef.current.filter((i) => i.tempId !== id);
+      syncWachtrij();
+      return;
+    }
     start(() => { void verwijderEvent(id, wedstrijdId); });
   }
 
@@ -107,6 +201,12 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
 
       {melding && (
         <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{melding}</p>
+      )}
+      {wachtAantal > 0 && (
+        <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          📶 {wachtAantal} gebeurtenis{wachtAantal === 1 ? "" : "sen"} wachten op verbinding — ze
+          blijven bewaard en worden automatisch verstuurd zodra er weer bereik is.
+        </p>
       )}
 
       {/* Timer + score */}

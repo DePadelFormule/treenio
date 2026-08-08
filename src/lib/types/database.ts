@@ -299,6 +299,18 @@ export interface KeeperTotalenView {
   opbouw_van_achteruit: number;
 }
 
+// Een bewaarde AI-les uit de lesgenerator. `les` is het volledige lesblad
+// (JSON volgens het schema in lesgenerator/schema.ts).
+export interface OpgeslagenLes {
+  id: string;
+  titel: string;
+  sport: string;
+  onderwerp: string;
+  datum: string | null;
+  les: unknown;
+  created_at: string;
+}
+
 // Minimale Database-shape voor de Supabase client. Voor de MVP houden we het
 // pragmatisch; tabellen die we nog niet typen vallen terug op `any` via index.
 export interface Database {
@@ -328,6 +340,11 @@ export interface Database {
         Row: StafNotitie;
         Insert: Partial<StafNotitie> & { speler_id: string };
         Update: Partial<StafNotitie>;
+      };
+      lessen: {
+        Row: OpgeslagenLes;
+        Insert: Partial<OpgeslagenLes> & { titel: string; sport: string; onderwerp: string; les: unknown };
+        Update: Partial<OpgeslagenLes>;
       };
     };
     Views: Record<string, never>;

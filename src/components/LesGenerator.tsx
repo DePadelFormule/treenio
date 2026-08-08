@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { genereerLes } from "@/app/staf/lesgenerator/actions";
+import { genereerLes, bewaarLes } from "@/app/staf/lesgenerator/actions";
 import type { LesInvoer } from "@/app/staf/lesgenerator/actions";
 import type { Les, Sport } from "@/lib/lesgenerator/schema";
 
@@ -110,12 +110,60 @@ export function LesGenerator() {
         <p className="text-xs text-neutral-400">De AI schrijft de les op basis van jouw invoer. Het duurt meestal 10 tot 30 seconden.</p>
       </form>
 
-      {les && <Lesblad les={les} />}
+      {les && (
+        <>
+          <BewaarPaneel les={les} />
+          <Lesblad les={les} />
+        </>
+      )}
     </div>
   );
 }
 
-function Lesblad({ les }: { les: Les }) {
+// Opslaan in het lessenarchief, optioneel gekoppeld aan een trainingsdatum.
+function BewaarPaneel({ les }: { les: Les }) {
+  const [datum, setDatum] = useState("");
+  const [bezig, start] = useTransition();
+  const [status, setStatus] = useState<{ ok: boolean; tekst: string } | null>(null);
+
+  function opslaan() {
+    setStatus(null);
+    start(async () => {
+      const res = await bewaarLes(les, datum || null);
+      setStatus(
+        res.ok
+          ? { ok: true, tekst: "Les bewaard in het archief." }
+          : { ok: false, tekst: res.fout ?? "Opslaan mislukt." },
+      );
+    });
+  }
+
+  return (
+    <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4 print:hidden">
+      <label className="text-sm text-neutral-600">
+        Trainingsdatum <span className="text-neutral-400">(optioneel)</span>
+        <input
+          type="date"
+          value={datum}
+          onChange={(e) => setDatum(e.target.value)}
+          className="ml-2 rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
+        />
+      </label>
+      <button
+        onClick={opslaan}
+        disabled={bezig || status?.ok}
+        className="rounded-lg bg-sparta px-4 py-2 text-sm font-semibold text-white hover:bg-sparta-dark disabled:opacity-50"
+      >
+        {bezig ? "Bewaren…" : status?.ok ? "✓ Bewaard" : "Les bewaren"}
+      </button>
+      {status && (
+        <span className={`text-sm ${status.ok ? "text-sparta" : "text-red-600"}`}>{status.tekst}</span>
+      )}
+    </div>
+  );
+}
+
+export function Lesblad({ les }: { les: Les }) {
   const somBlokken = les.blokken.reduce((t, b) => t + (b.duur_minuten || 0), 0);
 
   return (
