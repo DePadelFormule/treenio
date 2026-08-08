@@ -52,6 +52,19 @@ async function herbereken(supabase: SupaClient, wedstrijdId: string) {
   if (rijen.length > 0) {
     await supabase.from("wedstrijd_registraties").upsert(rijen as never, { onConflict: "wedstrijd_id,speler_id" });
   }
+
+  // Is de wedstrijd afgesloten ("einde" gelogd), schrijf dan de eindstand als
+  // uitslag (wij-tegen) in de wedstrijdenlijst. Zo vult de uitslag van eigen
+  // wedstrijden zichzelf in via de live-registratie.
+  const heeftEinde = ev.some((e) => e.type === "einde");
+  if (heeftEinde) {
+    const wij = ev.filter((e) => e.type === "goal").length;
+    const tegen = ev.filter((e) => e.type === "tegengoal").length;
+    await supabase
+      .from("wedstrijden")
+      .update({ uitslag: `${wij}-${tegen}` } as never)
+      .eq("id", wedstrijdId);
+  }
 }
 
 export interface EventPayload {
@@ -76,6 +89,7 @@ export async function logEvent(p: EventPayload): Promise<{ ok: boolean; id?: str
   await herbereken(supabase, p.wedstrijd_id);
   revalidatePath(`/staf/wedstrijd/${p.wedstrijd_id}/live`);
   revalidatePath("/staf/team");
+  revalidatePath("/staf/wedstrijden");
   return { ok: true, id: (data as { id: string }).id };
 }
 
@@ -90,5 +104,6 @@ export async function verwijderEvent(id: string, wedstrijd_id: string): Promise<
   await herbereken(supabase, wedstrijd_id);
   revalidatePath(`/staf/wedstrijd/${wedstrijd_id}/live`);
   revalidatePath("/staf/team");
+  revalidatePath("/staf/wedstrijden");
   return { ok: true };
 }

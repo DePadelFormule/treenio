@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { nieuweWedstrijd, verwijderWedstrijd } from "./actions";
-import { ImporteerProgrammaKnop } from "@/components/ImporteerProgrammaKnop";
 import { PlakProgramma } from "@/components/PlakProgramma";
 import { VerwijderKnop } from "@/components/VerwijderKnop";
 import type { Wedstrijd } from "@/lib/types/database";
@@ -17,7 +16,7 @@ export default async function WedstrijdenPage() {
   const { data: wedstrijden } = await supabase
     .from("wedstrijden")
     .select("*")
-    .order("datum", { ascending: false });
+    .order("datum", { ascending: true });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
@@ -27,19 +26,9 @@ export default async function WedstrijdenPage() {
 
       <h1 className="mt-4 mb-4 text-2xl font-bold text-sparta">Wedstrijden</h1>
 
-      {/* Programma plakken vanaf voetbal.nl — werkt zonder KNVB-koppeling */}
-      <div className="mb-4">
+      {/* Programma plakken vanaf voetbal.nl */}
+      <div className="mb-6">
         <PlakProgramma />
-      </div>
-
-      {/* Programma uit voetbal.nl (KNVB Dataservice) */}
-      <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-4">
-        <ImporteerProgrammaKnop />
-        <p className="mt-2 text-xs text-neutral-400">
-          Haalt het wedstrijdprogramma automatisch op uit de KNVB Dataservice.
-          Vereist een Club.Dataservice-key van de club; zolang die er niet is,
-          gebruik je hierboven &quot;Programma plakken&quot;.
-        </p>
       </div>
 
       {/* Snelle toevoeging */}
