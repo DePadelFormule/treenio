@@ -25,14 +25,13 @@ export function PlakProgramma() {
   return (
     <details className="rounded-xl border border-neutral-200 bg-white p-4">
       <summary className="cursor-pointer select-none text-sm font-semibold text-sparta">
-        Programma of uitslagen plakken (voetbal.nl)
+        Programma plakken (voetbal.nl)
       </summary>
       <div className="mt-3 space-y-3">
         <p className="text-xs text-neutral-500">
-          Open het programma óf de uitslagen van JO17-2 in de voetbal.nl-app of op de site,
-          selecteer en kopieer de lijst, en plak hem hieronder. Datums, tegenstanders en uitslagen
-          worden automatisch herkend. Bestaande wedstrijden worden niet gedupliceerd; plak je
-          uitslagen, dan worden die bij de juiste wedstrijden ingevuld.
+          Open het programma van JO17-2 in de voetbal.nl-app of op de site, selecteer en kopieer de
+          lijst, en plak hem hieronder. Datums en tegenstanders worden automatisch herkend;
+          wedstrijden die er al in staan worden overgeslagen.
         </p>
         <textarea
           value={tekst}
