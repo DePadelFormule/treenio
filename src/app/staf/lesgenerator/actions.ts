@@ -1,7 +1,9 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
+import { revalidatePath } from "next/cache";
 import { getHuidigeGebruiker } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { LES_INSTRUCTIE } from "@/lib/lesgenerator/instructie";
 import { LES_JSON_SCHEMA } from "@/lib/lesgenerator/schema";
 import type { Les, Sport } from "@/lib/lesgenerator/schema";
@@ -86,4 +88,42 @@ export async function genereerLes(invoer: LesInvoer): Promise<LesResultaat> {
     const bericht = e instanceof Error ? e.message : "onbekende fout";
     return { ok: false, fout: "Genereren mislukt: " + bericht };
   }
+}
+
+// Een gegenereerde les bewaren in het archief, optioneel gekoppeld aan een
+// trainingsdatum. Zo blijft een goede les herbruikbaar (herhaling!).
+export async function bewaarLes(
+  les: Les,
+  datum: string | null,
+): Promise<{ ok: boolean; fout?: string }> {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false, fout: "Geen toegang." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("lessen").insert({
+    titel: les.titel,
+    sport: les.sport,
+    onderwerp: les.onderwerp,
+    datum: datum || null,
+    les,
+  } as never);
+  if (error) {
+    return {
+      ok: false,
+      fout: "Opslaan mislukt. Is de lessen-tabel al aangemaakt in Supabase (migratie 0016)?",
+    };
+  }
+  revalidatePath("/staf/lessen");
+  return { ok: true };
+}
+
+export async function verwijderLes(formData: FormData) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const supabase = await createClient();
+  await supabase.from("lessen").delete().eq("id", id);
+  revalidatePath("/staf/lessen");
 }
