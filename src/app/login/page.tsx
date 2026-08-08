@@ -56,9 +56,13 @@ export default async function LoginPage({
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm">
+        <p className="mt-4 flex items-center justify-center gap-3 text-center text-sm">
           <Link href="/login/wachtwoord-vergeten" className="text-neutral-500 hover:text-sparta hover:underline">
             Wachtwoord vergeten?
+          </Link>
+          <span className="text-neutral-300">·</span>
+          <Link href="/login/registreren" className="text-neutral-500 hover:text-sparta hover:underline">
+            Account aanmaken
           </Link>
         </p>
         </div>
