@@ -17,7 +17,7 @@ export default async function WedstrijdenPage() {
   const { data: wedstrijden } = await supabase
     .from("wedstrijden")
     .select("*")
-    .order("datum", { ascending: false });
+    .order("datum", { ascending: true });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
