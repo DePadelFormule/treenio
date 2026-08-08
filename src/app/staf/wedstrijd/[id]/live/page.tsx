@@ -22,11 +22,19 @@ export default async function LivePage({
   if (!wedstrijd) notFound();
   const w = wedstrijd as Wedstrijd;
 
-  const [{ data: spelers }, { data: opstelling }, { data: events }] = await Promise.all([
+  const [{ data: spelers }, { data: opstelling }, { data: events }, { data: registraties }] = await Promise.all([
     supabase.from("spelers").select("id, naam, rugnummer").order("rugnummer", { ascending: true, nullsFirst: false }),
     supabase.from("wedstrijd_opstelling").select("veld, bank").eq("wedstrijd_id", id).maybeSingle(),
     supabase.from("wedstrijd_events").select("*").eq("wedstrijd_id", id).order("minuut", { ascending: true }),
+    supabase.from("wedstrijd_registraties").select("speler_id, speelminuten"),
   ]);
+
+  // Seizoenstotaal speelminuten per speler — voor eerlijk wisselen in de
+  // spelerkiezer (wie het minst speelde staat bovenaan bij "wissel in").
+  const minutenSeizoen: Record<string, number> = {};
+  for (const r of (registraties ?? []) as { speler_id: string; speelminuten: number | null }[]) {
+    minutenSeizoen[r.speler_id] = (minutenSeizoen[r.speler_id] ?? 0) + (r.speelminuten ?? 0);
+  }
 
   const o = opstelling as Pick<WedstrijdOpstelling, "veld" | "bank"> | null;
   const basisIds = o ? Object.values(o.veld ?? {}).filter(Boolean) : [];
@@ -56,6 +64,7 @@ export default async function LivePage({
         basisIds={basisIds}
         bankIds={bankIds}
         beginEvents={beginEvents}
+        minutenSeizoen={minutenSeizoen}
       />
     </main>
   );
