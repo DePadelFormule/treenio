@@ -22,7 +22,8 @@ async function herbereken(supabase: SupaClient, wedstrijdId: string) {
   const ev = (events ?? []) as EventRij[];
 
   const einde = ev.filter((e) => e.type === "einde").map((e) => e.minuut);
-  const matchEnd = einde.length ? Math.max(...einde) : 90;
+  // JO17 speelt 2×40 = 80 minuten; zonder gelogd "einde" rekenen we daarmee.
+  const matchEnd = einde.length ? Math.max(...einde) : 80;
 
   const ids = new Set<string>(basis);
   for (const e of ev) if (e.speler_id) ids.add(e.speler_id);
