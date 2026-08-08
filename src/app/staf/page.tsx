@@ -51,7 +51,9 @@ export default async function StafPage() {
   const grens = Date.now() - 3 * 24 * 60 * 60 * 1000; // "nieuw" = laatste 3 dagen
   const ingevuld = status.filter((s) => s.aantal > 0);
 
-  const volledigMenu = [
+  // Alle trainers zien de hele app; alleen de (afgeronde) positie-
+  // inventarisatie is nog exclusief voor de hoofdtrainer.
+  const basisMenu = [
     { href: "/staf/team", titel: "Team-overzicht", uitleg: "Alle spelers in één tabel: opkomst, minuten, goals, assists, kaarten." },
     { href: "/staf/spelers", titel: "Spelerskaarten", uitleg: "Per speler de volledige kaart met alle cijfers, doelen en notities." },
     { href: "/staf/wedstrijden", titel: "Wedstrijden", uitleg: "Programma beheren en per wedstrijd registreren (stats, keeper, scouting)." },
@@ -59,12 +61,13 @@ export default async function StafPage() {
     { href: "/staf/spelsituaties", titel: "Spelsituaties", uitleg: "Tactisch tekenbord: magneetjes slepen, animatie maken en afspelen." },
     { href: "/staf/lesgenerator", titel: "AI-lesgenerator", uitleg: "Laat de AI een complete training schrijven op basis van thema, duur en niveau." },
     { href: "/staf/lessen", titel: "Lessenarchief", uitleg: "Bewaarde trainingen teruglezen, printen en hergebruiken." },
-    { href: "/staf/posities", titel: "Positie-inventarisatie", uitleg: "Vul per speler je 1e/2e/3e positie in voor 4-3-3 en 4-4-2." },
   ];
-  const beperktMenu = [
-    { href: "/staf/posities", titel: "Positie-inventarisatie", uitleg: "Vul per speler je 1e/2e/3e positie in voor 4-3-3 en 4-4-2." },
-  ];
-  const menu = magAlles ? volledigMenu : beperktMenu;
+  const menu = magAlles
+    ? [
+        ...basisMenu,
+        { href: "/staf/posities", titel: "Positie-inventarisatie", uitleg: "Afgeronde inventarisatie: keuzes, uitkomst per speler en conclusie." },
+      ]
+    : basisMenu;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
