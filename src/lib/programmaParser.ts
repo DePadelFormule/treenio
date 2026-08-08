@@ -119,11 +119,50 @@ function schoonTeamdeel(s: string): string {
 // Hint om ons eigen team te herkennen in "Thuis - Uit".
 const EIGEN_TEAM_HINT = "nivo";
 
+// Regels die in geplakte programma's voorkomen maar geen teamnaam zijn.
+const GEEN_TEAM =
+  /^(programma|uitslag(en)?|wedstrijd(en)?|wedstrijdprogramma|poule(\s.+)?|competitie|beker|oefen(wedstrijd)?|vriendschappelijk|\d+e\s+ronde|ronde\s+\d+|thuis|uit|datum|tijd|aanvang|veld(\s\d+)?|sportpark\s.+|accommodatie.*)$/i;
+
+function isTeamnaam(s: string): boolean {
+  return s.length >= 2 && /[A-Za-z]/.test(s) && !GEEN_TEAM.test(s);
+}
+
 export function parsePlakProgramma(tekst: string, vandaag: Date = new Date()): PlakResultaat {
   const wedstrijden: GeplakteWedstrijd[] = [];
   const gezien = new Set<string>();
   let zonderDatum = 0;
   let huidigeDatum: string | null = null;
+  // Blok-formaat (voetbal.nl): onder een datumregel staan de teamnamen op losse
+  // regels (vaak dubbel, met de tijd ertussen). We verzamelen ze per datum en
+  // maken er daarna paren van: thuis, uit.
+  let blok: string[] = [];
+
+  const voegToe = (datum: string, thuis: string, uit: string) => {
+    let tegenstander: string;
+    if (thuis.toLowerCase().includes(EIGEN_TEAM_HINT)) {
+      tegenstander = uit;
+    } else if (uit.toLowerCase().includes(EIGEN_TEAM_HINT)) {
+      tegenstander = `${thuis} (uit)`;
+    } else {
+      tegenstander = `${thuis} - ${uit}`;
+    }
+    const sleutel = `${datum}|${tegenstander.toLowerCase()}`;
+    if (gezien.has(sleutel)) return;
+    gezien.add(sleutel);
+    wedstrijden.push({ datum, tegenstander });
+  };
+
+  const sluitBlokAf = () => {
+    // Opeenvolgende duplicaten samenvouwen (voetbal.nl toont elke naam dubbel).
+    const uniek: string[] = [];
+    for (const t of blok) if (uniek[uniek.length - 1] !== t) uniek.push(t);
+    // Per twee: thuis, uit. Een losse restregel negeren we.
+    for (let i = 0; i + 1 < uniek.length; i += 2) {
+      if (huidigeDatum) voegToe(huidigeDatum, uniek[i], uniek[i + 1]);
+      else zonderDatum++;
+    }
+    blok = [];
+  };
 
   for (const ruweRegel of tekst.split(/\r?\n/)) {
     const regel = ruweRegel.trim();
@@ -133,38 +172,34 @@ export function parsePlakProgramma(tekst: string, vandaag: Date = new Date()): P
     const teamRegel = datumInRegel ? datumInRegel.rest : regel;
     const teams = vindTeams(teamRegel);
 
-    // Losse datumregel (geen teams): onthouden voor de regels erna.
-    if (datumInRegel && !teams) {
+    // Formaat 1: "Thuis - Uit" op één regel (met datum erop of erboven).
+    if (teams) {
+      const thuis = schoonTeamdeel(teams.thuis);
+      const uit = schoonTeamdeel(teams.uit);
+      const datum = datumInRegel?.datum ?? huidigeDatum;
+      if (!thuis || !uit) continue;
+      if (!datum) {
+        zonderDatum++;
+        continue;
+      }
+      voegToe(datum, thuis, uit);
+      continue;
+    }
+
+    // Datumregel: vorige blok afronden en de nieuwe datum onthouden.
+    if (datumInRegel) {
+      sluitBlokAf();
       huidigeDatum = datumInRegel.datum;
-      continue;
-    }
-    if (!teams) continue; // kopje, locatie of andere ruis — negeren
-
-    const datum = datumInRegel?.datum ?? huidigeDatum;
-    if (!datum) {
-      zonderDatum++;
+      const rest = schoonTeamdeel(datumInRegel.rest);
+      if (isTeamnaam(rest)) blok.push(rest);
       continue;
     }
 
-    const thuis = schoonTeamdeel(teams.thuis);
-    const uit = schoonTeamdeel(teams.uit);
-    if (!thuis || !uit) continue;
-
-    // Tegenstander = het team dat niet het onze is; uitwedstrijd markeren.
-    let tegenstander: string;
-    if (thuis.toLowerCase().includes(EIGEN_TEAM_HINT)) {
-      tegenstander = uit;
-    } else if (uit.toLowerCase().includes(EIGEN_TEAM_HINT)) {
-      tegenstander = `${thuis} (uit)`;
-    } else {
-      tegenstander = `${thuis} - ${uit}`;
-    }
-
-    const sleutel = `${datum}|${tegenstander.toLowerCase()}`;
-    if (gezien.has(sleutel)) continue;
-    gezien.add(sleutel);
-    wedstrijden.push({ datum, tegenstander });
+    // Formaat 2 (voetbal.nl-blokken): losse teamnaam-regels verzamelen.
+    const schoon = schoonTeamdeel(regel);
+    if (isTeamnaam(schoon)) blok.push(schoon);
   }
+  sluitBlokAf();
 
   return { wedstrijden, zonderDatum };
 }
