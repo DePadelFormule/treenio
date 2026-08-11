@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { login } from "./actions";
 import { WachtwoordVeld } from "@/components/WachtwoordVeld";
 
@@ -15,9 +16,14 @@ export default async function LoginPage({
         <div className="h-2 bg-sparta" />
         <div className="p-8">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight text-sparta">
-            Treenio
-          </h1>
+          <Image
+            src="/logo.png"
+            alt="Treenio — Train. Analyze. Improve."
+            width={800}
+            height={635}
+            priority
+            className="mx-auto mb-2 h-auto w-48"
+          />
           <p className="mt-1 text-sm font-semibold text-neutral-700">
             Nivo Sparta JO17-2
           </p>
