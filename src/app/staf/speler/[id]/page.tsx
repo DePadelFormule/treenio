@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { POSITIE_CODES } from "@/lib/constants";
+import { VRAGENLIJST, VRAGENLIJST_BLOKKEN } from "@/lib/vragenlijst";
 import { nieuwAandachtspunt, toggleAandachtspunt, updatePosities, updateBeschikbaarheid } from "./actions";
 import type {
   Aandachtspunt,
@@ -56,6 +57,14 @@ export default async function StafSpelerPage({
     supabase.from("v_keeper_totalen").select("*").eq("speler_id", id),
     supabase.from("v_speler_posities").select("*").eq("speler_id", id),
   ]);
+
+  // Antwoorden op de seizoensstart-vragenlijst (indien ingevuld).
+  const { data: vragenlijstRij } = await supabase
+    .from("vragenlijst_antwoorden")
+    .select("antwoorden, created_at")
+    .eq("speler_id", id)
+    .maybeSingle();
+  const vragenlijst = (vragenlijstRij ?? null) as { antwoorden: Record<string, string>; created_at: string } | null;
 
   const opkomst = (opkomstRows?.[0] ?? null) as TrainingOpkomstView | null;
   const wedstrijd = (wedstrijdRows?.[0] ?? null) as WedstrijdTotalenView | null;
@@ -293,6 +302,41 @@ export default async function StafSpelerPage({
         <p className="mt-3 text-xs text-neutral-400">
           Registratie gebeurt via het iPad-tiksysteem op het wedstrijdscherm.
         </p>
+      </section>
+
+      {/* Seizoensstart-vragenlijst */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-lg font-semibold text-neutral-800">Vragenlijst seizoensstart</h2>
+        {!vragenlijst ? (
+          <p className="rounded-xl border border-dashed border-neutral-300 p-4 text-sm text-neutral-400">
+            Nog niet ingevuld. Deel de link <span className="font-mono">/vragenlijst</span> met de spelersgroep.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {VRAGENLIJST_BLOKKEN.map((blok) => {
+              const vragen = VRAGENLIJST.filter(
+                (v) => v.blok === blok && vragenlijst.antwoorden[v.id],
+              );
+              if (vragen.length === 0) return null;
+              return (
+                <div key={blok} className="rounded-xl border border-neutral-200 bg-white p-4">
+                  <h3 className="mb-2 text-sm font-bold text-sparta">{blok}</h3>
+                  <dl className="space-y-2">
+                    {vragen.map((v) => (
+                      <div key={v.id}>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-neutral-400">{v.tekst}</dt>
+                        <dd className="whitespace-pre-wrap text-sm text-neutral-800">{vragenlijst.antwoorden[v.id]}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              );
+            })}
+            <p className="text-xs text-neutral-400">
+              Ingevuld op {new Date(vragenlijst.created_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}.
+            </p>
+          </div>
+        )}
       </section>
     </main>
   );

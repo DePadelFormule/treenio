@@ -38,7 +38,8 @@ export async function updateSession(request: NextRequest) {
   const isPublic =
     path === "/" ||
     path.startsWith("/login") ||
-    path.startsWith("/auth");
+    path.startsWith("/auth") ||
+    path.startsWith("/vragenlijst"); // spelers vullen deze in zonder inlog
 
   // Niet ingelogd en geen publieke route → naar /login.
   if (!user && !isPublic) {

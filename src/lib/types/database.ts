@@ -311,6 +311,14 @@ export interface OpgeslagenLes {
   created_at: string;
 }
 
+// Antwoorden op de seizoensstart-vragenlijst (één rij per speler).
+export interface VragenlijstAntwoorden {
+  id: string;
+  speler_id: string;
+  antwoorden: Record<string, string>;
+  created_at: string;
+}
+
 // Minimale Database-shape voor de Supabase client. Voor de MVP houden we het
 // pragmatisch; tabellen die we nog niet typen vallen terug op `any` via index.
 export interface Database {
@@ -346,11 +354,21 @@ export interface Database {
         Insert: Partial<OpgeslagenLes> & { titel: string; sport: string; onderwerp: string; les: unknown };
         Update: Partial<OpgeslagenLes>;
       };
+      vragenlijst_antwoorden: {
+        Row: VragenlijstAntwoorden;
+        Insert: Partial<VragenlijstAntwoorden> & { speler_id: string; antwoorden: unknown };
+        Update: Partial<VragenlijstAntwoorden>;
+      };
     };
     Views: Record<string, never>;
     Functions: {
       is_staf: { Args: Record<string, never>; Returns: boolean };
       check_registratie_code: { Args: { code: string }; Returns: boolean };
+      vragenlijst_spelers: {
+        Args: Record<string, never>;
+        Returns: { id: string; naam: string; rugnummer: number | null }[];
+      };
+      vragenlijst_opslaan: { Args: { p_speler: string; p_antwoorden: unknown }; Returns: undefined };
     };
     Enums: Record<string, never>;
   };

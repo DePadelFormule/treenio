@@ -48,6 +48,27 @@ export default async function StafPage() {
   // alleen de positie-inventarisatie (en hun eigen account, in de header).
   const magAlles = gebruiker.staf?.mag_conclusie ?? false;
   const status = magAlles ? await positieStatus() : [];
+
+  // Vragenlijst-status: wie van de selectie heeft al ingevuld?
+  let vragenlijstStatus: { ingevuld: number; totaal: number; nogNiet: string[] } | null = null;
+  if (magAlles) {
+    const supabase = await createClient();
+    const [{ data: alleSpelers }, { data: antwoorden }] = await Promise.all([
+      supabase.from("spelers").select("id, naam"),
+      supabase.from("vragenlijst_antwoorden").select("speler_id"),
+    ]);
+    const klaarIds = new Set(
+      ((antwoorden ?? []) as { speler_id: string }[]).map((a) => a.speler_id),
+    );
+    const spelers = (alleSpelers ?? []) as { id: string; naam: string }[];
+    if (spelers.length > 0) {
+      vragenlijstStatus = {
+        ingevuld: spelers.filter((s) => klaarIds.has(s.id)).length,
+        totaal: spelers.length,
+        nogNiet: spelers.filter((s) => !klaarIds.has(s.id)).map((s) => s.naam.split(" ")[0]),
+      };
+    }
+  }
   const grens = Date.now() - 3 * 24 * 60 * 60 * 1000; // "nieuw" = laatste 3 dagen
   const ingevuld = status.filter((s) => s.aantal > 0);
 
@@ -132,6 +153,27 @@ export default async function StafPage() {
               );
             })}
           </ul>
+        </div>
+      )}
+
+      {vragenlijstStatus && (
+        <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-semibold text-neutral-800">Vragenlijst seizoensstart</h2>
+            <Link href="/vragenlijst" className="text-sm font-semibold text-sparta hover:underline">
+              Bekijk formulier →
+            </Link>
+          </div>
+          <p className="text-sm text-neutral-700">
+            <span className="font-semibold">{vragenlijstStatus.ingevuld} van {vragenlijstStatus.totaal}</span> spelers hebben ingevuld.
+            {vragenlijstStatus.nogNiet.length > 0 && (
+              <span className="text-neutral-400"> Nog niet: {vragenlijstStatus.nogNiet.join(", ")}.</span>
+            )}
+          </p>
+          <p className="mt-2 text-xs text-neutral-400">
+            Delen met de spelersgroep: stuur ze het app-adres met <span className="font-mono">/vragenlijst</span> erachter.
+            De antwoorden verschijnen per speler op de spelerskaart.
+          </p>
         </div>
       )}
     </main>
