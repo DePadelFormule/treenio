@@ -61,7 +61,6 @@ export function VragenlijstFormulier({ spelers }: { spelers: SpelerOptie[] }) {
             {spelers.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.naam}
-                {s.rugnummer ? ` (${s.rugnummer})` : ""}
               </option>
             ))}
           </select>
