@@ -14,6 +14,8 @@ export type StarteAls = "basis" | "wissel" | "niet_in_selectie";
 export type Beschikbaarheid = "fit" | "twijfel" | "geblesseerd";
 export type PresentieStatus =
   | "aanwezig"
+  | "te_laat"
+  | "te_laat_met"
   | "afwezig_met"
   | "afwezig_zonder"
   | "blessure"

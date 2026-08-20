@@ -16,6 +16,8 @@ interface Props {
 
 const STATUSSEN = [
   { key: "aanwezig", kort: "A", label: "Aanwezig", licht: "bg-green-100 text-green-800 border-green-300", vol: "bg-green-600 text-white" },
+  { key: "te_laat", kort: "T", label: "Te laat", licht: "bg-orange-100 text-orange-800 border-orange-300", vol: "bg-orange-500 text-white" },
+  { key: "te_laat_met", kort: "TR", label: "Te laat (met reden)", licht: "bg-teal-100 text-teal-800 border-teal-300", vol: "bg-teal-600 text-white" },
   { key: "afwezig_met", kort: "M", label: "Afgemeld (met bericht)", licht: "bg-amber-100 text-amber-800 border-amber-300", vol: "bg-amber-500 text-white" },
   { key: "afwezig_zonder", kort: "Z", label: "Niet afgemeld", licht: "bg-red-100 text-red-800 border-red-300", vol: "bg-red-600 text-white" },
   { key: "blessure", kort: "B", label: "Blessure", licht: "bg-purple-100 text-purple-800 border-purple-300", vol: "bg-purple-600 text-white" },
@@ -86,7 +88,8 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVer
     for (const t of trainingenMaand) {
       const s = status[`${t.id}:${spelerId}`];
       // Elke ingevulde status telt mee (ook vakantie = afwezig).
-      if (s) { geregistreerd++; if (s === "aanwezig") aanwezig++; }
+      // Te laat (met of zonder reden) telt als aanwezig: de speler was er.
+      if (s) { geregistreerd++; if (s === "aanwezig" || s === "te_laat" || s === "te_laat_met") aanwezig++; }
     }
     if (geregistreerd === 0) return null;
     return Math.round((100 * aanwezig) / geregistreerd);
