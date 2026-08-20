@@ -361,6 +361,11 @@ export interface Database {
         Insert: Partial<VragenlijstAntwoorden> & { speler_id: string; antwoorden: unknown };
         Update: Partial<VragenlijstAntwoorden>;
       };
+      training_uitzonderingen: {
+        Row: { datum: string; created_at: string };
+        Insert: { datum: string };
+        Update: { datum?: string };
+      };
     };
     Views: Record<string, never>;
     Functions: {

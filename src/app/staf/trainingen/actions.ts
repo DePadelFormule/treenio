@@ -11,6 +11,20 @@ export async function verwijderTraining(formData: FormData) {
   if (!id) return;
 
   const supabase = await createClient();
+  // Datum onthouden als uitzondering, zodat "Genereer di/do trainingen" deze
+  // bewust verwijderde dag niet opnieuw aanmaakt.
+  const { data: training } = await supabase
+    .from("trainingen")
+    .select("datum")
+    .eq("id", id)
+    .maybeSingle();
+  const datum = (training as { datum: string } | null)?.datum;
+  if (datum) {
+    await supabase
+      .from("training_uitzonderingen")
+      .upsert({ datum } as never, { onConflict: "datum" });
+  }
+
   await supabase.from("trainingen").delete().eq("id", id);
   revalidatePath("/staf/trainingen");
 }
@@ -59,13 +73,13 @@ export async function genereerMaand(formData: FormData) {
   if (datums.length === 0) return;
 
   const supabase = await createClient();
-  // Bestaande data in deze maand overslaan.
-  const { data: bestaand } = await supabase
-    .from("trainingen")
-    .select("datum")
-    .gte("datum", `${maand}-01`)
-    .lte("datum", `${maand}-31`);
+  // Bestaande data én bewust verwijderde datums in deze maand overslaan.
+  const [{ data: bestaand }, { data: uitzonderingen }] = await Promise.all([
+    supabase.from("trainingen").select("datum").gte("datum", `${maand}-01`).lte("datum", `${maand}-31`),
+    supabase.from("training_uitzonderingen").select("datum").gte("datum", `${maand}-01`).lte("datum", `${maand}-31`),
+  ]);
   const alBekend = new Set(((bestaand ?? []) as { datum: string }[]).map((r) => r.datum));
+  for (const u of (uitzonderingen ?? []) as { datum: string }[]) alBekend.add(u.datum);
 
   const nieuw = datums
     .filter((dt) => !alBekend.has(dt))
