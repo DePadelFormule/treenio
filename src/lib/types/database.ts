@@ -14,6 +14,8 @@ export type StarteAls = "basis" | "wissel" | "niet_in_selectie";
 export type Beschikbaarheid = "fit" | "twijfel" | "geblesseerd";
 export type PresentieStatus =
   | "aanwezig"
+  | "te_laat"
+  | "te_laat_met"
   | "afwezig_met"
   | "afwezig_zonder"
   | "blessure"
@@ -358,6 +360,11 @@ export interface Database {
         Row: VragenlijstAntwoorden;
         Insert: Partial<VragenlijstAntwoorden> & { speler_id: string; antwoorden: unknown };
         Update: Partial<VragenlijstAntwoorden>;
+      };
+      training_uitzonderingen: {
+        Row: { datum: string; created_at: string };
+        Insert: { datum: string };
+        Update: { datum?: string };
       };
     };
     Views: Record<string, never>;
