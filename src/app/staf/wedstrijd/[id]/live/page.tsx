@@ -22,17 +22,25 @@ export default async function LivePage({
   if (!wedstrijd) notFound();
   const w = wedstrijd as Wedstrijd;
 
-  const [{ data: spelers }, { data: opstelling }, { data: events }, { data: registraties }] = await Promise.all([
-    supabase.from("spelers").select("id, naam, rugnummer").order("rugnummer", { ascending: true, nullsFirst: false }),
+  const [{ data: spelers }, { data: opstelling }, { data: events }, { data: registraties }, { data: alleWedstrijden }] = await Promise.all([
+    supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
     supabase.from("wedstrijd_opstelling").select("veld, bank").eq("wedstrijd_id", id).maybeSingle(),
     supabase.from("wedstrijd_events").select("*").eq("wedstrijd_id", id).order("minuut", { ascending: true }),
-    supabase.from("wedstrijd_registraties").select("speler_id, speelminuten"),
+    supabase.from("wedstrijd_registraties").select("wedstrijd_id, speler_id, speelminuten"),
+    supabase.from("wedstrijden").select("*"),
   ]);
 
   // Seizoenstotaal speelminuten per speler — voor eerlijk wisselen in de
   // spelerkiezer (wie het minst speelde staat bovenaan bij "wissel in").
+  // Vriendschappelijke wedstrijden tellen niet mee in dat totaal.
+  const vriendschappelijk = new Set(
+    ((alleWedstrijden ?? []) as Wedstrijd[])
+      .filter((v) => v.type === "vriendschappelijk")
+      .map((v) => v.id),
+  );
   const minutenSeizoen: Record<string, number> = {};
-  for (const r of (registraties ?? []) as { speler_id: string; speelminuten: number | null }[]) {
+  for (const r of (registraties ?? []) as { wedstrijd_id: string; speler_id: string; speelminuten: number | null }[]) {
+    if (vriendschappelijk.has(r.wedstrijd_id)) continue;
     minutenSeizoen[r.speler_id] = (minutenSeizoen[r.speler_id] ?? 0) + (r.speelminuten ?? 0);
   }
 
@@ -65,7 +73,7 @@ export default async function LivePage({
       <LiveWedstrijd
         wedstrijdId={id}
         kop={`${w.datum} · ${w.tegenstander}`}
-        spelers={((spelers ?? []) as Pick<Speler, "id" | "naam" | "rugnummer">[]).map((s) => ({ id: s.id, naam: s.naam, rugnummer: s.rugnummer }))}
+        spelers={((spelers ?? []) as Speler[]).map((s) => ({ id: s.id, naam: s.gast ? `${s.naam} (gast)` : s.naam, rugnummer: s.rugnummer }))}
         basisIds={basisIds}
         bankIds={bankIds}
         beginEvents={beginEvents}

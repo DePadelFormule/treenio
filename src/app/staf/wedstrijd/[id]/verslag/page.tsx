@@ -34,12 +34,12 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
     supabase.from("wedstrijd_events").select("*").eq("wedstrijd_id", id)
       .order("minuut", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("wedstrijd_registraties").select("*").eq("wedstrijd_id", id),
-    supabase.from("spelers").select("id, naam, rugnummer"),
+    supabase.from("spelers").select("*"),
   ]);
 
   const naamVan = new Map<string, { naam: string; rugnummer: number | null }>();
-  for (const s of (spelers ?? []) as Pick<Speler, "id" | "naam" | "rugnummer">[]) {
-    naamVan.set(s.id, { naam: s.naam, rugnummer: s.rugnummer });
+  for (const s of (spelers ?? []) as Speler[]) {
+    naamVan.set(s.id, { naam: s.gast ? `${s.naam} (gast)` : s.naam, rugnummer: s.rugnummer });
   }
 
   const ev = ((events ?? []) as WedstrijdEvent[]);
@@ -84,10 +84,17 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
         <h1 className="text-2xl font-bold text-sparta">Verslag · {w.tegenstander}</h1>
         <p className="text-sm text-neutral-500">
           {w.datum}
+          {w.type === "beker" && " · Beker"}
+          {w.type === "vriendschappelijk" && " · Vriendschappelijk"}
           {w.uitslag && (
             <> · Eindstand: <span className="font-bold text-neutral-800">{w.uitslag}</span> <span className="text-neutral-400">(wij-tegen)</span></>
           )}
         </p>
+        {w.type === "vriendschappelijk" && (
+          <p className="mt-1 text-xs text-amber-600">
+            Vriendschappelijke wedstrijd — telt niet mee in de seizoensstatistieken.
+          </p>
+        )}
       </header>
 
       {ev.length === 0 ? (

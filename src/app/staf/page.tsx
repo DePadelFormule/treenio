@@ -54,13 +54,15 @@ export default async function StafPage() {
   if (magAlles) {
     const supabase = await createClient();
     const [{ data: alleSpelers }, { data: antwoorden }] = await Promise.all([
-      supabase.from("spelers").select("id, naam"),
+      supabase.from("spelers").select("*"),
       supabase.from("vragenlijst_antwoorden").select("speler_id"),
     ]);
     const klaarIds = new Set(
       ((antwoorden ?? []) as { speler_id: string }[]).map((a) => a.speler_id),
     );
-    const spelers = (alleSpelers ?? []) as { id: string; naam: string }[];
+    // Gastspelers doen niet mee met de vragenlijst.
+    const spelers = ((alleSpelers ?? []) as { id: string; naam: string; gast?: boolean }[])
+      .filter((s) => !s.gast);
     if (spelers.length > 0) {
       vragenlijstStatus = {
         ingevuld: spelers.filter((s) => klaarIds.has(s.id)).length,

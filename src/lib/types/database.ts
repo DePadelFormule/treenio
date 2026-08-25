@@ -34,6 +34,9 @@ export interface Speler {
   blessure_notitie: string | null;
   foto_url: string | null;
   geboortedatum: string | null;
+  // Gastspeler (doet incidenteel mee met wedstrijden; geen trainingen/vragenlijst).
+  // Optioneel getypt zodat de app ook werkt vóórdat migratie 0021 is gedraaid.
+  gast?: boolean;
   created_at: string;
 }
 
@@ -130,12 +133,17 @@ export interface PositieVoorkeur {
   created_at: string;
 }
 
+// Vriendschappelijke wedstrijden tellen niet mee in de seizoensstatistieken.
+export type WedstrijdType = "competitie" | "beker" | "vriendschappelijk";
+
 export interface Wedstrijd {
   id: string;
   datum: string;
   tegenstander: string;
   uitslag: string | null;
   bron_id: string | null;
+  // Optioneel getypt zodat de app ook werkt vóórdat migratie 0022 is gedraaid.
+  type?: WedstrijdType;
   created_at: string;
 }
 

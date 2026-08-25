@@ -4,6 +4,7 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { OpstellingBord } from "@/components/OpstellingBord";
 import { WedstrijdAfmeldingen } from "@/components/WedstrijdAfmeldingen";
+import { voegGastToe } from "./actions";
 import type { Speler, Wedstrijd, WedstrijdOpstelling } from "@/lib/types/database";
 
 export default async function OpstellingPage({
@@ -40,7 +41,7 @@ export default async function OpstellingPage({
   const spelerLijst = alleSpelers.map((s) => ({
     id: s.id,
     rugnummer: s.rugnummer,
-    naam: s.naam,
+    naam: s.gast ? `${s.naam} (gast)` : s.naam,
     status: s.beschikbaarheid,
   }));
 
@@ -82,6 +83,26 @@ export default async function OpstellingPage({
       )}
 
       <OpstellingBord wedstrijdId={id} spelers={spelerLijst} begin={begin} />
+
+      {/* Gastspeler toevoegen */}
+      <form action={voegGastToe} className="mt-6 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+        <input type="hidden" name="wedstrijd_id" value={id} />
+        <label className="flex-1 text-sm">
+          <span className="mb-1 block text-xs text-neutral-500">Gastspeler (bijv. uit een ander team)</span>
+          <input type="text" name="naam" required placeholder="Naam" className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <label className="text-sm">
+          <span className="mb-1 block text-xs text-neutral-500">Rugnr</span>
+          <input type="text" name="rugnummer" inputMode="numeric" placeholder="—" className="w-16 rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
+          + Gast toevoegen
+        </button>
+        <p className="w-full text-xs text-neutral-400">
+          Een gast is daarna te kiezen in de opstelling en de live-registratie, maar telt niet mee
+          in de trainingen-presentie en de vragenlijst.
+        </p>
+      </form>
 
       <WedstrijdAfmeldingen wedstrijdId={id} spelers={buitenSelectie} begin={afmeldBegin} />
 
