@@ -67,6 +67,8 @@ export async function plakProgramma(tekst: string): Promise<ImportResultaat> {
   return { ok: nieuw.length > 0 || overgeslagen > 0, bericht: delen.join(" · ") + "." };
 }
 
+const WEDSTRIJD_TYPES = ["competitie", "beker", "vriendschappelijk"];
+
 export async function nieuweWedstrijd(formData: FormData) {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return;
@@ -74,11 +76,29 @@ export async function nieuweWedstrijd(formData: FormData) {
   const datum = String(formData.get("datum") ?? "").trim();
   const tegenstander = String(formData.get("tegenstander") ?? "").trim();
   const uitslag = String(formData.get("uitslag") ?? "").trim() || null;
-  if (!datum || !tegenstander) return;
+  const type = String(formData.get("type") ?? "competitie");
+  if (!datum || !tegenstander || !WEDSTRIJD_TYPES.includes(type)) return;
 
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("wedstrijden")
-    .insert({ datum, tegenstander, uitslag } as never);
+    .insert({ datum, tegenstander, uitslag, type } as never);
+  if (error) {
+    // Vóór migratie 0022 bestaat de type-kolom nog niet; dan zonder type opslaan.
+    await supabase.from("wedstrijden").insert({ datum, tegenstander, uitslag } as never);
+  }
   revalidatePath("/staf/wedstrijden");
+}
+
+// Type van een bestaande wedstrijd wijzigen (chips op de wedstrijdenlijst).
+export async function setWedstrijdType(id: string, type: string) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return;
+  if (!id || !WEDSTRIJD_TYPES.includes(type)) return;
+
+  const supabase = await createClient();
+  await supabase.from("wedstrijden").update({ type } as never).eq("id", id);
+  revalidatePath("/staf/wedstrijden");
+  revalidatePath("/staf/team");
+  revalidatePath("/staf/spelers");
 }

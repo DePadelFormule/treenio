@@ -84,10 +84,17 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
         <h1 className="text-2xl font-bold text-sparta">Verslag · {w.tegenstander}</h1>
         <p className="text-sm text-neutral-500">
           {w.datum}
+          {w.type === "beker" && " · Beker"}
+          {w.type === "vriendschappelijk" && " · Vriendschappelijk"}
           {w.uitslag && (
             <> · Eindstand: <span className="font-bold text-neutral-800">{w.uitslag}</span> <span className="text-neutral-400">(wij-tegen)</span></>
           )}
         </p>
+        {w.type === "vriendschappelijk" && (
+          <p className="mt-1 text-xs text-amber-600">
+            Vriendschappelijke wedstrijd — telt niet mee in de seizoensstatistieken.
+          </p>
+        )}
       </header>
 
       {ev.length === 0 ? (
