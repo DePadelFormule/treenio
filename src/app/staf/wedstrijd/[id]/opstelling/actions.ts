@@ -69,3 +69,20 @@ export async function setWedstrijdAfmelding(
   revalidatePath(`/staf/wedstrijd/${wedstrijd_id}/opstelling`);
   return { ok: !error };
 }
+
+// Gastspeler toevoegen (bijv. een JO16-speler die meedoet). Komt direct
+// beschikbaar in de opstelling-kiezer; blijft buiten trainingen/vragenlijst.
+export async function voegGastToe(formData: FormData) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return;
+
+  const wedstrijdId = String(formData.get("wedstrijd_id") ?? "");
+  const naam = String(formData.get("naam") ?? "").trim().slice(0, 80);
+  const rugRaw = String(formData.get("rugnummer") ?? "").trim();
+  const rugnummer = rugRaw && /^\d{1,3}$/.test(rugRaw) ? Number(rugRaw) : null;
+  if (!naam) return;
+
+  const supabase = await createClient();
+  await supabase.from("spelers").insert({ naam, rugnummer, gast: true } as never);
+  if (wedstrijdId) revalidatePath(`/staf/wedstrijd/${wedstrijdId}/opstelling`);
+}

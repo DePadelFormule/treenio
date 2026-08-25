@@ -23,7 +23,7 @@ export default async function LivePage({
   const w = wedstrijd as Wedstrijd;
 
   const [{ data: spelers }, { data: opstelling }, { data: events }, { data: registraties }] = await Promise.all([
-    supabase.from("spelers").select("id, naam, rugnummer").order("rugnummer", { ascending: true, nullsFirst: false }),
+    supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
     supabase.from("wedstrijd_opstelling").select("veld, bank").eq("wedstrijd_id", id).maybeSingle(),
     supabase.from("wedstrijd_events").select("*").eq("wedstrijd_id", id).order("minuut", { ascending: true }),
     supabase.from("wedstrijd_registraties").select("speler_id, speelminuten"),
@@ -65,7 +65,7 @@ export default async function LivePage({
       <LiveWedstrijd
         wedstrijdId={id}
         kop={`${w.datum} · ${w.tegenstander}`}
-        spelers={((spelers ?? []) as Pick<Speler, "id" | "naam" | "rugnummer">[]).map((s) => ({ id: s.id, naam: s.naam, rugnummer: s.rugnummer }))}
+        spelers={((spelers ?? []) as Speler[]).map((s) => ({ id: s.id, naam: s.gast ? `${s.naam} (gast)` : s.naam, rugnummer: s.rugnummer }))}
         basisIds={basisIds}
         bankIds={bankIds}
         beginEvents={beginEvents}

@@ -19,7 +19,7 @@ export default async function TrainingenPage({
 
   const supabase = await createClient();
   const [{ data: spelers }, { data: trainingen }, { data: regs }] = await Promise.all([
-    supabase.from("spelers").select("id, naam, rugnummer").order("rugnummer", { ascending: true, nullsFirst: false }),
+    supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
     supabase.from("trainingen").select("id, datum").order("datum", { ascending: true }),
     supabase.from("training_registraties").select("training_id, speler_id, status"),
   ]);
@@ -51,7 +51,9 @@ export default async function TrainingenPage({
       </p>
 
       <PresentieRooster
-        spelers={((spelers ?? []) as Pick<Speler, "id" | "naam" | "rugnummer">[]).map((s) => ({ id: s.id, naam: s.naam, rugnummer: s.rugnummer }))}
+        spelers={((spelers ?? []) as Speler[])
+          .filter((s) => !s.gast)
+          .map((s) => ({ id: s.id, naam: s.naam, rugnummer: s.rugnummer }))}
         trainingen={trainLijst}
         begin={begin}
         startMaand={startMaand}

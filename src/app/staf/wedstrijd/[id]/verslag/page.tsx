@@ -34,12 +34,12 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
     supabase.from("wedstrijd_events").select("*").eq("wedstrijd_id", id)
       .order("minuut", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("wedstrijd_registraties").select("*").eq("wedstrijd_id", id),
-    supabase.from("spelers").select("id, naam, rugnummer"),
+    supabase.from("spelers").select("*"),
   ]);
 
   const naamVan = new Map<string, { naam: string; rugnummer: number | null }>();
-  for (const s of (spelers ?? []) as Pick<Speler, "id" | "naam" | "rugnummer">[]) {
-    naamVan.set(s.id, { naam: s.naam, rugnummer: s.rugnummer });
+  for (const s of (spelers ?? []) as Speler[]) {
+    naamVan.set(s.id, { naam: s.gast ? `${s.naam} (gast)` : s.naam, rugnummer: s.rugnummer });
   }
 
   const ev = ((events ?? []) as WedstrijdEvent[]);

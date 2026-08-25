@@ -34,6 +34,9 @@ export interface Speler {
   blessure_notitie: string | null;
   foto_url: string | null;
   geboortedatum: string | null;
+  // Gastspeler (doet incidenteel mee met wedstrijden; geen trainingen/vragenlijst).
+  // Optioneel getypt zodat de app ook werkt vóórdat migratie 0021 is gedraaid.
+  gast?: boolean;
   created_at: string;
 }
 
