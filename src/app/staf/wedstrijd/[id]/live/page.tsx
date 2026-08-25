@@ -50,9 +50,14 @@ export default async function LivePage({
         <Link href="/staf/wedstrijden" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
           ← Terug naar wedstrijden
         </Link>
-        <Link href={`/staf/wedstrijd/${id}/opstelling`} className="text-sm font-semibold text-sparta hover:underline">
-          Opstelling →
-        </Link>
+        <span className="flex gap-4">
+          <Link href={`/staf/wedstrijd/${id}/verslag`} className="text-sm font-semibold text-sparta hover:underline">
+            Verslag →
+          </Link>
+          <Link href={`/staf/wedstrijd/${id}/opstelling`} className="text-sm font-semibold text-sparta hover:underline">
+            Opstelling →
+          </Link>
+        </span>
       </div>
 
       <h1 className="mt-3 mb-4 text-2xl font-bold text-sparta">Live · {w.tegenstander}</h1>
