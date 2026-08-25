@@ -48,3 +48,24 @@ export async function bewaarOpstelling(payload: OpstellingPayload) {
   revalidatePath(`/staf/wedstrijd/${payload.wedstrijd_id}/registreren`);
   return { ok: true };
 }
+
+// Afmeldstatus van één speler voor deze wedstrijd zetten. Partiële upsert:
+// startte_als en stats blijven staan (kolommen hebben defaults).
+export async function setWedstrijdAfmelding(
+  wedstrijd_id: string,
+  speler_id: string,
+  afmeld_status: string,
+) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("wedstrijd_registraties")
+    .upsert(
+      { wedstrijd_id, speler_id, afmeld_status } as never,
+      { onConflict: "wedstrijd_id,speler_id" },
+    );
+  revalidatePath(`/staf/wedstrijd/${wedstrijd_id}/opstelling`);
+  return { ok: !error };
+}
