@@ -55,6 +55,14 @@ export default async function WedstrijdenPage() {
               >
                 Opstelling
               </Link>
+              {w.uitslag && (
+                <Link
+                  href={`/staf/wedstrijd/${w.id}/verslag`}
+                  className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-semibold text-neutral-600 hover:border-sparta hover:text-sparta"
+                >
+                  Verslag
+                </Link>
+              )}
               <Link
                 href={`/staf/wedstrijd/${w.id}/live`}
                 className="rounded-lg bg-sparta px-3 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark"
