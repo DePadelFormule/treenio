@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { OpstellingBord } from "@/components/OpstellingBord";
+import { WedstrijdAfmeldingen } from "@/components/WedstrijdAfmeldingen";
 import type { Speler, Wedstrijd, WedstrijdOpstelling } from "@/lib/types/database";
 
 export default async function OpstellingPage({
@@ -22,9 +23,10 @@ export default async function OpstellingPage({
   if (!wedstrijd) notFound();
   const w = wedstrijd as Wedstrijd;
 
-  const [{ data: spelers }, { data: opstelling }] = await Promise.all([
+  const [{ data: spelers }, { data: opstelling }, { data: registraties }] = await Promise.all([
     supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
     supabase.from("wedstrijd_opstelling").select("*").eq("wedstrijd_id", id).maybeSingle(),
+    supabase.from("wedstrijd_registraties").select("speler_id, afmeld_status").eq("wedstrijd_id", id),
   ]);
 
   const o = opstelling as WedstrijdOpstelling | null;
@@ -43,6 +45,17 @@ export default async function OpstellingPage({
   }));
 
   const nietFit = alleSpelers.filter((s) => s.beschikbaarheid !== "fit");
+
+  // Spelers buiten de selectie (niet in het veld, niet op de bank) — voor het
+  // afmeldingen-blok. Bijgewerkt zodra de opstelling opnieuw is opgeslagen.
+  const inSelectie = new Set([...Object.values(begin.veld).filter(Boolean), ...begin.bank]);
+  const buitenSelectie = alleSpelers
+    .filter((s) => !inSelectie.has(s.id))
+    .map((s) => ({ id: s.id, naam: s.naam, rugnummer: s.rugnummer }));
+  const afmeldBegin: Record<string, string> = {};
+  for (const r of (registraties ?? []) as { speler_id: string; afmeld_status: string }[]) {
+    if (r.afmeld_status && r.afmeld_status !== "nvt") afmeldBegin[r.speler_id] = r.afmeld_status;
+  }
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
@@ -69,6 +82,8 @@ export default async function OpstellingPage({
       )}
 
       <OpstellingBord wedstrijdId={id} spelers={spelerLijst} begin={begin} />
+
+      <WedstrijdAfmeldingen wedstrijdId={id} spelers={buitenSelectie} begin={afmeldBegin} />
 
       <p className="mt-6 text-xs text-neutral-400">
         Tik op een positie om een speler te kiezen. Kies onderaan spelers voor de bank.
