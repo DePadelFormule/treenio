@@ -78,6 +78,8 @@ export interface WedstrijdOpstelling {
   formatie: string;
   veld: Record<string, string>; // slotKey → speler_id
   bank: string[]; // speler_id[]
+  // Teamtaken voor deze wedstrijd (één per regel). Optioneel getypt (migratie 0025).
+  teamtaken?: string | null;
   created_at: string;
 }
 
