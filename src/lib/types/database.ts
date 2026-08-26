@@ -46,6 +46,8 @@ export interface WedstrijdVerslag {
   ging_goed: string | null;
   kan_beter: string | null;
   voor_training: string | null;
+  // Foto van het papieren formulier. Optioneel getypt (migratie 0025).
+  foto_pad?: string | null;
   created_at: string;
 }
 

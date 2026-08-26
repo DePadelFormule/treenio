@@ -15,21 +15,37 @@ const DRUK_LABEL: Record<string, string> = {
   wisselend: "Wisselend",
 };
 
-function Blok({ titel, tekst }: { titel: string; tekst: string | null | undefined }) {
+function Blok({ titel, tekst, leeg, regels = 2 }: { titel: string; tekst: string | null | undefined; leeg?: boolean; regels?: number }) {
   return (
     <div className="mb-2 break-inside-avoid">
       <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">{titel}</p>
-      <p className="whitespace-pre-wrap text-[13px] leading-snug text-neutral-800">{tekst?.trim() || "—"}</p>
+      {leeg ? (
+        // Invulformulier: schrijflijnen voor pen op papier.
+        <div>
+          {Array.from({ length: regels }, (_, i) => (
+            <div key={i} className="h-6 border-b border-neutral-300" />
+          ))}
+        </div>
+      ) : (
+        <p className="whitespace-pre-wrap text-[13px] leading-snug text-neutral-800">{tekst?.trim() || "—"}</p>
+      )}
     </div>
   );
 }
 
-export default async function VerslagPrintPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function VerslagPrintPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ leeg?: string }>;
+}) {
   const gebruiker = await getHuidigeGebruiker();
   if (!gebruiker) redirect("/login");
   if (gebruiker.rol !== "staf") redirect("/");
 
   const { id } = await params;
+  const leeg = (await searchParams).leeg === "1";
   const supabase = await createClient();
 
   const { data: wedstrijd } = await supabase
@@ -62,7 +78,7 @@ export default async function VerslagPrintPage({ params }: { params: Promise<{ i
           {w.datum}
           {w.tijd ? ` · ${w.tijd} uur` : ""}
           {w.type === "beker" ? " · Beker" : w.type === "vriendschappelijk" ? " · Vriendschappelijk" : ""}
-          {w.uitslag ? ` · Uitslag: ${w.uitslag} (wij-tegen)` : ""}
+          {w.uitslag ? ` · Uitslag: ${w.uitslag} (wij-tegen)` : leeg ? " · Uitslag: ______" : ""}
         </p>
       </header>
 
@@ -71,9 +87,9 @@ export default async function VerslagPrintPage({ params }: { params: Promise<{ i
         <h2 className="mb-1.5 rounded bg-neutral-100 px-2 py-1 text-sm font-bold text-neutral-800 print:bg-neutral-100">
           Teamverslag
         </h2>
-        <Blok titel="Wat ging goed" tekst={verslag?.ging_goed} />
-        <Blok titel="Wat kan beter" tekst={verslag?.kan_beter} />
-        <Blok titel="Meenemen naar de training" tekst={verslag?.voor_training} />
+        <Blok titel="Wat ging goed" tekst={verslag?.ging_goed} leeg={leeg} regels={3} />
+        <Blok titel="Wat kan beter" tekst={verslag?.kan_beter} leeg={leeg} regels={3} />
+        <Blok titel="Meenemen naar de training" tekst={verslag?.voor_training} leeg={leeg} regels={2} />
       </section>
 
       {/* Tegenstander */}
@@ -82,16 +98,16 @@ export default async function VerslagPrintPage({ params }: { params: Promise<{ i
           Tegenstander · {w.tegenstander}
         </h2>
         <div className="grid grid-cols-2 gap-x-6">
-          <Blok titel="Systeem" tekst={scouting?.systeem_tegenstander} />
-          <Blok titel="Druk zetten" tekst={scouting?.drukzetten ? DRUK_LABEL[scouting.drukzetten] : null} />
+          <Blok titel="Systeem" tekst={scouting?.systeem_tegenstander} leeg={leeg} regels={1} />
+          <Blok titel="Druk zetten (hoog / inzakken / wisselend)" tekst={scouting?.drukzetten ? DRUK_LABEL[scouting.drukzetten] : null} leeg={leeg} regels={1} />
         </div>
-        <Blok titel="Omschakeling & counter" tekst={scouting?.omschakeling} />
-        <Blok titel="Vaste spelmomenten" tekst={scouting?.standaardsituaties} />
+        <Blok titel="Omschakeling & counter" tekst={scouting?.omschakeling} leeg={leeg} regels={2} />
+        <Blok titel="Vaste spelmomenten" tekst={scouting?.standaardsituaties} leeg={leeg} regels={2} />
         <div className="grid grid-cols-2 gap-x-6">
-          <Blok titel="Opvallend sterk" tekst={scouting?.uitblinkers} />
-          <Blok titel="Opvallend zwak" tekst={scouting?.zwakke_schakel} />
+          <Blok titel="Opvallend sterk" tekst={scouting?.uitblinkers} leeg={leeg} regels={2} />
+          <Blok titel="Opvallend zwak" tekst={scouting?.zwakke_schakel} leeg={leeg} regels={2} />
         </div>
-        <Blok titel="Overige opmerkingen" tekst={scouting?.eigen_opmerking} />
+        <Blok titel="Overige opmerkingen" tekst={scouting?.eigen_opmerking} leeg={leeg} regels={2} />
       </section>
 
       <p className="mt-6 text-[10px] text-neutral-400">

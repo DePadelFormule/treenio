@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { bewaarWedstrijdVerslag, bewaarScouting } from "./actions";
+import { bewaarWedstrijdVerslag, bewaarScouting, uploadVerslagFoto, verwijderVerslagFoto } from "./actions";
 import type { Speler, Wedstrijd, WedstrijdEvent, WedstrijdRegistratie, WedstrijdVerslag, WedstrijdScouting } from "@/lib/types/database";
 
 // Terugleesbaar wedstrijdverslag: scoreverloop, wissels, kaarten en
@@ -41,6 +41,9 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
   ]);
   const verslag = verslagRij as WedstrijdVerslag | null;
   const scouting = scoutingRij as WedstrijdScouting | null;
+  const fotoUrl = verslag?.foto_pad
+    ? supabase.storage.from("verslagfotos").getPublicUrl(verslag.foto_pad).data.publicUrl
+    : null;
 
   const naamVan = new Map<string, { naam: string; rugnummer: number | null }>();
   for (const s of (spelers ?? []) as Speler[]) {
@@ -81,6 +84,9 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
           ← Terug naar wedstrijden
         </Link>
         <span className="flex gap-4">
+          <Link href={`/staf/wedstrijd/${id}/verslag/print?leeg=1`} className="text-sm font-semibold text-sparta hover:underline">
+            📝 Leeg formulier
+          </Link>
           <Link href={`/staf/wedstrijd/${id}/verslag/print`} className="text-sm font-semibold text-sparta hover:underline">
             🖨️ Print/PDF
           </Link>
@@ -216,6 +222,40 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
           Teamverslag opslaan
         </button>
       </form>
+
+      {/* Foto van het papieren formulier (leeg formulier printen → met pen
+          invullen langs de lijn → foto maken → hier uploaden). */}
+      <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4 print:hidden">
+        <h2 className="text-sm font-semibold text-neutral-700">Papieren verslag (foto)</h2>
+        <p className="mb-3 mt-0.5 text-xs text-neutral-400">
+          Leeg formulier geprint en met pen ingevuld? Maak er een foto van en zet hem hier bij de wedstrijd.
+        </p>
+        {fotoUrl && (
+          <div className="mb-3">
+            <a href={fotoUrl} target="_blank" rel="noreferrer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={fotoUrl} alt="Foto van het papieren wedstrijdverslag" className="max-h-96 w-auto rounded-lg border border-neutral-200" />
+            </a>
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <form action={uploadVerslagFoto} className="flex flex-wrap items-center gap-3">
+            <input type="hidden" name="wedstrijd_id" value={id} />
+            <input type="file" name="foto" accept="image/*" required className="text-sm text-neutral-600 file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-neutral-700" />
+            <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
+              {fotoUrl ? "Foto vervangen" : "Foto uploaden"}
+            </button>
+          </form>
+          {fotoUrl && (
+            <form action={verwijderVerslagFoto}>
+              <input type="hidden" name="wedstrijd_id" value={id} />
+              <button type="submit" className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50">
+                Verwijderen
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
 
       {/* Tegenstander-scouting: 1 per wedstrijd. Handig voor de returnwedstrijd. */}
       <form action={bewaarScouting} className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
