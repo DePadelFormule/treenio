@@ -72,7 +72,7 @@ export default async function LivePage({
 
       <LiveWedstrijd
         wedstrijdId={id}
-        kop={`${w.datum} · ${w.tegenstander}`}
+        kop={`${w.datum}${w.tijd ? ` · ${w.tijd} uur` : ""} · ${w.tegenstander}`}
         spelers={((spelers ?? []) as Speler[]).map((s) => ({ id: s.id, naam: s.gast ? `${s.naam} (gast)` : s.naam, rugnummer: s.rugnummer }))}
         basisIds={basisIds}
         bankIds={bankIds}

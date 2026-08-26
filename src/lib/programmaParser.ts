@@ -32,6 +32,7 @@ const MAANDEN: Record<string, number> = {
 export interface GeplakteWedstrijd {
   datum: string; // YYYY-MM-DD
   tegenstander: string;
+  tijd: string | null; // aanvangstijd "HH:MM"
 }
 
 export interface PlakResultaat {
@@ -95,6 +96,16 @@ function vindDatum(regel: string, vandaag: Date): { datum: string; rest: string 
   return null;
 }
 
+// Zoekt een aanvangstijd in de regel: "09:45", "9.45" of "09.45 uur".
+function vindTijd(regel: string): string | null {
+  const m = regel.match(/\b(\d{1,2})[:.](\d{2})\b/);
+  if (!m) return null;
+  const uur = Number(m[1]);
+  const minuut = Number(m[2]);
+  if (uur > 23 || minuut > 59) return null;
+  return `${String(uur).padStart(2, "0")}:${m[2]}`;
+}
+
 // Splitst een regel in twee teamnamen, of null als het geen wedstrijdregel is.
 // Scheiding is " - " (met spaties); beide kanten moeten letters bevatten.
 function vindTeams(regel: string): { thuis: string; uit: string } | null {
@@ -136,8 +147,11 @@ export function parsePlakProgramma(tekst: string, vandaag: Date = new Date()): P
   // regels (vaak dubbel, met de tijd ertussen). We verzamelen ze per datum en
   // maken er daarna paren van: thuis, uit.
   let blok: string[] = [];
+  // Tijden in blok-volgorde: voetbal.nl toont de aanvangstijd tussen de twee
+  // teamnamen van dezelfde wedstrijd, dus tijd n hoort bij wedstrijdpaar n.
+  let blokTijden: string[] = [];
 
-  const voegToe = (datum: string, thuis: string, uit: string) => {
+  const voegToe = (datum: string, thuis: string, uit: string, tijd: string | null) => {
     let tegenstander: string;
     if (thuis.toLowerCase().includes(EIGEN_TEAM_HINT)) {
       tegenstander = uit;
@@ -149,19 +163,22 @@ export function parsePlakProgramma(tekst: string, vandaag: Date = new Date()): P
     const sleutel = `${datum}|${tegenstander.toLowerCase()}`;
     if (gezien.has(sleutel)) return;
     gezien.add(sleutel);
-    wedstrijden.push({ datum, tegenstander });
+    wedstrijden.push({ datum, tegenstander, tijd });
   };
 
   const sluitBlokAf = () => {
     // Opeenvolgende duplicaten samenvouwen (voetbal.nl toont elke naam dubbel).
     const uniek: string[] = [];
     for (const t of blok) if (uniek[uniek.length - 1] !== t) uniek.push(t);
+    const tijden: string[] = [];
+    for (const t of blokTijden) if (tijden[tijden.length - 1] !== t) tijden.push(t);
     // Per twee: thuis, uit. Een losse restregel negeren we.
     for (let i = 0; i + 1 < uniek.length; i += 2) {
-      if (huidigeDatum) voegToe(huidigeDatum, uniek[i], uniek[i + 1]);
+      if (huidigeDatum) voegToe(huidigeDatum, uniek[i], uniek[i + 1], tijden[i / 2] ?? null);
       else zonderDatum++;
     }
     blok = [];
+    blokTijden = [];
   };
 
   for (const ruweRegel of tekst.split(/\r?\n/)) {
@@ -182,7 +199,7 @@ export function parsePlakProgramma(tekst: string, vandaag: Date = new Date()): P
         zonderDatum++;
         continue;
       }
-      voegToe(datum, thuis, uit);
+      voegToe(datum, thuis, uit, vindTijd(teamRegel));
       continue;
     }
 
@@ -190,12 +207,17 @@ export function parsePlakProgramma(tekst: string, vandaag: Date = new Date()): P
     if (datumInRegel) {
       sluitBlokAf();
       huidigeDatum = datumInRegel.datum;
+      const restTijd = vindTijd(datumInRegel.rest);
+      if (restTijd) blokTijden.push(restTijd);
       const rest = schoonTeamdeel(datumInRegel.rest);
       if (isTeamnaam(rest)) blok.push(rest);
       continue;
     }
 
     // Formaat 2 (voetbal.nl-blokken): losse teamnaam-regels verzamelen.
+    // Tijden (eigen regel of naast een teamnaam) apart bijhouden.
+    const tijd = vindTijd(regel);
+    if (tijd) blokTijden.push(tijd);
     const schoon = schoonTeamdeel(regel);
     if (isTeamnaam(schoon)) blok.push(schoon);
   }

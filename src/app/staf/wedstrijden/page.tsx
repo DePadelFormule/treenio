@@ -6,6 +6,7 @@ import { nieuweWedstrijd, verwijderWedstrijd } from "./actions";
 import { PlakProgramma } from "@/components/PlakProgramma";
 import { VerwijderKnop } from "@/components/VerwijderKnop";
 import { WedstrijdTypeKiezer } from "@/components/WedstrijdTypeKiezer";
+import { WedstrijdTijdInput } from "@/components/WedstrijdTijdInput";
 import type { Wedstrijd } from "@/lib/types/database";
 
 export default async function WedstrijdenPage() {
@@ -33,9 +34,10 @@ export default async function WedstrijdenPage() {
       </div>
 
       {/* Snelle toevoeging */}
-      <form action={nieuweWedstrijd} className="mb-8 grid gap-3 rounded-xl border border-neutral-200 bg-white p-4 sm:grid-cols-[auto_1fr_auto_auto_auto]">
+      <form action={nieuweWedstrijd} className="mb-8 grid gap-3 rounded-xl border border-neutral-200 bg-white p-4 sm:grid-cols-[auto_1fr_auto_auto_auto_auto]">
         <input type="date" name="datum" required className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
         <input type="text" name="tegenstander" placeholder="Tegenstander" required className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        <input type="time" name="tijd" title="Aanvangstijd" className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
         <input type="text" name="uitslag" placeholder="Uitslag (bijv. 3-1)" className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
         <select name="type" defaultValue="competitie" className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm">
           <option value="competitie">Competitie</option>
@@ -53,7 +55,10 @@ export default async function WedstrijdenPage() {
             <div className="min-w-0">
               <p className="font-medium text-neutral-800">{w.tegenstander}</p>
               <p className="mb-1.5 text-xs text-neutral-400">{w.datum}{w.uitslag ? ` · ${w.uitslag}` : ""}</p>
-              <WedstrijdTypeKiezer id={w.id} begin={w.type ?? "competitie"} />
+              <span className="flex flex-wrap items-center gap-2">
+                <WedstrijdTijdInput id={w.id} begin={w.tijd ?? ""} />
+                <WedstrijdTypeKiezer id={w.id} begin={w.type ?? "competitie"} />
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link

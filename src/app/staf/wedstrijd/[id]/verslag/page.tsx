@@ -84,6 +84,7 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
         <h1 className="text-2xl font-bold text-sparta">Verslag · {w.tegenstander}</h1>
         <p className="text-sm text-neutral-500">
           {w.datum}
+          {w.tijd && ` · ${w.tijd} uur`}
           {w.type === "beker" && " · Beker"}
           {w.type === "vriendschappelijk" && " · Vriendschappelijk"}
           {w.uitslag && (

@@ -67,7 +67,7 @@ export default async function OpstellingPage({
       <header className="mt-4 mb-6">
         <h1 className="text-2xl font-bold text-sparta">Opstelling</h1>
         <p className="text-sm text-neutral-500">
-          {w.datum} · {w.tegenstander}
+          {w.datum}{w.tijd ? ` · ${w.tijd} uur` : ""} · {w.tegenstander}
         </p>
       </header>
 
