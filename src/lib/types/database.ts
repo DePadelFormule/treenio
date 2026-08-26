@@ -144,6 +144,8 @@ export interface Wedstrijd {
   bron_id: string | null;
   // Optioneel getypt zodat de app ook werkt vóórdat migratie 0022 is gedraaid.
   type?: WedstrijdType;
+  // Aanvangstijd "HH:MM". Optioneel getypt (migratie 0023).
+  tijd?: string | null;
   created_at: string;
 }
 
