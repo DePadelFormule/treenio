@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { Speler, Wedstrijd, WedstrijdEvent, WedstrijdRegistratie } from "@/lib/types/database";
+import { bewaarWedstrijdVerslag, bewaarScouting } from "./actions";
+import type { Speler, Wedstrijd, WedstrijdEvent, WedstrijdRegistratie, WedstrijdVerslag, WedstrijdScouting } from "@/lib/types/database";
 
 // Terugleesbaar wedstrijdverslag: scoreverloop, wissels, kaarten en
 // speelminuten — alles wat tijdens de live-registratie is geturfd.
@@ -30,12 +31,16 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
   if (!wedstrijd) notFound();
   const w = wedstrijd as Wedstrijd;
 
-  const [{ data: events }, { data: registraties }, { data: spelers }] = await Promise.all([
+  const [{ data: events }, { data: registraties }, { data: spelers }, { data: verslagRij }, { data: scoutingRij }] = await Promise.all([
     supabase.from("wedstrijd_events").select("*").eq("wedstrijd_id", id)
       .order("minuut", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("wedstrijd_registraties").select("*").eq("wedstrijd_id", id),
     supabase.from("spelers").select("*"),
+    supabase.from("wedstrijd_verslag").select("*").eq("wedstrijd_id", id).maybeSingle(),
+    supabase.from("wedstrijd_scouting").select("*").eq("wedstrijd_id", id).maybeSingle(),
   ]);
+  const verslag = verslagRij as WedstrijdVerslag | null;
+  const scouting = scoutingRij as WedstrijdScouting | null;
 
   const naamVan = new Map<string, { naam: string; rugnummer: number | null }>();
   for (const s of (spelers ?? []) as Speler[]) {
@@ -181,6 +186,80 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
           )}
         </>
       )}
+
+      {/* Teamverslag: hoe speelden wij als team. Tijdens of na de wedstrijd
+          in te vullen; 1 verslag per wedstrijd, door alle trainers te lezen. */}
+      <form action={bewaarWedstrijdVerslag} className="mt-8 rounded-xl border border-neutral-200 bg-white p-4">
+        <input type="hidden" name="wedstrijd_id" value={id} />
+        <h2 className="text-sm font-semibold text-neutral-700">Teamverslag</h2>
+        <p className="mb-3 mt-0.5 text-xs text-neutral-400">
+          Hoe speelden wij als team? Tijdens de rust of na afloop invullen.
+        </p>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-neutral-500">Wat ging goed</span>
+          <textarea name="ging_goed" rows={3} defaultValue={verslag?.ging_goed ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-neutral-500">Wat kan beter</span>
+          <textarea name="kan_beter" rows={3} defaultValue={verslag?.kan_beter ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-neutral-500">Meenemen naar de training</span>
+          <textarea name="voor_training" rows={2} defaultValue={verslag?.voor_training ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
+          Teamverslag opslaan
+        </button>
+      </form>
+
+      {/* Tegenstander-scouting: 1 per wedstrijd. Handig voor de returnwedstrijd. */}
+      <form action={bewaarScouting} className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
+        <input type="hidden" name="wedstrijd_id" value={id} />
+        <h2 className="text-sm font-semibold text-neutral-700">Tegenstander · {w.tegenstander}</h2>
+        <p className="mb-3 mt-0.5 text-xs text-neutral-400">
+          Scouting voor de returnwedstrijd: hoe speelden zij?
+        </p>
+        <div className="mb-3 grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="mb-1 block text-xs font-semibold text-neutral-500">Systeem</span>
+            <input type="text" name="systeem_tegenstander" placeholder="bijv. 4-4-2" defaultValue={scouting?.systeem_tegenstander ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-xs font-semibold text-neutral-500">Druk zetten</span>
+            <select name="drukzetten" defaultValue={scouting?.drukzetten ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm">
+              <option value="">—</option>
+              <option value="hoog">Hoog druk zetten</option>
+              <option value="inzakken">Inzakken</option>
+              <option value="wisselend">Wisselend</option>
+            </select>
+          </label>
+        </div>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-neutral-500">Omschakeling &amp; counter</span>
+          <textarea name="omschakeling" rows={2} placeholder="Hoe schakelen ze om na balverlies/balverovering? Countergevaar?" defaultValue={scouting?.omschakeling ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-neutral-500">Vaste spelmomenten</span>
+          <textarea name="standaardsituaties" rows={2} placeholder="Corners, vrije trappen, inworpen, uittrap keeper…" defaultValue={scouting?.standaardsituaties ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <div className="mb-3 grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="mb-1 block text-xs font-semibold text-neutral-500">Opvallend sterk</span>
+            <textarea name="uitblinkers" rows={2} placeholder="Gevaarlijke/sterke spelers (rugnummers)" defaultValue={scouting?.uitblinkers ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-xs font-semibold text-neutral-500">Opvallend zwak</span>
+            <textarea name="zwakke_schakel" rows={2} placeholder="Zwakke schakel / waar valt winst te halen" defaultValue={scouting?.zwakke_schakel ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+          </label>
+        </div>
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block text-xs font-semibold text-neutral-500">Overige opmerkingen</span>
+          <textarea name="eigen_opmerking" rows={2} defaultValue={scouting?.eigen_opmerking ?? ""} className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+        </label>
+        <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
+          Scouting opslaan
+        </button>
+      </form>
     </main>
   );
 }
