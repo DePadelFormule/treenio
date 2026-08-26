@@ -66,6 +66,9 @@ export interface WedstrijdScouting {
   zwakke_schakel: string | null;
   uitblinkers: string | null;
   eigen_opmerking: string | null;
+  // Optioneel getypt zodat de app ook werkt vóórdat migratie 0024 is gedraaid.
+  omschakeling?: string | null;
+  standaardsituaties?: string | null;
   created_at: string;
 }
 
