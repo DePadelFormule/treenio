@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { bewaarWedstrijdVerslag, bewaarScouting } from "./actions";
+import { FotoVoorlezen } from "@/components/FotoVoorlezen";
 import type { Speler, Wedstrijd, WedstrijdEvent, WedstrijdRegistratie, WedstrijdVerslag, WedstrijdScouting } from "@/lib/types/database";
 
 // Terugleesbaar wedstrijdverslag: scoreverloop, wissels, kaarten en
@@ -80,9 +81,17 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
         <Link href="/staf/wedstrijden" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
           ← Terug naar wedstrijden
         </Link>
-        <Link href={`/staf/wedstrijd/${id}/live`} className="text-sm font-semibold text-sparta hover:underline">
-          Live-scherm →
-        </Link>
+        <span className="flex gap-4">
+          <Link href={`/staf/wedstrijd/${id}/verslag/print?leeg=1`} className="text-sm font-semibold text-sparta hover:underline">
+            📝 Leeg formulier
+          </Link>
+          <Link href={`/staf/wedstrijd/${id}/verslag/print`} className="text-sm font-semibold text-sparta hover:underline">
+            🖨️ Print/PDF
+          </Link>
+          <Link href={`/staf/wedstrijd/${id}/live`} className="text-sm font-semibold text-sparta hover:underline">
+            Live-scherm →
+          </Link>
+        </span>
       </div>
 
       <header className="mt-4 mb-6">
@@ -212,6 +221,7 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
         </button>
       </form>
 
+
       {/* Tegenstander-scouting: 1 per wedstrijd. Handig voor de returnwedstrijd. */}
       <form action={bewaarScouting} className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
         <input type="hidden" name="wedstrijd_id" value={id} />
@@ -260,6 +270,9 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
           Scouting opslaan
         </button>
       </form>
+
+      {/* Foto van het met pen ingevulde formulier voorlezen (AI vult de velden). */}
+      <FotoVoorlezen wedstrijdId={id} />
     </main>
   );
 }
