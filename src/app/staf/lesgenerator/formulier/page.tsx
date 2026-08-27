@@ -9,7 +9,9 @@ import { PrintKnop } from "@/components/PrintKnop";
 // voorgedrukt, dus in één keer een stapel te printen. Ingevuld? Foto maken op
 // de Lesvoorbereiding-pagina → de AI zet de les in het archief.
 
-const KERNEN = ["Kern 1A", "Kern 1B", "Kern 2A", "Kern 2B", "Afsluitingsvorm"];
+// Vijf gelijke blokken (2× kern 1, 2× kern 2, afsluitingsvorm) — in de balk
+// schrijft de trainer zelf het doel en de vorm.
+const AANTAL_BLOKKEN = 5;
 
 // Half speelveld (doel boven, middellijn onder) in lichtgrijs zodat pen en
 // potlood goed leesbaar blijven.
@@ -68,12 +70,13 @@ export default async function LesFormulierPage() {
         </p>
       </header>
 
-      {/* Kernen + afsluitingsvorm: tekenveld + uitlegregels */}
-      {KERNEN.map((naam) => (
-        <section key={naam} className="mb-3 break-inside-avoid">
-          <h2 className="mb-1.5 flex items-center justify-between rounded bg-neutral-100 px-2 py-1 text-sm font-bold text-neutral-800 print:bg-neutral-100">
-            {naam}
-            <span className="text-[11px] font-semibold text-neutral-400">____ min</span>
+      {/* Vijf blokken: tekenveld + uitlegregels; doel en vorm in de balk */}
+      {Array.from({ length: AANTAL_BLOKKEN }, (_, i) => (
+        <section key={i} className="mb-3 break-inside-avoid">
+          <h2 className="mb-1.5 flex flex-wrap items-center gap-x-4 rounded bg-neutral-100 px-2 py-1 text-[13px] font-bold text-neutral-800 print:bg-neutral-100">
+            <span>Doel: ________________________</span>
+            <span>Vorm: ______________________</span>
+            <span className="ml-auto text-[11px] font-semibold text-neutral-400">____ min</span>
           </h2>
           <div className="flex gap-4">
             <div className="w-[44%] shrink-0">
