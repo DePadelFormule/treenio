@@ -328,6 +328,57 @@ export interface OpgeslagenLes {
   created_at: string;
 }
 
+// ---- Academy (handboek + optionele quiz per hoofdstuk, migratie 0026) -----
+
+export interface AcademyHoofdstuk {
+  id: string;
+  titel: string;
+  volgorde: number;
+  created_at: string;
+}
+
+export interface AcademySectie {
+  id: string;
+  hoofdstuk_id: string;
+  titel: string | null;
+  tekst: string;
+  volgorde: number;
+  created_at: string;
+}
+
+export type AcademyVraagType = "meerkeuze" | "stelling";
+
+// Staf-weergave: bevat het juiste antwoord (juist_index).
+export interface AcademyQuizvraag {
+  id: string;
+  hoofdstuk_id: string;
+  type: AcademyVraagType;
+  vraag: string;
+  opties: string[];
+  juist_index: number;
+  volgorde: number;
+  created_at: string;
+}
+
+// Publieke weergave (via de RPC academy_quiz_vragen): zonder juist_index.
+export interface AcademyVraagPubliek {
+  id: string;
+  type: AcademyVraagType;
+  vraag: string;
+  opties: string[];
+  volgorde: number;
+}
+
+export interface AcademyQuizResultaat {
+  id: string;
+  hoofdstuk_id: string;
+  speler_id: string;
+  score: number;
+  totaal: number;
+  fout_vraag_ids: string[];
+  created_at: string;
+}
+
 // Antwoorden op de seizoensstart-vragenlijst (één rij per speler).
 export interface VragenlijstAntwoorden {
   id: string;
@@ -381,6 +432,26 @@ export interface Database {
         Insert: { datum: string };
         Update: { datum?: string };
       };
+      academy_hoofdstukken: {
+        Row: AcademyHoofdstuk;
+        Insert: Partial<AcademyHoofdstuk> & { titel: string };
+        Update: Partial<AcademyHoofdstuk>;
+      };
+      academy_secties: {
+        Row: AcademySectie;
+        Insert: Partial<AcademySectie> & { hoofdstuk_id: string };
+        Update: Partial<AcademySectie>;
+      };
+      academy_quizvragen: {
+        Row: AcademyQuizvraag;
+        Insert: Partial<AcademyQuizvraag> & { hoofdstuk_id: string; vraag: string; opties: unknown };
+        Update: Partial<AcademyQuizvraag> & { opties?: unknown };
+      };
+      academy_quiz_resultaten: {
+        Row: AcademyQuizResultaat;
+        Insert: Partial<AcademyQuizResultaat> & { hoofdstuk_id: string; speler_id: string };
+        Update: Partial<AcademyQuizResultaat>;
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -391,6 +462,15 @@ export interface Database {
         Returns: { id: string; naam: string; rugnummer: number | null }[];
       };
       vragenlijst_opslaan: { Args: { p_speler: string; p_antwoorden: unknown }; Returns: undefined };
+      academy_quiz_vragen: { Args: { p_hoofdstuk: string }; Returns: AcademyVraagPubliek[] };
+      academy_spelers_voor_quiz: {
+        Args: { p_hoofdstuk: string };
+        Returns: { id: string; naam: string; rugnummer: number | null }[];
+      };
+      academy_quiz_afronden: {
+        Args: { p_hoofdstuk: string; p_speler: string; p_antwoorden: unknown };
+        Returns: { score: number; totaal: number }[];
+      };
     };
     Enums: Record<string, never>;
   };
