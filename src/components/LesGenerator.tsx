@@ -196,6 +196,10 @@ export function Lesblad({ les }: { les: Les }) {
                 </p>
               )}
 
+              {b.tekening && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={b.tekening} alt={`Tekening bij ${b.naam}`} className="mt-2 max-w-xs rounded-lg border border-neutral-200" />
+              )}
               {b.organisatie && <p className="mt-2 whitespace-pre-wrap rounded bg-green-50 px-2 py-1.5 text-sm text-green-900">{b.organisatie}</p>}
             </li>
           ))}

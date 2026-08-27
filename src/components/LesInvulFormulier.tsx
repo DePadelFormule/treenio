@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { bewaarHandmatigeLes, type HandLesBlok } from "@/app/staf/lesgenerator/actions";
+import { TekenVeld } from "@/components/TekenVeld";
 
 // Digitale versie van het papieren lesvoorbereidingsformulier: vijf blokken
-// met doel, vorm, minuten en uitleg. Opslaan zet de les in het archief.
+// met een tekenveld, doel, vorm, minuten en uitleg. Opslaan zet de les in het
+// archief.
 
-const LEEG_BLOK: HandLesBlok = { doel: "", vorm: "", minuten: 0, uitleg: "" };
+const LEEG_BLOK: HandLesBlok = { doel: "", vorm: "", minuten: 0, uitleg: "", tekening: undefined };
 
 export function LesInvulFormulier() {
   const [datum, setDatum] = useState("");
@@ -107,12 +109,18 @@ export function LesInvulFormulier() {
                 className="w-20 rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
             </label>
           </div>
-          <label className="block">
-            <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-neutral-500">Uitleg &amp; organisatie</span>
-            <textarea rows={3} value={blok.uitleg} onChange={(e) => zetBlok(i, { uitleg: e.target.value })}
-              placeholder="Opstelling, afmetingen, regels, coachmomenten…"
-              className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
-          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-neutral-500">Teken de oefening</span>
+              <TekenVeld waarde={blok.tekening} onChange={(dataUrl) => zetBlok(i, { tekening: dataUrl })} />
+            </div>
+            <label className="block">
+              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-neutral-500">Uitleg &amp; organisatie</span>
+              <textarea rows={9} value={blok.uitleg} onChange={(e) => zetBlok(i, { uitleg: e.target.value })}
+                placeholder="Opstelling, afmetingen, regels, coachmomenten…"
+                className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
+            </label>
+          </div>
         </div>
       ))}
 

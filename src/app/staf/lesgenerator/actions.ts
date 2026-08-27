@@ -244,6 +244,7 @@ export interface HandLesBlok {
   vorm: string;
   minuten: number;
   uitleg: string;
+  tekening?: string; // data-URL (PNG) van het tekenveld
 }
 
 export interface HandLesInvoer {
@@ -270,8 +271,9 @@ export async function bewaarHandmatigeLes(
       vorm: b.vorm.trim().slice(0, 120),
       minuten: Number.isFinite(b.minuten) && b.minuten > 0 ? Math.min(b.minuten, 120) : 0,
       uitleg: b.uitleg.trim().slice(0, 2000),
+      tekening: b.tekening?.startsWith("data:image/") && b.tekening.length < 1_500_000 ? b.tekening : undefined,
     }))
-    .filter((b) => b.doel || b.vorm || b.uitleg);
+    .filter((b) => b.doel || b.vorm || b.uitleg || b.tekening);
   if (!thema) return { ok: false, fout: "Vul een thema in." };
   if (blokken.length === 0) return { ok: false, fout: "Vul minstens één blok in." };
 
@@ -293,6 +295,7 @@ export async function bewaarHandmatigeLes(
       coachpunten: [],
       progressie_makkelijker: "",
       progressie_moeilijker: "",
+      tekening: b.tekening,
     })),
     leeskaart: {
       focuspunten: invoer.doelstelling.trim() ? [invoer.doelstelling.trim().slice(0, 300)] : [],

@@ -12,6 +12,10 @@ export interface LesBlok {
   coachpunten: string[];
   progressie_makkelijker: string;
   progressie_moeilijker: string;
+  // Handgetekende oefening op het halve veld (data-URL, PNG). Alleen gezet bij
+  // het digitale lesformulier — de AI genereert dit niet, dus niet in het
+  // JSON-schema hieronder.
+  tekening?: string;
 }
 
 export interface Leeskaart {
