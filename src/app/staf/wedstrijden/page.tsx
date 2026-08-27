@@ -26,7 +26,12 @@ export default async function WedstrijdenPage() {
         ← Terug naar dashboard
       </Link>
 
-      <h1 className="mt-4 mb-4 text-2xl font-bold text-sparta">Wedstrijden</h1>
+      <div className="mt-4 mb-4 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-sparta">Wedstrijden</h1>
+        <Link href="/staf/opstelling-formulier" className="text-sm font-semibold text-sparta hover:underline">
+          📝 Leeg opstellingsformulier
+        </Link>
+      </div>
 
       {/* Programma plakken vanaf voetbal.nl */}
       <div className="mb-6">
