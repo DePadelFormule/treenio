@@ -4,8 +4,9 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { OpstellingBord } from "@/components/OpstellingBord";
 import { WedstrijdAfmeldingen } from "@/components/WedstrijdAfmeldingen";
-import { voegGastToe, bewaarTeamtaken } from "./actions";
+import { voegGastToe } from "./actions";
 import { OpstellingFotoVoorlezen } from "@/components/OpstellingFotoVoorlezen";
+import { TeamtakenVeld } from "@/components/TeamtakenVeld";
 import type { Speler, Wedstrijd, WedstrijdOpstelling } from "@/lib/types/database";
 
 export default async function OpstellingPage({
@@ -86,21 +87,7 @@ export default async function OpstellingPage({
       <OpstellingBord wedstrijdId={id} spelers={spelerLijst} begin={begin} />
 
       {/* Teamtaken voor deze wedstrijd (staan ook op het papieren formulier). */}
-      <form action={bewaarTeamtaken} className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
-        <input type="hidden" name="wedstrijd_id" value={id} />
-        <h2 className="text-sm font-semibold text-neutral-700">Teamtaken</h2>
-        <p className="mb-2 mt-0.5 text-xs text-neutral-400">Maximaal drie, één per regel.</p>
-        <textarea
-          name="teamtaken"
-          rows={3}
-          defaultValue={o?.teamtaken ?? ""}
-          placeholder={"1. …\n2. …\n3. …"}
-          className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
-        />
-        <button type="submit" className="mt-2 rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
-          Teamtaken opslaan
-        </button>
-      </form>
+      <TeamtakenVeld wedstrijdId={id} begin={o?.teamtaken ?? ""} />
 
       {/* Foto van het papieren opstellingsformulier voorlezen. */}
       <OpstellingFotoVoorlezen wedstrijdId={id} />

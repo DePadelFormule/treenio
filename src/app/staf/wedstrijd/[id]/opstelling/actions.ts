@@ -72,20 +72,24 @@ export async function setWedstrijdAfmelding(
 }
 
 // Teamtaken voor deze wedstrijd bewaren (één taak per regel).
-export async function bewaarTeamtaken(formData: FormData) {
+// Client-aanroep (geen native form-post, zie TeamtakenVeld) zodat opslaan
+// niet de hele pagina laat navigeren/herladen. Bewust GEEN revalidatePath:
+// de tekst staat al lokaal in de client-state, en een volledige herfetch van
+// de pagina (wedstrijd + spelers + opstelling + registraties) voor een simpel
+// tekstveldje maakte de pagina traag/vast bij een langzame verbinding.
+export async function bewaarTeamtaken(wedstrijdId: string, teamtaken: string) {
   const gebruiker = await getHuidigeGebruiker();
-  if (gebruiker?.rol !== "staf") return;
-  const wedstrijdId = String(formData.get("wedstrijd_id") ?? "");
-  if (!wedstrijdId) return;
-  const teamtaken = String(formData.get("teamtaken") ?? "").trim().slice(0, 1000) || null;
+  if (gebruiker?.rol !== "staf") return { ok: false };
+  if (!wedstrijdId) return { ok: false };
+  const waarde = teamtaken.trim().slice(0, 1000) || null;
 
   const supabase = await createClient();
   // Upsert raakt alleen de meegegeven kolommen; veld/bank blijven staan.
-  await supabase.from("wedstrijd_opstelling").upsert(
-    { wedstrijd_id: wedstrijdId, teamtaken } as never,
+  const { error } = await supabase.from("wedstrijd_opstelling").upsert(
+    { wedstrijd_id: wedstrijdId, teamtaken: waarde } as never,
     { onConflict: "wedstrijd_id" },
   );
-  revalidatePath(`/staf/wedstrijd/${wedstrijdId}/opstelling`);
+  return { ok: !error };
 }
 
 // ---- Papieren opstellingsformulier voorlezen met AI -----------------------

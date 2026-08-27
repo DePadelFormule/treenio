@@ -39,7 +39,8 @@ export async function updateSession(request: NextRequest) {
     path === "/" ||
     path.startsWith("/login") ||
     path.startsWith("/auth") ||
-    path.startsWith("/vragenlijst"); // spelers vullen deze in zonder inlog
+    path.startsWith("/vragenlijst") || // spelers vullen deze in zonder inlog
+    path.startsWith("/academy"); // handboek + quiz, spelers lezen zonder inlog
 
   // Niet ingelogd en geen publieke route → naar /login.
   if (!user && !isPublic) {

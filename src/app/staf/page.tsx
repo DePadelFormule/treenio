@@ -3,7 +3,39 @@ import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/SignOutButton";
-import type { PositieVoorkeur, Staf } from "@/lib/types/database";
+import type { AcademyHoofdstuk, AcademyQuizResultaat, PositieVoorkeur, Staf } from "@/lib/types/database";
+
+interface AcademyRegel {
+  hoofdstuk: string;
+  hoofdstukId: string;
+  spelerNaam: string;
+  score: number;
+  totaal: number;
+}
+
+// Quiz-resultaten per hoofdstuk: privé voor alle trainers (spelers zien dit
+// nooit). Handmatige join, zelfde stijl als positieStatus hierboven.
+async function academyResultaten(): Promise<AcademyRegel[]> {
+  const supabase = await createClient();
+  const [{ data: hoofdstukken }, { data: resultaten }, { data: spelers }] = await Promise.all([
+    supabase.from("academy_hoofdstukken").select("id, titel"),
+    supabase.from("academy_quiz_resultaten").select("*").order("created_at", { ascending: false }),
+    supabase.from("spelers").select("id, naam"),
+  ]);
+  const hoofdstukTitel = new Map(
+    ((hoofdstukken ?? []) as Pick<AcademyHoofdstuk, "id" | "titel">[]).map((h) => [h.id, h.titel]),
+  );
+  const spelerNaam = new Map(
+    ((spelers ?? []) as { id: string; naam: string }[]).map((s) => [s.id, s.naam]),
+  );
+  return ((resultaten ?? []) as AcademyQuizResultaat[]).map((r) => ({
+    hoofdstuk: hoofdstukTitel.get(r.hoofdstuk_id) ?? "?",
+    hoofdstukId: r.hoofdstuk_id,
+    spelerNaam: spelerNaam.get(r.speler_id) ?? "?",
+    score: r.score,
+    totaal: r.totaal,
+  }));
+}
 
 interface TrainerStatus {
   naam: string;
@@ -73,6 +105,12 @@ export default async function StafPage() {
   }
   const grens = Date.now() - 3 * 24 * 60 * 60 * 1000; // "nieuw" = laatste 3 dagen
   const ingevuld = status.filter((s) => s.aantal > 0);
+  const academyRegels = await academyResultaten();
+  const academyPerHoofdstuk = new Map<string, AcademyRegel[]>();
+  for (const r of academyRegels) {
+    if (!academyPerHoofdstuk.has(r.hoofdstukId)) academyPerHoofdstuk.set(r.hoofdstukId, []);
+    academyPerHoofdstuk.get(r.hoofdstukId)!.push(r);
+  }
 
   // Alle trainers zien de app; alleen de AI-lesgenerator (kost geld per les),
   // het lessenarchief en de afgeronde positie-inventarisatie zijn exclusief
@@ -83,6 +121,7 @@ export default async function StafPage() {
     { href: "/staf/wedstrijden", titel: "Wedstrijden", uitleg: "Programma beheren en per wedstrijd registreren (stats, keeper, scouting)." },
     { href: "/staf/trainingen", titel: "Trainingen", uitleg: "Presentielijst bijhouden: wie was er, afmeldingen en inzet." },
     { href: "/staf/spelsituaties", titel: "Spelsituaties", uitleg: "Tactisch tekenbord: magneetjes slepen, animatie maken en afspelen." },
+    { href: "/staf/academy", titel: "Academy", uitleg: "Handboek voor spelers: begrippen, teamtaken en meer — met een leuke quiz." },
   ];
   const menu = magAlles
     ? [
@@ -176,6 +215,35 @@ export default async function StafPage() {
             Delen met de spelersgroep: stuur ze het app-adres met <span className="font-mono">/vragenlijst</span> erachter.
             De antwoorden verschijnen per speler op de spelerskaart.
           </p>
+        </div>
+      )}
+
+      {academyPerHoofdstuk.size > 0 && (
+        <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-semibold text-neutral-800">Academy-quiz resultaten</h2>
+            <Link href="/staf/academy" className="text-sm font-semibold text-sparta hover:underline">
+              Beheer Academy →
+            </Link>
+          </div>
+          <p className="mb-3 text-xs text-neutral-400">
+            Alleen voor trainers. Ga hier discreet mee om — spelers zien elkaars score nooit.
+          </p>
+          <div className="space-y-4">
+            {[...academyPerHoofdstuk.entries()].map(([hoofdstukId, regels]) => (
+              <div key={hoofdstukId}>
+                <p className="mb-1 text-sm font-semibold text-neutral-700">{regels[0].hoofdstuk}</p>
+                <ul className="divide-y divide-neutral-100">
+                  {regels.map((r, i) => (
+                    <li key={i} className="flex items-center justify-between py-1 text-sm">
+                      <span className="text-neutral-700">{r.spelerNaam}</span>
+                      <span className="font-semibold text-neutral-600">{r.score} / {r.totaal}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </main>
