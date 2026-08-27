@@ -181,16 +181,19 @@ export async function leesLesFoto(formData: FormData): Promise<LesFotoResultaat>
               type: "text",
               text:
                 "Dit is een foto van een met pen ingevuld voetbal-lesvoorbereidingsformulier (JO17, half veld). " +
-                "Bovenaan staan datum, thema, aantal spelers en duur; daaronder vier blokken " +
-                "(Warming-up, Oefenvorm 1, Oefenvorm 2, Partijvorm / afsluiting) met per blok minuten, doel, organisatie & uitleg, coachpunten en materiaal. " +
-                "Neem de tekst letterlijk over en verzin niets. Vul zo in: datum als YYYY-MM-DD (anders null); " +
+                "Bovenaan staan datum, thema, aantal spelers, duur en doelstelling. Daaronder maximaal vijf blokken: " +
+                "Kern 1A, Kern 1B, Kern 2A, Kern 2B en Afsluitingsvorm — per blok de minuten, links een getekende oefening " +
+                "op een half veld en rechts geschreven uitleg & organisatie. De warming-up is standaard en staat niet op het formulier. " +
+                "Neem geschreven tekst letterlijk over en verzin niets. Vul zo in: datum als YYYY-MM-DD (anders null); " +
                 "les.titel en les.onderwerp = het thema; les.sport = 'voetbal'; les.fase = 0; les.niveau = 'JO17'; " +
                 "les.totale_duur_minuten en les.aantal_spelers van het formulier (onleesbaar = 0); " +
-                "les.materiaal = alle genoemde materialen samengevoegd; " +
-                "les.blokken = alleen de blokken waar iets bij geschreven is (type: 'warming-up', 'oefenvorm' of 'wedstrijdvorm'; " +
-                "coachpunten als losse punten; progressie_makkelijker en progressie_moeilijker leeg laten als ze niet op papier staan); " +
-                "les.leeskaart: lege lijsten tenzij er duidelijk focuspunten geschreven zijn. " +
-                "Een leeg of onleesbaar veld wordt een lege tekst of 0.",
+                "les.materiaal = materialen die in de uitleg of tekeningen voorkomen (pionnen, hesjes, doeltjes...); " +
+                "les.blokken = alleen de blokken waar iets getekend of geschreven is, met naam 'Kern 1A' enz. " +
+                "(type 'oefenvorm', maar 'wedstrijdvorm' voor de Afsluitingsvorm); les.blokken[].doel leeg laten; " +
+                "les.blokken[].organisatie: begin met 'Tekening: ...' — een korte, feitelijke beschrijving van wat er op het halve veld " +
+                "getekend is (opstelling, pionnen, looplijnen, pijlen: doorgetrokken = bal/sprint, gestreept = loopactie) — " +
+                "en daarna de geschreven uitleg; les.blokken[].coachpunten, progressie_makkelijker en progressie_moeilijker leeg; " +
+                "les.leeskaart: lege lijsten. Een leeg of onleesbaar veld wordt een lege tekst of 0.",
             },
           ],
         },

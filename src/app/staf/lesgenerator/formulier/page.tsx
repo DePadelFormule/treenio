@@ -3,24 +3,32 @@ import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { PrintKnop } from "@/components/PrintKnop";
 
-// Leeg lesvoorbereidingsformulier (A4) om met pen in te vullen. Zonder datum
+// Leeg lesvoorbereidingsformulier om met pen in te vullen. Per blok een half
+// veld om de oefening op te tekenen + schrijfregels voor de uitleg. De
+// warming-up is standaard en staat er bewust niet op. Zonder datum
 // voorgedrukt, dus in één keer een stapel te printen. Ingevuld? Foto maken op
 // de Lesvoorbereiding-pagina → de AI zet de les in het archief.
 
-const BLOKKEN = [
-  { naam: "Warming-up", regelsOrganisatie: 2 },
-  { naam: "Oefenvorm 1", regelsOrganisatie: 3 },
-  { naam: "Oefenvorm 2", regelsOrganisatie: 3 },
-  { naam: "Partijvorm / afsluiting", regelsOrganisatie: 2 },
-];
+const KERNEN = ["Kern 1A", "Kern 1B", "Kern 2A", "Kern 2B", "Afsluitingsvorm"];
 
-function Regels({ n }: { n: number }) {
+// Half speelveld (doel boven, middellijn onder) in lichtgrijs zodat pen en
+// potlood goed leesbaar blijven.
+function HalfVeld() {
   return (
-    <div>
-      {Array.from({ length: n }, (_, i) => (
-        <div key={i} className="h-6 border-b border-neutral-300" />
-      ))}
-    </div>
+    <svg viewBox="0 0 100 70" className="w-full" role="img" aria-label="Half speelveld">
+      {/* doel */}
+      <rect x="44" y="0.5" width="12" height="2.5" fill="none" stroke="#b3b3b3" strokeWidth="0.8" />
+      {/* veldranden; onderkant = middellijn */}
+      <rect x="2" y="3" width="96" height="64" fill="none" stroke="#999" strokeWidth="1" />
+      {/* zestienmetergebied + doelgebied */}
+      <rect x="28" y="3" width="44" height="17" fill="none" stroke="#b3b3b3" strokeWidth="0.8" />
+      <rect x="40" y="3" width="20" height="7" fill="none" stroke="#b3b3b3" strokeWidth="0.8" />
+      {/* strafschopstip + boog */}
+      <circle cx="50" cy="15" r="0.9" fill="#b3b3b3" />
+      <path d="M 42 20 A 9 9 0 0 0 58 20" fill="none" stroke="#b3b3b3" strokeWidth="0.8" />
+      {/* halve middencirkel op de middellijn */}
+      <path d="M 41 67 A 9 9 0 0 1 59 67" fill="none" stroke="#b3b3b3" strokeWidth="0.8" />
+    </svg>
   );
 }
 
@@ -44,7 +52,7 @@ export default async function LesFormulierPage() {
       </p>
 
       {/* Kop */}
-      <header className="mb-3 border-b-2 border-sparta pb-2">
+      <header className="mb-3 border-b-2 border-sparta pb-2 break-inside-avoid">
         <h1 className="text-lg font-bold text-sparta">Lesvoorbereiding · Nivo Sparta JO17-2</h1>
         <p className="mt-1 flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-neutral-700">
           <span>Datum: __________</span>
@@ -52,30 +60,38 @@ export default async function LesFormulierPage() {
           <span>Spelers: ____</span>
           <span>Duur: ____ min</span>
         </p>
-        <p className="mt-1 text-[11px] text-neutral-400">Half veld · materiaal vrij te kiezen</p>
+        <p className="mt-1 flex gap-6 text-[13px] text-neutral-700">
+          <span>Doelstelling: ______________________________________________</span>
+        </p>
+        <p className="mt-1 text-[11px] text-neutral-400">
+          Half veld · materiaal vrij te kiezen · warming-up is standaard (niet noteren)
+        </p>
       </header>
 
-      {/* Lesblokken */}
-      {BLOKKEN.map((blok) => (
-        <section key={blok.naam} className="mb-3 break-inside-avoid">
-          <h2 className="mb-1 flex items-center justify-between rounded bg-neutral-100 px-2 py-1 text-sm font-bold text-neutral-800 print:bg-neutral-100">
-            {blok.naam}
+      {/* Kernen + afsluitingsvorm: tekenveld + uitlegregels */}
+      {KERNEN.map((naam) => (
+        <section key={naam} className="mb-3 break-inside-avoid">
+          <h2 className="mb-1.5 flex items-center justify-between rounded bg-neutral-100 px-2 py-1 text-sm font-bold text-neutral-800 print:bg-neutral-100">
+            {naam}
             <span className="text-[11px] font-semibold text-neutral-400">____ min</span>
           </h2>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">Doel</p>
-          <Regels n={1} />
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Organisatie &amp; uitleg</p>
-          <Regels n={blok.regelsOrganisatie} />
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Coachpunten</p>
-          <Regels n={2} />
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-neutral-500">Materiaal</p>
-          <Regels n={1} />
+          <div className="flex gap-4">
+            <div className="w-[44%] shrink-0">
+              <HalfVeld />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">Uitleg &amp; organisatie</p>
+              {Array.from({ length: 7 }, (_, i) => (
+                <div key={i} className="h-[1.35rem] border-b border-neutral-300" />
+              ))}
+            </div>
+          </div>
         </section>
       ))}
 
       <p className="mt-4 text-[10px] text-neutral-400">
-        Treenio · schrijf duidelijk — na de training foto maken op de Lesvoorbereiding-pagina en
-        de les staat in het archief.
+        Treenio · teken de oefening op het halve veld en schrijf de uitleg ernaast — na afloop
+        foto maken op de Lesvoorbereiding-pagina en de les staat in het archief.
       </p>
     </main>
   );
