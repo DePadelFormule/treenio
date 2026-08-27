@@ -181,15 +181,16 @@ export async function leesLesFoto(formData: FormData): Promise<LesFotoResultaat>
               type: "text",
               text:
                 "Dit is een foto van een met pen ingevuld voetbal-lesvoorbereidingsformulier (JO17, half veld). " +
-                "Bovenaan staan datum, thema, aantal spelers, duur en doelstelling. Daaronder maximaal vijf blokken: " +
-                "Kern 1A, Kern 1B, Kern 2A, Kern 2B en Afsluitingsvorm — per blok de minuten, links een getekende oefening " +
+                "Bovenaan staan datum, thema, aantal spelers, duur en doelstelling. Daaronder maximaal vijf blokken; " +
+                "elk blok heeft een kopbalk met 'Doel: ...', 'Vorm: ...' en de minuten, links een getekende oefening " +
                 "op een half veld en rechts geschreven uitleg & organisatie. De warming-up is standaard en staat niet op het formulier. " +
                 "Neem geschreven tekst letterlijk over en verzin niets. Vul zo in: datum als YYYY-MM-DD (anders null); " +
                 "les.titel en les.onderwerp = het thema; les.sport = 'voetbal'; les.fase = 0; les.niveau = 'JO17'; " +
                 "les.totale_duur_minuten en les.aantal_spelers van het formulier (onleesbaar = 0); " +
                 "les.materiaal = materialen die in de uitleg of tekeningen voorkomen (pionnen, hesjes, doeltjes...); " +
-                "les.blokken = alleen de blokken waar iets getekend of geschreven is, met naam 'Kern 1A' enz. " +
-                "(type 'oefenvorm', maar 'wedstrijdvorm' voor de Afsluitingsvorm); les.blokken[].doel leeg laten; " +
+                "les.blokken = alleen de blokken waar iets getekend of geschreven is; " +
+                "les.blokken[].naam = de geschreven vorm (anders 'Oefenvorm'), les.blokken[].doel = het geschreven doel, " +
+                "type 'oefenvorm' (of 'wedstrijdvorm' als de vorm duidelijk een partij-/afsluitvorm is); " +
                 "les.blokken[].organisatie: begin met 'Tekening: ...' — een korte, feitelijke beschrijving van wat er op het halve veld " +
                 "getekend is (opstelling, pionnen, looplijnen, pijlen: doorgetrokken = bal/sprint, gestreept = loopactie) — " +
                 "en daarna de geschreven uitleg; les.blokken[].coachpunten, progressie_makkelijker en progressie_moeilijker leeg; " +
@@ -232,6 +233,87 @@ export async function leesLesFoto(formData: FormData): Promise<LesFotoResultaat>
     ok: true,
     bericht: `Les "${les.titel}" met ${les.blokken.length} blok${les.blokken.length === 1 ? "" : "ken"} in het archief gezet. Controleer hem daar even.`,
   };
+}
+
+// ---- Digitaal lesvoorbereidingsformulier ----------------------------------
+// Handmatig invullen in de app (zelfde opzet als het papieren formulier:
+// vijf blokken met doel, vorm, minuten en uitleg) → direct in het archief.
+
+export interface HandLesBlok {
+  doel: string;
+  vorm: string;
+  minuten: number;
+  uitleg: string;
+}
+
+export interface HandLesInvoer {
+  datum: string | null; // YYYY-MM-DD
+  thema: string;
+  doelstelling: string;
+  spelers: number;
+  duur: number;
+  blokken: HandLesBlok[];
+}
+
+export async function bewaarHandmatigeLes(
+  invoer: HandLesInvoer,
+): Promise<{ ok: boolean; fout?: string }> {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf" || !gebruiker.staf?.mag_conclusie) {
+    return { ok: false, fout: "Geen toegang." };
+  }
+
+  const thema = invoer.thema.trim().slice(0, 120);
+  const blokken = invoer.blokken
+    .map((b) => ({
+      doel: b.doel.trim().slice(0, 300),
+      vorm: b.vorm.trim().slice(0, 120),
+      minuten: Number.isFinite(b.minuten) && b.minuten > 0 ? Math.min(b.minuten, 120) : 0,
+      uitleg: b.uitleg.trim().slice(0, 2000),
+    }))
+    .filter((b) => b.doel || b.vorm || b.uitleg);
+  if (!thema) return { ok: false, fout: "Vul een thema in." };
+  if (blokken.length === 0) return { ok: false, fout: "Vul minstens één blok in." };
+
+  const les: Les = {
+    titel: thema,
+    sport: "voetbal",
+    onderwerp: thema,
+    fase: 0,
+    niveau: "JO17",
+    totale_duur_minuten: invoer.duur > 0 ? Math.min(invoer.duur, 240) : blokken.reduce((s, b) => s + b.minuten, 0),
+    aantal_spelers: invoer.spelers > 0 ? Math.min(invoer.spelers, 40) : 0,
+    materiaal: "",
+    blokken: blokken.map((b) => ({
+      naam: b.vorm || "Oefenvorm",
+      type: "oefenvorm",
+      duur_minuten: b.minuten,
+      doel: b.doel,
+      organisatie: b.uitleg,
+      coachpunten: [],
+      progressie_makkelijker: "",
+      progressie_moeilijker: "",
+    })),
+    leeskaart: {
+      focuspunten: invoer.doelstelling.trim() ? [invoer.doelstelling.trim().slice(0, 300)] : [],
+      veelgemaakte_fouten: [],
+      huiswerk: [],
+    },
+  };
+
+  const datum = invoer.datum && /^\d{4}-\d{2}-\d{2}$/.test(invoer.datum) ? invoer.datum : null;
+  const supabase = await createClient();
+  const { error } = await supabase.from("lessen").insert({
+    titel: les.titel,
+    sport: les.sport,
+    onderwerp: les.onderwerp,
+    datum,
+    les,
+  } as never);
+  if (error) return { ok: false, fout: "Opslaan mislukt: " + error.message };
+
+  revalidatePath("/staf/lessen");
+  return { ok: true };
 }
 
 export async function verwijderLes(formData: FormData) {

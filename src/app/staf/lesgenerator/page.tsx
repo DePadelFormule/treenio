@@ -20,9 +20,14 @@ export default async function LesGeneratorPage() {
         <Link href="/staf" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
           ← Terug naar dashboard
         </Link>
-        <Link href="/staf/lesgenerator/formulier" className="text-sm font-semibold text-sparta hover:underline">
-          📝 Leeg formulier (print)
-        </Link>
+        <span className="flex gap-4">
+          <Link href="/staf/lesgenerator/invullen" className="text-sm font-semibold text-sparta hover:underline">
+            ✍️ Digitaal formulier
+          </Link>
+          <Link href="/staf/lesgenerator/formulier" className="text-sm font-semibold text-sparta hover:underline">
+            📝 Leeg formulier (print)
+          </Link>
+        </span>
       </div>
 
       <h1 className="mb-1 mt-4 text-2xl font-bold text-sparta print:hidden">Lesvoorbereiding</h1>
