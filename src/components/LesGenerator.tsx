@@ -201,6 +201,20 @@ export function Lesblad({ les }: { les: Les }) {
                 <img src={b.tekening} alt={`Tekening bij ${b.naam}`} className="mt-2 max-w-xs rounded-lg border border-neutral-200" />
               )}
               {b.organisatie && <p className="mt-2 whitespace-pre-wrap rounded bg-green-50 px-2 py-1.5 text-sm text-green-900">{b.organisatie}</p>}
+
+              {(b.coaching_verdedigers || b.coaching_aanvallers) && (
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {b.coaching_verdedigers && (
+                    <p className="text-sm text-neutral-700"><span className="font-semibold">Coaching verdedigers:</span> {b.coaching_verdedigers}</p>
+                  )}
+                  {b.coaching_aanvallers && (
+                    <p className="text-sm text-neutral-700"><span className="font-semibold">Coaching aanvallers:</span> {b.coaching_aanvallers}</p>
+                  )}
+                </div>
+              )}
+              {b.variaties && (
+                <p className="mt-2 text-sm text-neutral-700"><span className="font-semibold">Variaties:</span> {b.variaties}</p>
+              )}
             </li>
           ))}
         </ol>
