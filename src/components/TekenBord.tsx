@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { bewaarSpelsituatie } from "@/app/staf/spelsituaties/actions";
+import { HalfVeldLijnen } from "@/components/HalfVeldLijnen";
+import { tekenBordFrame } from "@/lib/bordCanvas";
 import type { BordData, BordFrame, BordTeam, BordToken } from "@/lib/types/database";
 
 interface Props {
@@ -39,8 +42,11 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
   const [fullscreen, setFullscreen] = useState(false);
   const [bezig, setBezig] = useState(false);
   const [bewaard, setBewaard] = useState(false);
+  const [opnemen, setOpnemen] = useState(false);
+  const [videoFout, setVideoFout] = useState<string | null>(null);
 
   const veldRef = useRef<HTMLDivElement>(null);
+  const videoCanvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
   const dragId = useRef<string | null>(null);
 
@@ -52,7 +58,11 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
     const tid = nieuwId();
     const nummer = tokens.filter((t) => t.team === team).length + 1;
     const label = team === "bal" ? "" : String(nummer);
-    const startPos = { x: 50, y: team === "eigen" ? 70 : team === "tegenstander" ? 35 : 50 };
+    // Liggend half veld (doel rechts): eigen team richting het doel, tegen-
+    // stander ervoor. Heel veld: verticaal, twee doelen boven/onder.
+    const startPos = halfVeld
+      ? { x: team === "eigen" ? 65 : team === "tegenstander" ? 30 : 50, y: 35 }
+      : { x: 50, y: team === "eigen" ? 70 : team === "tegenstander" ? 35 : 50 };
     setTokens((t) => [...t, { id: tid, team, label }]);
     setFrames((fr) => fr.map((f) => ({ ...f, [tid]: { ...startPos } })));
     setBewaard(false);
@@ -150,6 +160,82 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
   }
   useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
 
+  // ---- video downloaden -------------------------------------------------
+  // Tekent dezelfde animatie op een verborgen canvas en neemt die op via
+  // MediaRecorder. Werkt lokaal in de browser; niets wordt geüpload.
+  async function downloadVideo() {
+    if (frames.length < 2 || opnemen) return;
+    setVideoFout(null);
+    if (typeof MediaRecorder === "undefined" || !videoCanvasRef.current?.captureStream) {
+      setVideoFout("Video opnemen wordt niet ondersteund in deze browser.");
+      return;
+    }
+    setOpnemen(true);
+    try {
+      const canvas = videoCanvasRef.current;
+      const W = 960;
+      const H = halfVeld ? Math.round((W * 2) / 3) : Math.round((W * 3) / 2);
+      canvas.width = W;
+      canvas.height = H;
+      const context2d = canvas.getContext("2d");
+      if (!context2d) throw new Error("Canvas niet beschikbaar.");
+      const ctx = context2d;
+
+      const kandidaten = ["video/mp4", "video/webm;codecs=vp9", "video/webm"];
+      const mimeType = kandidaten.find((m) => MediaRecorder.isTypeSupported(m)) ?? "video/webm";
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, { mimeType });
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      const klaar = new Promise<void>((resolve) => { recorder.onstop = () => resolve(); });
+      recorder.start();
+
+      const perStap = 900;
+      const total = (frames.length - 1) * perStap;
+      await new Promise<void>((resolveTeken) => {
+        let start: number | null = null;
+        function tick(ts: number) {
+          if (start === null) start = ts;
+          const elapsed = ts - start;
+          const p = Math.min(elapsed / total, 1);
+          const segF = p * (frames.length - 1);
+          const seg = Math.min(Math.floor(segF), frames.length - 2);
+          const t = segF - seg;
+          const a = frames[seg], b = frames[seg + 1];
+          const tussen: BordFrame = {};
+          for (const tok of tokens) {
+            const pa = a[tok.id] ?? b[tok.id] ?? { x: 50, y: 50 };
+            const pb = b[tok.id] ?? pa;
+            tussen[tok.id] = { x: pa.x + (pb.x - pa.x) * t, y: pa.y + (pb.y - pa.y) * t };
+          }
+          tekenBordFrame(ctx, W, H, halfVeld, tokens, tussen);
+          if (elapsed < total) requestAnimationFrame(tick);
+          else resolveTeken();
+        }
+        requestAnimationFrame(tick);
+      });
+      // laatste beeld nog even vasthouden zodat de video niet abrupt eindigt
+      await new Promise((r) => setTimeout(r, 500));
+      recorder.stop();
+      await klaar;
+
+      const blob = new Blob(chunks, { type: mimeType });
+      const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(titel || "spelsituatie").replace(/[^\w -]+/g, "").trim() || "spelsituatie"}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setVideoFout(e instanceof Error ? e.message : "Video maken mislukt.");
+    } finally {
+      setOpnemen(false);
+    }
+  }
+
   // ---- opslaan --------------------------------------------------------------
   async function opslaan() {
     setBezig(true);
@@ -166,17 +252,14 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
     <div
       ref={veldRef}
       className="relative w-full overflow-hidden rounded-2xl border-2 border-white/40 bg-gradient-to-b from-green-700 to-green-800 touch-none select-none"
-      style={{ aspectRatio: halfVeld ? "3 / 4" : "2 / 3" }}
+      style={{ aspectRatio: halfVeld ? "3 / 2" : "2 / 3" }}
     >
       {/* lijnen */}
-      <div className="pointer-events-none absolute inset-3 rounded-lg border-2 border-white/30" />
       {halfVeld ? (
-        <>
-          <div className="pointer-events-none absolute left-1/4 right-1/4 top-3 h-16 border-2 border-white/30" />
-          <div className="pointer-events-none absolute bottom-3 left-3 right-3 border-t-2 border-white/30" />
-        </>
+        <HalfVeldLijnen />
       ) : (
         <>
+          <div className="pointer-events-none absolute inset-3 rounded-lg border-2 border-white/30" />
           <div className="pointer-events-none absolute left-3 right-3 top-1/2 -translate-y-1/2 border-t-2 border-white/30" />
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/30" />
           <div className="pointer-events-none absolute left-1/4 right-1/4 top-3 h-12 border-2 border-white/30" />
@@ -255,9 +338,37 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
             <button type="button" onClick={stop} className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white">■ Stop</button>
           )}
           <button type="button" onClick={() => setLoop((l) => !l)} className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${loop ? "bg-sparta text-white" : "bg-neutral-200 text-neutral-700"}`} title="Herhalen">↻</button>
+          {!fullscreen && (
+            <button
+              type="button"
+              onClick={downloadVideo}
+              disabled={frames.length < 2 || opnemen}
+              className="rounded-lg bg-neutral-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              title="Video downloaden (mp4/webm)"
+            >
+              {opnemen ? "Bezig met opnemen…" : "🎥 Video"}
+            </button>
+          )}
+          {!fullscreen && (
+            <Link
+              href={`/staf/spelsituaties/${id}/print`}
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-semibold text-neutral-700 hover:border-sparta hover:text-sparta"
+              title="Alle stappen als PDF"
+            >
+              🖨️ PDF
+            </Link>
+          )}
           <button type="button" onClick={() => setFullscreen((f) => !f)} className="rounded-lg bg-neutral-700 px-3 py-1.5 text-sm font-semibold text-white">{fullscreen ? "Sluiten" : "⛶ Presentatie"}</button>
         </div>
       </div>
+      {videoFout && <p className="mt-2 text-sm text-red-600">{videoFout}</p>}
+      {/* Verborgen canvas voor de video-opname */}
+      <canvas ref={videoCanvasRef} className="hidden" />
+      {opnemen && (
+        <p className="mt-2 text-xs text-neutral-400">
+          De animatie wordt opgenomen — dit duurt ongeveer zo lang als de animatie zelf.
+        </p>
+      )}
 
       {/* Stappen */}
       {!speelt && (
