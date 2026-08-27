@@ -245,6 +245,9 @@ export interface HandLesBlok {
   minuten: number;
   uitleg: string;
   tekening?: string; // data-URL (PNG) van het tekenveld
+  coaching_verdedigers: string;
+  coaching_aanvallers: string;
+  variaties: string;
 }
 
 export interface HandLesInvoer {
@@ -272,8 +275,11 @@ export async function bewaarHandmatigeLes(
       minuten: Number.isFinite(b.minuten) && b.minuten > 0 ? Math.min(b.minuten, 120) : 0,
       uitleg: b.uitleg.trim().slice(0, 2000),
       tekening: b.tekening?.startsWith("data:image/") && b.tekening.length < 1_500_000 ? b.tekening : undefined,
+      coaching_verdedigers: b.coaching_verdedigers.trim().slice(0, 1000),
+      coaching_aanvallers: b.coaching_aanvallers.trim().slice(0, 1000),
+      variaties: b.variaties.trim().slice(0, 1000),
     }))
-    .filter((b) => b.doel || b.vorm || b.uitleg || b.tekening);
+    .filter((b) => b.doel || b.vorm || b.uitleg || b.tekening || b.coaching_verdedigers || b.coaching_aanvallers || b.variaties);
   if (!thema) return { ok: false, fout: "Vul een thema in." };
   if (blokken.length === 0) return { ok: false, fout: "Vul minstens één blok in." };
 
@@ -296,6 +302,9 @@ export async function bewaarHandmatigeLes(
       progressie_makkelijker: "",
       progressie_moeilijker: "",
       tekening: b.tekening,
+      coaching_verdedigers: b.coaching_verdedigers || undefined,
+      coaching_aanvallers: b.coaching_aanvallers || undefined,
+      variaties: b.variaties || undefined,
     })),
     leeskaart: {
       focuspunten: invoer.doelstelling.trim() ? [invoer.doelstelling.trim().slice(0, 300)] : [],
