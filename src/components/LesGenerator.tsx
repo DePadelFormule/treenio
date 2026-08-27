@@ -3,12 +3,10 @@
 import { useState, useTransition } from "react";
 import { genereerLes, bewaarLes } from "@/app/staf/lesgenerator/actions";
 import type { LesInvoer } from "@/app/staf/lesgenerator/actions";
-import type { Les, Sport } from "@/lib/lesgenerator/schema";
-
-const SPORTEN: Sport[] = ["voetbal", "padel"];
+import type { Les } from "@/lib/lesgenerator/schema";
 
 export function LesGenerator() {
-  const [sport, setSport] = useState<Sport>("voetbal");
+  const sport = "voetbal" as const;
   const [onderwerp, setOnderwerp] = useState("");
   const [duur, setDuur] = useState(90);
   const [spelers, setSpelers] = useState(14);
@@ -47,28 +45,13 @@ export function LesGenerator() {
     <div>
       {/* Formulier — verborgen bij afdrukken */}
       <form onSubmit={maak} className="grid gap-3 rounded-xl border border-neutral-200 bg-white p-4 print:hidden">
-        <div className="flex flex-wrap gap-2">
-          {SPORTEN.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSport(s)}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold capitalize ${
-                s === sport ? "bg-sparta text-white" : "bg-neutral-200 text-neutral-700"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-neutral-700">Onderwerp / thema</span>
           <input
             value={onderwerp}
             onChange={(e) => setOnderwerp(e.target.value)}
             required
-            placeholder={sport === "voetbal" ? "bijv. druk zetten, uitverdedigen, 1v1 aanvallend" : "bijv. bandeja, verdedigen vanaf het glas, lob-spel"}
+            placeholder="bijv. druk zetten, uitverdedigen, 1v1 aanvallend"
             className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-base"
           />
         </label>

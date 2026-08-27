@@ -87,7 +87,7 @@ export default async function StafPage() {
   const menu = magAlles
     ? [
         ...basisMenu,
-        { href: "/staf/lesgenerator", titel: "AI-lesgenerator", uitleg: "Laat de AI een complete training schrijven op basis van thema, duur en niveau." },
+        { href: "/staf/lesgenerator", titel: "Lesvoorbereiding", uitleg: "Papieren formulier printen en met een foto in het archief zetten, of de AI een training laten schrijven." },
         { href: "/staf/lessen", titel: "Lessenarchief", uitleg: "Bewaarde trainingen teruglezen, printen en hergebruiken." },
         { href: "/staf/posities", titel: "Positie-inventarisatie", uitleg: "Afgeronde inventarisatie: keuzes, uitkomst per speler en conclusie." },
       ]
