@@ -2,7 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { VerversKnop } from "@/components/VerversKnop";
 import type { Speler, VragenlijstAntwoorden } from "@/lib/types/database";
+
+// Nooit statisch cachen: spelers vullen de vragenlijst nog steeds in terwijl
+// een trainer dit overzicht open heeft staan.
+export const dynamic = "force-dynamic";
 
 // Samenvatting van de seizoensstart-vragenlijst: keepen, aanvoerder-stemmen,
 // en welke ouders kunnen rijden/willen vlaggen. Voor alle staf.
@@ -91,9 +96,12 @@ export default async function VragenlijstOverzichtPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <Link href="/staf" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
-        ← Terug naar dashboard
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/staf" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
+          ← Terug naar dashboard
+        </Link>
+        <VerversKnop />
+      </div>
 
       <h1 className="mt-4 mb-1 text-2xl font-bold text-sparta">Vragenlijst · overzicht</h1>
       <p className="mb-5 text-sm text-neutral-500">
