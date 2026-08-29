@@ -27,6 +27,39 @@ function matchSpeler(antwoord: string, spelers: Speler[]): string {
   return antwoord.trim();
 }
 
+// Open vraag: leeslijst van speler + antwoord, alfabetisch op naam.
+function Leeslijst({
+  titel, antwoorden, vraagId, naamVan,
+}: {
+  titel: string;
+  antwoorden: VragenlijstAntwoorden[];
+  vraagId: string;
+  naamVan: (rij: VragenlijstAntwoorden) => string;
+}) {
+  const rijen = antwoorden
+    .filter((a) => a.antwoorden[vraagId]?.trim())
+    .map((a) => ({ naam: naamVan(a), tekst: a.antwoorden[vraagId] }))
+    .sort((a, b) => a.naam.localeCompare(b.naam));
+
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+      <h2 className="mb-3 font-semibold text-neutral-800">{titel}</h2>
+      {rijen.length === 0 ? (
+        <p className="text-sm text-neutral-400">Nog geen antwoorden.</p>
+      ) : (
+        <dl className="divide-y divide-neutral-100">
+          {rijen.map((r) => (
+            <div key={r.naam} className="py-2">
+              <dt className="text-xs font-semibold text-sparta">{r.naam}</dt>
+              <dd className="whitespace-pre-wrap text-sm text-neutral-800">{r.tekst}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
+
 function Groep({ titel, groepen }: { titel: string; groepen: { label: string; namen: string[] }[] }) {
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4">
@@ -139,6 +172,23 @@ export default async function VragenlijstOverzichtPage() {
 
           <Groep titel="🚗 Rijden bij uitwedstrijden (ouders)" groepen={rijdenGroepen} />
           <Groep titel="🚩 Vlaggen (ouders)" groepen={vlaggenGroepen} />
+
+          <Leeslijst
+            titel="🎯 Verwacht van de trainers — tijdens trainingen"
+            antwoorden={antwoorden} vraagId="verwacht_trainingen" naamVan={naamVan}
+          />
+          <Leeslijst
+            titel="🎯 Verwacht van de trainers — tijdens wedstrijden"
+            antwoorden={antwoorden} vraagId="verwacht_wedstrijden" naamVan={naamVan}
+          />
+          <Leeslijst
+            titel="📈 Waar willen ze meer tijd/aandacht aan besteden tijdens trainingen"
+            antwoorden={antwoorden} vraagId="meer_aandacht" naamVan={naamVan}
+          />
+          <Leeslijst
+            titel="🔧 Verbeterpunten (wat willen ze verbeteren dit seizoen)"
+            antwoorden={antwoorden} vraagId="verbeterpunten" naamVan={naamVan}
+          />
         </div>
       )}
     </main>
