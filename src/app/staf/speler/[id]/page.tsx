@@ -4,7 +4,9 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { POSITIE_CODES } from "@/lib/constants";
 import { VRAGENLIJST, VRAGENLIJST_BLOKKEN } from "@/lib/vragenlijst";
-import { nieuwAandachtspunt, toggleAandachtspunt, updatePosities, updateBeschikbaarheid } from "./actions";
+import { nieuwAandachtspunt, toggleAandachtspunt, updatePosities } from "./actions";
+import { BeschikbaarheidVeld } from "@/components/BeschikbaarheidVeld";
+import { OntwikkeldoelenSectie } from "@/components/OntwikkeldoelenSectie";
 import type {
   Aandachtspunt,
   Ontwikkeldoel,
@@ -66,6 +68,15 @@ export default async function StafSpelerPage({
     .maybeSingle();
   const vragenlijst = (vragenlijstRij ?? null) as { antwoorden: Record<string, string>; created_at: string } | null;
 
+  // Suggesties om als ontwikkeldoel over te nemen — direct uit de
+  // vragenlijst-antwoorden van deze speler (indien ingevuld).
+  const ontwikkeldoelSuggesties = vragenlijst
+    ? [
+        { label: "Doel voor dit seizoen", tekst: vragenlijst.antwoorden.doel_seizoen },
+        { label: "Verbeterpunten", tekst: vragenlijst.antwoorden.verbeterpunten },
+      ].filter((s): s is { label: string; tekst: string } => Boolean(s.tekst?.trim()))
+    : [];
+
   const opkomst = (opkomstRows?.[0] ?? null) as TrainingOpkomstView | null;
   const wedstrijd = (wedstrijdRows?.[0] ?? null) as WedstrijdTotalenView | null;
   const keeper = (keeperRows?.[0] ?? null) as KeeperTotalenView | null;
@@ -113,45 +124,16 @@ export default async function StafSpelerPage({
       </form>
 
       {/* Beschikbaarheid / blessure */}
-      <form action={updateBeschikbaarheid} className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-        <input type="hidden" name="speler_id" value={sp.id} />
-        <label className="text-sm">
-          <span className="mb-1 block text-xs text-neutral-500">Status</span>
-          <select name="beschikbaarheid" defaultValue={sp.beschikbaarheid} className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm">
-            <option value="fit">🟢 Fit</option>
-            <option value="twijfel">🟡 Twijfel</option>
-            <option value="geblesseerd">🔴 Geblesseerd</option>
-          </select>
-        </label>
-        <label className="flex-1 text-sm">
-          <span className="mb-1 block text-xs text-neutral-500">Blessure-notitie</span>
-          <input type="text" name="blessure_notitie" defaultValue={sp.blessure_notitie ?? ""} placeholder="bijv. enkel, terug over 2 weken" className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm" />
-        </label>
-        <button type="submit" className="rounded-lg bg-sparta px-4 py-1.5 text-sm font-semibold text-white hover:bg-sparta-dark">
-          Status opslaan
-        </button>
-      </form>
+      <BeschikbaarheidVeld spelerId={sp.id} beginStatus={sp.beschikbaarheid} beginNotitie={sp.blessure_notitie ?? ""} />
 
       <div className="mt-6 grid gap-8 md:grid-cols-2">
         <div className="space-y-6">
           {/* Ontwikkeldoelen (staf-only) */}
-          <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-sparta">
-              Ontwikkeldoelen
-            </h2>
-            {doelen && doelen.length ? (
-              <ul className="space-y-2">
-                {(doelen as Ontwikkeldoel[]).map((d) => (
-                  <li key={d.id} className="rounded-lg border border-neutral-200 bg-white p-3 text-sm">
-                    <span className="font-medium">{d.doel}</span>
-                    <span className="ml-2 text-xs text-neutral-400">({d.status})</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-neutral-400">Nog geen doelen.</p>
-            )}
-          </section>
+          <OntwikkeldoelenSectie
+            spelerId={sp.id}
+            beginDoelen={(doelen ?? []) as Ontwikkeldoel[]}
+            suggesties={ontwikkeldoelSuggesties}
+          />
 
           {/* Staf-notities */}
           <section>
