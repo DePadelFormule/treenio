@@ -75,8 +75,8 @@ export default async function StafSpelerPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <Link href="/staf" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
-        ← Terug naar selectie
+      <Link href="/staf/spelers" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
+        ← Terug naar spelerskaarten
       </Link>
 
       {/* Speler-kop */}

@@ -55,7 +55,8 @@ export default async function TeamOverzichtPage() {
 
       <h1 className="mt-4 mb-2 text-2xl font-bold text-sparta">Team-overzicht</h1>
       <p className="mb-6 text-sm text-neutral-500">
-        Tik op een kolomkop om te sorteren (nog eens tikken draait de volgorde om).
+        Tik op een kolomkop om te sorteren (nog eens tikken draait de volgorde om). Tik op een
+        rugnummer om het aan te passen.
       </p>
 
       {rows.length > 0 ? (
