@@ -201,8 +201,8 @@ export default async function StafPage() {
         <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold text-neutral-800">Vragenlijst seizoensstart</h2>
-            <Link href="/vragenlijst" className="text-sm font-semibold text-sparta hover:underline">
-              Bekijk formulier →
+            <Link href="/staf/vragenlijst/overzicht" className="text-sm font-semibold text-sparta hover:underline">
+              Bekijk overzicht →
             </Link>
           </div>
           <p className="text-sm text-neutral-700">
