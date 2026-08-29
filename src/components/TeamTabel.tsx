@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { updateRugnummer } from "@/app/staf/team/actions";
 
 export interface TeamRij {
   id: string;
@@ -33,9 +34,44 @@ const KOLOMMEN: { key: keyof TeamRij; label: string; type: Type; center?: boolea
   { key: "rood", label: "🟥", type: "num", center: true },
 ];
 
-export function TeamTabel({ rows }: { rows: TeamRij[] }) {
+function RugnummerCel({ spelerId, waarde, onOpgeslagen }: { spelerId: string; waarde: number | null; onOpgeslagen: (n: number | null) => void }) {
+  const [tekst, setTekst] = useState(waarde != null ? String(waarde) : "");
+  const [, start] = useTransition();
+
+  function opslaan() {
+    if ((waarde != null ? String(waarde) : "") === tekst) return;
+    start(async () => {
+      const res = await updateRugnummer(spelerId, tekst);
+      if (res.ok) {
+        onOpgeslagen(tekst.trim() === "" ? null : Number(tekst));
+      } else {
+        setTekst(waarde != null ? String(waarde) : "");
+      }
+    });
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={tekst}
+      placeholder="–"
+      onChange={(e) => setTekst(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
+      onBlur={opslaan}
+      onClick={(e) => e.stopPropagation()}
+      className="w-9 rounded border border-transparent bg-transparent px-1 py-0.5 text-center font-bold text-sparta hover:border-neutral-300 focus:border-sparta focus:bg-white focus:outline-none"
+    />
+  );
+}
+
+export function TeamTabel({ rows: rowsProp }: { rows: TeamRij[] }) {
+  const [rows, setRows] = useState(rowsProp);
   const [sortKey, setSortKey] = useState<keyof TeamRij>("rugnummer");
   const [dir, setDir] = useState<"asc" | "desc">("asc");
+
+  function zetRugnummer(id: string, n: number | null) {
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, rugnummer: n } : r)));
+  }
 
   function klikKolom(key: keyof TeamRij, type: Type) {
     if (key === sortKey) {
@@ -85,7 +121,9 @@ export function TeamTabel({ rows }: { rows: TeamRij[] }) {
         <tbody>
           {gesorteerd.map((r) => (
             <tr key={r.id} className="border-b border-neutral-100 last:border-0">
-              <td className="sticky left-0 z-10 w-9 bg-white px-2 py-2.5 font-bold text-sparta">{r.rugnummer ?? "–"}</td>
+              <td className="sticky left-0 z-10 w-9 bg-white px-1 py-1.5">
+                <RugnummerCel spelerId={r.id} waarde={r.rugnummer} onOpgeslagen={(n) => zetRugnummer(r.id, n)} />
+              </td>
               <td className="sticky left-9 z-10 whitespace-nowrap bg-white px-2 py-2.5">
                 <span className="mr-1.5" title={r.status}>
                   {r.status === "fit" ? "🟢" : r.status === "twijfel" ? "🟡" : "🔴"}
