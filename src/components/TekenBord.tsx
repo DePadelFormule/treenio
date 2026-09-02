@@ -2,14 +2,21 @@
 
 // Schil om het tekenbord: laadt de situatie (oud of nieuw formaat), houdt
 // het veldtype bij en slaat op. Het tekenen zelf zit in PlayEditor.
+//
+// Opslaan gaat automatisch: een paar seconden na de laatste wijziging, en
+// meteen als het tabblad naar de achtergrond gaat. Zo raak je niets kwijt
+// als je terug naar het dashboard klikt.
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Save, Printer } from "lucide-react";
 import { bewaarSpelsituatie } from "@/app/staf/spelsituaties/actions";
 import PlayEditor from "@/components/tactiek/PlayEditor";
 import { naarPlayData } from "@/lib/tactiek/vanBordData";
 import type { PlayData } from "@/lib/tactiek/types";
+
+/** Wachttijd na de laatste wijziging voordat er automatisch wordt opgeslagen. */
+const AUTOSAVE_MS = 3000;
 
 interface Props {
   id: string;
@@ -19,34 +26,96 @@ interface Props {
   beginData: unknown;
 }
 
+type Stand = "schoon" | "vuil" | "bezig" | "fout";
+
 export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginData }: Props) {
   const [play, setPlay] = useState<PlayData>(() => naarPlayData(beginData, beginHalfVeld, beginTitel, beginUitleg ?? ""));
   const [halfVeld, setHalfVeld] = useState(beginHalfVeld);
-  const [bezig, setBezig] = useState(false);
-  const [bewaard, setBewaard] = useState(false);
+  const [stand, setStand] = useState<Stand>("schoon");
+  const [laatstOpgeslagen, setLaatstOpgeslagen] = useState<string | null>(null);
   const [fout, setFout] = useState<string | null>(null);
 
-  function wijzig(data: PlayData) {
-    setPlay(data);
-    setBewaard(false);
-  }
+  // Wat er nu op het bord staat, altijd actueel, ook binnen een timer.
+  const huidig = useRef({ play, halfVeld });
+  huidig.current = { play, halfVeld };
+  const vuil = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function opslaan() {
-    setBezig(true);
+  const opslaan = useCallback(async () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    const { play: p, halfVeld: hv } = huidig.current;
+    setStand("bezig");
     setFout(null);
     const res = await bewaarSpelsituatie({
       id,
-      titel: play.title.trim() || beginTitel,
-      uitleg: play.description.trim() || null,
-      half_veld: halfVeld,
-      data: play,
+      titel: p.title.trim() || beginTitel,
+      uitleg: p.description.trim() || null,
+      half_veld: hv,
+      data: p,
     });
-    setBezig(false);
-    setBewaard(res.ok);
-    if (!res.ok) setFout(res.error ?? "Opslaan mislukt.");
+    if (!res.ok) {
+      setStand("fout");
+      setFout(res.error ?? "Opslaan mislukt.");
+      return;
+    }
+    // Alleen schoon als er ondertussen niets meer veranderd is.
+    if (huidig.current.play === p && huidig.current.halfVeld === hv) {
+      vuil.current = false;
+      setStand("schoon");
+    } else {
+      setStand("vuil");
+    }
+    setLaatstOpgeslagen(new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }));
+  }, [id, beginTitel]);
+
+  /** Markeert het bord als gewijzigd en zet de autosave-timer opnieuw. */
+  const markeerVuil = useCallback(() => {
+    vuil.current = true;
+    setStand("vuil");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => { void opslaan(); }, AUTOSAVE_MS);
+  }, [opslaan]);
+
+  function wijzig(data: PlayData) {
+    setPlay(data);
+    markeerVuil();
   }
 
+  function wisselVeld(half: boolean) {
+    setHalfVeld(half);
+    markeerVuil();
+  }
+
+  // Tabblad naar de achtergrond of dicht: meteen opslaan, en bij sluiten met
+  // niet-opgeslagen werk eerst waarschuwen.
+  useEffect(() => {
+    const onZichtbaarheid = () => {
+      if (document.visibilityState === "hidden" && vuil.current) void opslaan();
+    };
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!vuil.current) return;
+      e.preventDefault();
+    };
+    document.addEventListener("visibilitychange", onZichtbaarheid);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", onZichtbaarheid);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [opslaan]);
+
   const knop = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors disabled:opacity-40";
+
+  const standTekst = stand === "bezig"
+    ? "Opslaan…"
+    : stand === "vuil"
+      ? "Wijzigingen worden zo opgeslagen"
+      : stand === "fout"
+        ? fout ?? "Opslaan mislukt"
+        : laatstOpgeslagen
+          ? `Opgeslagen om ${laatstOpgeslagen}`
+          : null;
 
   return (
     <div className="space-y-2">
@@ -57,17 +126,26 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
           veld={halfVeld ? "half" : "heel"}
           toolbarStart={({ busy }) => (
             <>
-              <button type="button" onClick={opslaan} disabled={busy || bezig} className={`${knop} bg-sparta text-white hover:bg-sparta-dark font-semibold`}>
-                <Save className="w-4 h-4" /> {bezig ? "Opslaan…" : "Opslaan"}
+              <button
+                type="button"
+                onClick={() => void opslaan()}
+                disabled={busy || stand === "bezig"}
+                className={`${knop} font-semibold ${stand === "vuil" ? "bg-sparta text-white hover:bg-sparta-dark" : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"}`}
+                title="Nu opslaan (gebeurt ook vanzelf)"
+              >
+                <Save className="w-4 h-4" /> Opslaan
               </button>
-              {bewaard && <span className="text-xs text-green-400 flex-shrink-0">✓ Opgeslagen</span>}
-              {fout && <span className="text-xs text-red-400 flex-shrink-0">{fout}</span>}
+              {standTekst && (
+                <span className={`text-xs flex-shrink-0 ${stand === "fout" ? "text-red-400" : stand === "schoon" ? "text-green-400" : "text-neutral-400"}`}>
+                  {standTekst}
+                </span>
+              )}
               <label className="flex items-center gap-1.5 text-xs text-neutral-300 px-1">
                 <input
                   type="checkbox"
                   checked={halfVeld}
                   disabled={busy}
-                  onChange={(e) => { setHalfVeld(e.target.checked); setBewaard(false); }}
+                  onChange={(e) => wisselVeld(e.target.checked)}
                   className="accent-sparta"
                 />
                 half veld
@@ -80,7 +158,7 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
         />
       </div>
       <p className="text-xs text-neutral-400">
-        Tip: zet magneetjes neer, maak met + een nieuw frame en versleep ze om de beweging te tonen. Een frame met een stap-tekst wordt een ondertitel.
+        Tip: zet magneetjes neer, maak met + een nieuw frame en versleep ze om de beweging te tonen. Een frame met een stap-tekst wordt een ondertitel. Opslaan gaat vanzelf.
       </p>
     </div>
   );
