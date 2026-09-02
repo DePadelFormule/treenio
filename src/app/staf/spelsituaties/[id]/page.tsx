@@ -4,7 +4,7 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { TekenBord } from "@/components/TekenBord";
 import { verwijderSpelsituatie } from "../actions";
-import type { BordData, Spelsituatie } from "@/lib/types/database";
+import type { Spelsituatie } from "@/lib/types/database";
 
 export default async function SpelsituatiePage({
   params,
@@ -26,13 +26,8 @@ export default async function SpelsituatiePage({
   if (!situatie) notFound();
   const s = situatie as Spelsituatie;
 
-  const data: BordData = {
-    tokens: s.data?.tokens ?? [],
-    frames: s.data?.frames && s.data.frames.length ? s.data.frames : [{}],
-  };
-
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
+    <main className="mx-auto max-w-6xl px-4 py-6">
       <div className="flex items-center justify-between">
         <Link href="/staf/spelsituaties" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
           ← Terug naar situaties
@@ -49,7 +44,7 @@ export default async function SpelsituatiePage({
           beginTitel={s.titel}
           beginUitleg={s.uitleg}
           beginHalfVeld={s.half_veld}
-          beginData={data}
+          beginData={s.data}
         />
       </div>
     </main>

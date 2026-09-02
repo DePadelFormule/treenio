@@ -2,6 +2,8 @@
 // weerspiegelen. Wil je dit later genereren:
 //   supabase gen types typescript --project-id <id> > src/lib/types/database.ts
 
+import type { PlayData } from "@/lib/tactiek/types";
+
 export type Rol = "hoofdtrainer" | "assistent";
 export type DoelStatus = "open" | "bezig" | "behaald" | "gepauzeerd";
 export type AfmeldStatus =
@@ -83,6 +85,10 @@ export interface WedstrijdOpstelling {
   created_at: string;
 }
 
+/**
+ * Oud bordformaat (tokens in procenten). Nieuwe situaties slaan PlayData op
+ * (zie lib/tactiek/types); oude rijen worden bij het openen omgezet.
+ */
 export type BordTeam = "eigen" | "tegenstander" | "bal";
 export interface BordToken {
   id: string;
@@ -112,7 +118,8 @@ export interface Spelsituatie {
   titel: string;
   uitleg: string | null;
   half_veld: boolean;
-  data: BordData;
+  /** PlayData in meters, of het oude BordData bij situaties van voor het nieuwe tekenbord. */
+  data: PlayData | BordData;
   created_at: string;
 }
 
