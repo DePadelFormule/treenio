@@ -10,7 +10,7 @@
 
 export type Tool =
   | 'select' | 'player' | 'trainer' | 'ball'
-  | 'cone' | 'cone_big' | 'goal' | 'goal_big'
+  | 'cone' | 'goal'
   | 'arrow' | 'lob' | 'run' | 'option' | 'zone' | 'text' | 'pen' | 'eraser'
 
 export interface TBObject {
