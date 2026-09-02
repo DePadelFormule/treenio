@@ -55,6 +55,39 @@ export async function bewaarSpelsituatie(payload: BewaarPayload) {
   return { ok: true };
 }
 
+export interface SpelsituatieKort {
+  id: string;
+  titel: string;
+  uitleg: string | null;
+  half_veld: boolean;
+  data: unknown;
+}
+
+/** Alle spelsituaties, nieuwste eerst. Voor de kiezer in het lesformulier. */
+export async function lijstSpelsituaties(): Promise<SpelsituatieKort[]> {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("spelsituaties")
+    .select("id, titel, uitleg, half_veld, data")
+    .order("created_at", { ascending: false });
+  return (data ?? []) as SpelsituatieKort[];
+}
+
+/** Eén spelsituatie, om in een les af te spelen. */
+export async function haalSpelsituatie(id: string): Promise<SpelsituatieKort | null> {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("spelsituaties")
+    .select("id, titel, uitleg, half_veld, data")
+    .eq("id", id)
+    .maybeSingle();
+  return (data as SpelsituatieKort | null) ?? null;
+}
+
 export async function verwijderSpelsituatie(formData: FormData) {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return;

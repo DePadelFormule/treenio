@@ -94,6 +94,22 @@ function tekenBeeld(
   drawSubtitle(ctx, subtitle, canvasW / 2, projection.courtY + projection.courtH - 14, canvasW * 0.7, 26)
 }
 
+/**
+ * Eén frame als PNG (data-URL), bijvoorbeeld om als tekening in een les te
+ * zetten. Alleen in de browser, want het tekent op een los canvas.
+ */
+export function frameNaarDataUrl(play: PlayData, veld: VeldSoort, frameIndex = 0): string {
+  const layout = kijkLayout(veld)
+  const data = toCanvasSpace(play, layout.projection)
+  const canvas = document.createElement('canvas')
+  canvas.width = layout.canvasW
+  canvas.height = layout.canvasH
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+  tekenBeeld(ctx, layout, data, bareify(data.frames[frameIndex]?.positions ?? {}), true, true, null, null, frameIndex)
+  return canvas.toDataURL('image/png')
+}
+
 /** Stilstaand beeld van één frame, met de looplijnen erbij zodat je ook op papier ziet waar iedereen heen gaat. */
 export function PlayPreview({ play, veld, frameIndex = 0, className = '' }: {
   play: PlayData

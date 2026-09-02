@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { bewaarHandmatigeLes, type HandLesBlok } from "@/app/staf/lesgenerator/actions";
 import { TekenVeld } from "@/components/TekenVeld";
 import { PrintKnop } from "@/components/PrintKnop";
+import { SpelsituatieKiezer } from "@/components/SpelsituatieKiezer";
 
 // Digitale versie van het papieren lesvoorbereidingsformulier: vijf blokken
 // met een tekenveld, doel, vorm, minuten en uitleg. Opslaan zet de les in het
@@ -26,6 +27,8 @@ export function LesInvulFormulier() {
   );
   const [status, setStatus] = useState<{ ok: boolean; tekst: string } | null>(null);
   const [bezig, start] = useTransition();
+  /** Voor welk blok de spelsituatie-kiezer open staat. */
+  const [kiezerVoor, setKiezerVoor] = useState<number | null>(null);
 
   function zetBlok(i: number, deel: Partial<HandLesBlok>) {
     setStatus(null);
@@ -123,8 +126,26 @@ export function LesInvulFormulier() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-neutral-500">Teken de oefening</span>
-              <TekenVeld waarde={blok.tekening} onChange={(dataUrl) => zetBlok(i, { tekening: dataUrl })} />
+              <div className="mb-1 flex items-center justify-between">
+                <span className="block text-xs font-bold uppercase tracking-wide text-neutral-500">Teken de oefening</span>
+                {!blok.spelsituatie_id && (
+                  <button type="button" onClick={() => setKiezerVoor(i)} className="text-xs font-semibold text-sparta hover:underline">
+                    Uit spelsituatie
+                  </button>
+                )}
+              </div>
+              {blok.spelsituatie_id && blok.tekening ? (
+                <div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={blok.tekening} alt={`Spelsituatie bij blok ${i + 1}`} className="w-full rounded-lg border border-neutral-300" />
+                  <div className="mt-1 flex gap-3 text-xs font-semibold">
+                    <button type="button" onClick={() => setKiezerVoor(i)} className="text-sparta hover:underline">Andere stap of situatie</button>
+                    <button type="button" onClick={() => zetBlok(i, { tekening: undefined, spelsituatie_id: undefined })} className="text-neutral-400 hover:text-red-600">Wissen</button>
+                  </div>
+                </div>
+              ) : (
+                <TekenVeld key={blok.spelsituatie_id ?? "hand"} waarde={blok.tekening} onChange={(dataUrl) => zetBlok(i, { tekening: dataUrl })} />
+              )}
             </div>
             <label className="block">
               <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-neutral-500">Uitleg &amp; organisatie</span>
@@ -238,6 +259,16 @@ export function LesInvulFormulier() {
 
       <p className="mt-4 text-[10px] text-neutral-400">Treenio · digitaal lesformulier</p>
     </div>
+
+    {kiezerVoor !== null && (
+      <SpelsituatieKiezer
+        onSluit={() => setKiezerVoor(null)}
+        onKies={(keuze) => {
+          zetBlok(kiezerVoor, { tekening: keuze.tekening, spelsituatie_id: keuze.spelsituatie_id });
+          setKiezerVoor(null);
+        }}
+      />
+    )}
     </>
   );
 }
