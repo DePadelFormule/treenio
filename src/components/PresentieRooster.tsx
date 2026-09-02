@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { setPresentie, genereerMaand } from "@/app/staf/trainingen/actions";
+import { setPresentie, genereerMaand, zetIedereenAanwezig } from "@/app/staf/trainingen/actions";
 
 interface SpelerKort { id: string; naam: string; rugnummer: number | null; }
 interface TrainingKort { id: string; datum: string; }
@@ -11,6 +11,8 @@ interface Props {
   trainingen: TrainingKort[];
   begin: Record<string, string>; // "trainingId:spelerId" -> status
   startMaand: string; // YYYY-MM
+  /** Vandaag als YYYY-MM-DD, voor de standaardkeuze bij "Iedereen aanwezig". */
+  vandaag: string;
   onVerwijder: (formData: FormData) => void | Promise<void>;
 }
 
@@ -43,11 +45,32 @@ function dagLabel(datum: string) {
   return `${DAGEN[d.getUTCDay()]} ${d.getUTCDate()}-${d.getUTCMonth() + 1}`;
 }
 
-export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVerwijder }: Props) {
+export function PresentieRooster({ spelers, trainingen, begin, startMaand, vandaag, onVerwijder }: Props) {
   const [maand, setMaand] = useState(startMaand < MIN_MAAND ? MIN_MAAND : startMaand);
   const [status, setStatus] = useState<Record<string, string>>(begin);
   const [open, setOpen] = useState<{ t: string; s: string } | null>(null);
+  const [allenOpen, setAllenOpen] = useState(false);
+  const [allenVanaf, setAllenVanaf] = useState("");
+  const [allenBezig, setAllenBezig] = useState(false);
+  const [allenMelding, setAllenMelding] = useState<string | null>(null);
   const [, start] = useTransition();
+
+  /** Zet alle lege vakjes vanaf de gekozen training op aanwezig. */
+  async function iedereenAanwezig() {
+    if (!allenVanaf) return;
+    setAllenBezig(true);
+    const res = await zetIedereenAanwezig(maand, allenVanaf);
+    setAllenBezig(false);
+    if (!res.ok) { setAllenMelding("Dat is niet gelukt."); return; }
+    setStatus((s) => {
+      const c = { ...s };
+      for (const g of res.gezet) c[`${g.training_id}:${g.speler_id}`] = "aanwezig";
+      return c;
+    });
+    setAllenOpen(false);
+    setAllenMelding(res.gezet.length === 0 ? "Alles was al ingevuld." : `${res.gezet.length} vakjes op aanwezig gezet.`);
+    setTimeout(() => setAllenMelding(null), 4000);
+  }
 
   function gaMaand(delta: number) {
     const nieuw = schuifMaand(maand, delta);
@@ -102,13 +125,31 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVer
         <button onClick={() => gaMaand(-1)} disabled={maand <= MIN_MAAND} className="rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold disabled:opacity-30">◀</button>
         <span className="min-w-[9rem] text-center text-lg font-bold text-sparta">{maandLabel(maand)}</span>
         <button onClick={() => gaMaand(1)} className="rounded-lg bg-neutral-200 px-3 py-1.5 text-sm font-semibold">▶</button>
-        <form action={genereerMaand} className="ml-auto">
-          <input type="hidden" name="maand" value={maand} />
-          <button type="submit" className="rounded-lg border border-sparta px-3 py-1.5 text-sm font-semibold text-sparta hover:bg-sparta hover:text-white">
-            + Genereer di/do trainingen
-          </button>
-        </form>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {trainingenMaand.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                // Standaard: de eerste training vanaf vandaag, anders de laatste van de maand.
+                const eerste = trainingenMaand.find((t) => t.datum >= vandaag) ?? trainingenMaand[trainingenMaand.length - 1];
+                setAllenVanaf(eerste.datum);
+                setAllenMelding(null);
+                setAllenOpen(true);
+              }}
+              className="rounded-lg border border-green-600 px-3 py-1.5 text-sm font-semibold text-green-700 hover:bg-green-600 hover:text-white"
+            >
+              ✓ Iedereen aanwezig
+            </button>
+          )}
+          <form action={genereerMaand}>
+            <input type="hidden" name="maand" value={maand} />
+            <button type="submit" className="rounded-lg border border-sparta px-3 py-1.5 text-sm font-semibold text-sparta hover:bg-sparta hover:text-white">
+              + Genereer di/do trainingen
+            </button>
+          </form>
+        </div>
       </div>
+      {allenMelding && <p className="mb-3 text-sm text-green-700">{allenMelding}</p>}
 
       {trainingenMaand.length === 0 ? (
         <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400">
@@ -171,6 +212,36 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, onVer
       <p className="mt-2 text-xs text-neutral-400">
         Tik een vakje → kies onderin de status. De %-kolom is de opkomst in deze maand.
       </p>
+
+      {/* Iedereen aanwezig vanaf een training */}
+      {allenOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setAllenOpen(false)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-neutral-200 bg-white p-4 shadow-2xl">
+            <div className="mx-auto max-w-md">
+              <p className="mb-1 text-sm font-semibold text-neutral-700">Iedereen aanwezig zetten</p>
+              <p className="mb-3 text-xs text-neutral-500">
+                Alle spelers krijgen “aanwezig” voor deze training en alle latere trainingen in {maandLabel(maand)}.
+                Vakjes die al ingevuld zijn blijven staan; daarna hoef je alleen de afmeldingen nog aan te tikken.
+              </p>
+              <label className="mb-3 block text-sm">
+                <span className="mb-1 block text-xs font-semibold text-neutral-500">Vanaf training</span>
+                <select value={allenVanaf} onChange={(e) => setAllenVanaf(e.target.value)} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm">
+                  {trainingenMaand.map((t) => (
+                    <option key={t.id} value={t.datum}>{dagLabel(t.datum)}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => setAllenOpen(false)} disabled={allenBezig} className="rounded-lg bg-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-700">Annuleren</button>
+                <button onClick={iedereenAanwezig} disabled={allenBezig || !allenVanaf} className="rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
+                  {allenBezig ? "Bezig…" : "Zet op aanwezig"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Keuzemenu onderin */}
       {open && (
