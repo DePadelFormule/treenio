@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
-import type { BordData } from "@/lib/types/database";
+import type { PlayData } from "@/lib/tactiek/types";
 
 export async function nieuweSpelsituatie(formData: FormData) {
   const gebruiker = await getHuidigeGebruiker();
@@ -32,7 +32,7 @@ export interface BewaarPayload {
   titel: string;
   uitleg: string | null;
   half_veld: boolean;
-  data: BordData;
+  data: PlayData;
 }
 
 export async function bewaarSpelsituatie(payload: BewaarPayload) {
