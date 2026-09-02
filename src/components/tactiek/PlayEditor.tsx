@@ -11,7 +11,7 @@ import {
   ArrowRight, ArrowUpRight, Route, MoveRight, Type,
   Play, Pause, Square as StopIcon, Plus, Trash2, RotateCcw, ChevronLeft, ChevronRight,
   Video, Circle, Loader2, Unlink, Sparkles, Image as ImageIcon, Footprints, Pin, PinOff,
-  Pencil, Eraser, Triangle, Cone, Goal,
+  Pencil, Eraser, Cone, Goal,
 } from 'lucide-react'
 
 import type {
@@ -137,6 +137,8 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
   const [tool, setTool] = useState<Tool>('select')
   const [playerColor, setPlayerColor] = useState(PLAYER_COLORS[0])
   const [zoneColor, setZoneColor] = useState<ZoneColor>('green')
+  /** Klein of groot, voor pionnen en doeltjes. */
+  const [markerSize, setMarkerSize] = useState<'small' | 'large'>('small')
   const [selection, setSelection] = useState<Selection>(null)
   const [playing, setPlaying] = useState(false)
   const [animTime, setAnimTime] = useState(0)
@@ -549,10 +551,8 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     if (tool === 'player') addObject('player', pos)
     else if (tool === 'trainer') addObject('trainer', pos)
     else if (tool === 'ball') addObject('ball', pos)
-    else if (tool === 'cone') addObject('cone', pos, 'small')
-    else if (tool === 'cone_big') addObject('cone', pos, 'large')
-    else if (tool === 'goal') addObject('goal', pos, 'small')
-    else if (tool === 'goal_big') addObject('goal', pos, 'large')
+    else if (tool === 'cone') addObject('cone', pos, markerSize)
+    else if (tool === 'goal') addObject('goal', pos, markerSize)
   }
 
   /** Veegt elke stiftlijn van dit frame weg die onder de veger ligt, ook midden op een lange streek. */
@@ -846,10 +846,8 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     { id: 'player', icon: Users, label: 'Speler (magneetje in de gekozen kleur)' },
     { id: 'trainer', icon: UserIcon, label: 'Trainer' },
     { id: 'ball', icon: Disc, label: 'Bal' },
-    { id: 'cone', icon: Triangle, label: 'Pion klein (in de gekozen kleur)', badge: 'S' },
-    { id: 'cone_big', icon: Cone, label: 'Pion groot (in de gekozen kleur)', badge: 'L' },
-    { id: 'goal', icon: Goal, label: 'Doeltje klein', badge: 'S' },
-    { id: 'goal_big', icon: Goal, label: 'Doeltje groot', badge: 'L' },
+    { id: 'cone', icon: Cone, label: 'Pion (in de gekozen kleur); kies daarna klein of groot', badge: markerSize === 'large' ? 'L' : 'S' },
+    { id: 'goal', icon: Goal, label: 'Doeltje; kies daarna klein of groot', badge: markerSize === 'large' ? 'L' : 'S' },
     { id: 'arrow', icon: ArrowRight, label: 'Pass of pijl' },
     { id: 'lob', icon: ArrowUpRight, label: 'Hoge bal' },
     { id: 'run', icon: Route, label: 'Looplijn (gestippeld)' },
@@ -938,22 +936,41 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
 
       <div className="flex-1 min-h-0 flex">
         {/* Zijbalk met het gereedschap. */}
-        <div className="w-14 bg-neutral-900 border-r border-neutral-800 flex flex-col items-center gap-0.5 py-2 flex-shrink-0 overflow-y-auto">
-          {tools.map(t => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => { setTool(t.id); setSelection(null) }}
-              disabled={interactionDisabled}
-              title={t.label}
-              className={`${knopklein} relative ${tool === t.id ? 'bg-sparta text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
-            >
-              <t.icon className="w-4 h-4" />
-              {t.badge && <span className="absolute -bottom-0.5 -right-0.5 text-[8px] leading-none font-bold bg-neutral-700 text-neutral-200 rounded px-0.5 py-px">{t.badge}</span>}
-            </button>
-          ))}
+        <div className="w-[4.75rem] bg-neutral-900 border-r border-neutral-800 flex flex-col items-center gap-1 py-2 flex-shrink-0 overflow-y-auto">
+          {/* Twee kolommen, zodat alles op een gewoon scherm zonder scrollen past. */}
+          <div className="grid grid-cols-2 gap-0.5 flex-shrink-0">
+            {tools.map(t => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => { setTool(t.id); setSelection(null) }}
+                disabled={interactionDisabled}
+                title={t.label}
+                className={`${knopklein} relative ${tool === t.id ? 'bg-sparta text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
+              >
+                <t.icon className="w-4 h-4" />
+                {t.badge && <span className="absolute -bottom-0.5 -right-0.5 text-[8px] leading-none font-bold bg-neutral-700 text-neutral-200 rounded px-0.5 py-px">{t.badge}</span>}
+              </button>
+            ))}
+          </div>
 
-          <div className="w-7 h-px bg-neutral-800 my-1 flex-shrink-0" />
+          <div className="w-12 h-px bg-neutral-800 my-0.5 flex-shrink-0" />
+
+          {(tool === 'cone' || tool === 'goal') && (
+            <div className="grid grid-cols-2 gap-0.5 flex-shrink-0">
+              {(['small', 'large'] as const).map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setMarkerSize(s)}
+                  title={s === 'small' ? 'Klein' : 'Groot'}
+                  className={`w-9 h-7 rounded-lg text-xs font-bold transition-colors ${markerSize === s ? 'bg-neutral-700 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
+                >
+                  {s === 'small' ? 'S' : 'L'}
+                </button>
+              ))}
+            </div>
+          )}
 
           {tool === 'zone' ? (
             <div className="grid grid-cols-2 gap-1.5 flex-shrink-0">
@@ -986,8 +1003,9 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
             </div>
           )}
 
-          <div className="w-7 h-px bg-neutral-800 my-1 flex-shrink-0" />
+          <div className="w-12 h-px bg-neutral-800 my-0.5 flex-shrink-0" />
 
+          <div className="grid grid-cols-2 gap-0.5 flex-shrink-0">
           {(() => {
             let linkedArrow: Arrow | undefined
             if (selection?.kind === 'arrow') linkedArrow = arrows.find(a => a.id === selection.id && a.attachedObjectId)
@@ -1042,6 +1060,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
           <button type="button" onClick={clearAll} disabled={interactionDisabled} title="Alles wissen" className={`${knopklein} text-neutral-400 hover:bg-neutral-800 hover:text-white`}>
             <RotateCcw className="w-4 h-4" />
           </button>
+          </div>
         </div>
 
         <div className="flex-1 min-w-0 min-h-0 flex flex-col lg:flex-row">
