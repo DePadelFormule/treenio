@@ -11,14 +11,15 @@ import {
   ArrowRight, ArrowUpRight, Route, MoveRight, Type,
   Play, Pause, Square as StopIcon, Plus, Trash2, RotateCcw, ChevronLeft, ChevronRight,
   Video, Circle, Loader2, Unlink, Sparkles, Image as ImageIcon, Footprints, Pin, PinOff,
-  Pencil, Eraser,
+  Pencil, Eraser, Triangle, Cone, Goal,
 } from 'lucide-react'
 
 import type {
   Tool, TBObject, Frame, AnimPos, ZoneColor, Zone, Arrow, TextLabel, Stroke, Selection, PlayData,
 } from '@/lib/tactiek/types'
+import { isMarker } from '@/lib/tactiek/types'
 import {
-  PLAY_VERSION, RECORD_FPS, ARROW_VISIBLE_MS, ARROW_FADE_MS, ZONE_STYLE, PULSE_DURATION_MS, MAGNET_R, BALL_R,
+  PLAY_VERSION, RECORD_FPS, ARROW_VISIBLE_MS, ARROW_FADE_MS, ZONE_STYLE, PULSE_DURATION_MS, MAGNET_R, objectRadius,
   genId, drawBoardCanvas, drawZone, drawZonePreview, drawArrow, textLabelBox, drawTextLabel,
   drawPulse, drawBallShadow, drawTBObject, drawMotionTrail, drawSubtitle, drawStroke,
 } from '@/lib/tactiek/render'
@@ -290,6 +291,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     }
     if (showTrails && frames.length > 1) {
       for (const obj of objects) {
+        if (isMarker(obj)) continue
         const points = frames.map(f => f.positions[obj.id]).filter(Boolean) as { x: number; y: number }[]
         drawMotionTrail(ctx, points, obj.color)
       }
@@ -338,7 +340,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
         if (obj && p) pulsesNow.push({ obj, pos: p, phase: 0.3, color: obj.color })
       }
     }
-    for (const pl of pulsesNow) drawPulse(ctx, pl.pos.x, pl.pos.y, pl.obj.type === 'ball' ? BALL_R : MAGNET_R, pl.color, pl.phase)
+    for (const pl of pulsesNow) drawPulse(ctx, pl.pos.x, pl.pos.y, objectRadius(pl.obj), pl.color, pl.phase)
 
     for (const obj of objects) {
       const p = positions[obj.id]
@@ -350,7 +352,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
           ctx.strokeStyle = linkedArrow.color
           ctx.lineWidth = 1.5
           ctx.globalAlpha = 0.7
-          ctx.beginPath(); ctx.arc(p.x, p.y, (obj.type === 'ball' ? BALL_R : MAGNET_R) + 5, 0, Math.PI * 2); ctx.stroke()
+          ctx.beginPath(); ctx.arc(p.x, p.y, objectRadius(obj) + 5, 0, Math.PI * 2); ctx.stroke()
           ctx.restore()
         }
       }
@@ -419,8 +421,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
       const obj = objects[i]
       const p = positions[obj.id]
       if (!p) continue
-      const r = obj.type === 'ball' ? BALL_R + 6 : MAGNET_R + 4
-      if (Math.hypot(x - p.x, y - p.y) <= r) return obj
+      if (Math.hypot(x - p.x, y - p.y) <= objectRadius(obj) + 5) return obj
     }
     return null
   }
@@ -464,11 +465,11 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     return null
   }
 
-  function addObject(type: TBObject['type'], pos: { x: number; y: number }) {
+  function addObject(type: TBObject['type'], pos: { x: number; y: number }, size?: TBObject['size']) {
     const clamped = clampToCourt(pos)
     // Rugnummer: doortellen binnen dezelfde kleur, zodat elk team bij 1 begint.
     const label = type === 'player' ? String(objects.filter(o => o.type === 'player' && o.color === playerColor).length + 1) : undefined
-    const obj: TBObject = { id: genId(), type, color: playerColor, label }
+    const obj: TBObject = { id: genId(), type, color: playerColor, label, ...(size ? { size } : {}) }
     setObjects(prev => [...prev, obj])
     setFrames(prev => prev.map(f => ({ ...f, positions: { ...f.positions, [obj.id]: clamped } })))
     setSelection({ kind: 'object', id: obj.id })
@@ -548,6 +549,10 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     if (tool === 'player') addObject('player', pos)
     else if (tool === 'trainer') addObject('trainer', pos)
     else if (tool === 'ball') addObject('ball', pos)
+    else if (tool === 'cone') addObject('cone', pos, 'small')
+    else if (tool === 'cone_big') addObject('cone', pos, 'large')
+    else if (tool === 'goal') addObject('goal', pos, 'small')
+    else if (tool === 'goal_big') addObject('goal', pos, 'large')
   }
 
   /** Veegt elke stiftlijn van dit frame weg die onder de veger ligt, ook midden op een lange streek. */
@@ -642,6 +647,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
         let nearestObj: TBObject | null = null
         let nearestDist = style === 'option' ? -1 : 60
         for (const obj of objects) {
+          if (isMarker(obj)) continue
           if (style === 'lob' && obj.type !== 'ball') continue
           if (style === 'run' && obj.type === 'ball') continue
           const p = positions[obj.id]
@@ -835,11 +841,15 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection, frames.length])
 
-  const tools: { id: Tool; icon: React.ElementType; label: string }[] = [
+  const tools: { id: Tool; icon: React.ElementType; label: string; badge?: string }[] = [
     { id: 'select', icon: MousePointer2, label: 'Selecteer' },
     { id: 'player', icon: Users, label: 'Speler (magneetje in de gekozen kleur)' },
     { id: 'trainer', icon: UserIcon, label: 'Trainer' },
     { id: 'ball', icon: Disc, label: 'Bal' },
+    { id: 'cone', icon: Triangle, label: 'Pion klein (in de gekozen kleur)', badge: 'S' },
+    { id: 'cone_big', icon: Cone, label: 'Pion groot (in de gekozen kleur)', badge: 'L' },
+    { id: 'goal', icon: Goal, label: 'Doeltje klein', badge: 'S' },
+    { id: 'goal_big', icon: Goal, label: 'Doeltje groot', badge: 'L' },
     { id: 'arrow', icon: ArrowRight, label: 'Pass of pijl' },
     { id: 'lob', icon: ArrowUpRight, label: 'Hoge bal' },
     { id: 'run', icon: Route, label: 'Looplijn (gestippeld)' },
@@ -936,9 +946,10 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
               onClick={() => { setTool(t.id); setSelection(null) }}
               disabled={interactionDisabled}
               title={t.label}
-              className={`${knopklein} ${tool === t.id ? 'bg-sparta text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
+              className={`${knopklein} relative ${tool === t.id ? 'bg-sparta text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`}
             >
               <t.icon className="w-4 h-4" />
+              {t.badge && <span className="absolute -bottom-0.5 -right-0.5 text-[8px] leading-none font-bold bg-neutral-700 text-neutral-200 rounded px-0.5 py-px">{t.badge}</span>}
             </button>
           ))}
 

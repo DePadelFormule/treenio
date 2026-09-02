@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Play, Pause, RotateCcw, Footprints, Circle as BallIcon } from 'lucide-react'
 import type { AnimPos, PlayData } from '@/lib/tactiek/types'
+import { isMarker } from '@/lib/tactiek/types'
 import { kijkLayout, toCanvasSpace, type BordLayout, type VeldSoort } from '@/lib/tactiek/veld'
 import {
   bareify, computeTimeline, getPositionsAtTime, optionAlphaAt, frameAlphaAt, subtitleAt, type Timeline,
@@ -56,6 +57,7 @@ function tekenBeeld(
 
   if (frames.length > 1) {
     for (const obj of objects) {
+      if (isMarker(obj)) continue
       const aan = obj.type === 'ball' ? balbaan : looplijnen
       if (!aan) continue
       const punten = frames.map(f => f.positions[obj.id]).filter(Boolean) as { x: number; y: number }[]
