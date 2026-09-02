@@ -48,6 +48,51 @@ export async function setPresentie(
   return { ok: !error };
 }
 
+// Zet iedereen (geen gasten) op aanwezig voor alle trainingen in een maand
+// vanaf een datum, maar alleen waar nog niets is ingevuld. Zo hoef je daarna
+// alleen de afmeldingen nog aan te tikken. Geeft terug wat er gezet is,
+// zodat het rooster op het scherm meteen kan bijwerken.
+export async function zetIedereenAanwezig(maand: string, vanaf: string) {
+  const leeg = [] as { training_id: string; speler_id: string }[];
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false, gezet: leeg };
+  if (!/^\d{4}-\d{2}$/.test(maand) || !/^\d{4}-\d{2}-\d{2}$/.test(vanaf)) return { ok: false, gezet: leeg };
+
+  const supabase = await createClient();
+  const [{ data: trainingen }, { data: spelers }] = await Promise.all([
+    supabase.from("trainingen").select("id").gte("datum", vanaf).lte("datum", `${maand}-31`),
+    supabase.from("spelers").select("id, gast"),
+  ]);
+  const trainingIds = ((trainingen ?? []) as { id: string }[]).map((t) => t.id);
+  const spelerIds = ((spelers ?? []) as { id: string; gast?: boolean | null }[]).filter((s) => !s.gast).map((s) => s.id);
+  if (trainingIds.length === 0 || spelerIds.length === 0) return { ok: true, gezet: leeg };
+
+  const { data: bestaand } = await supabase
+    .from("training_registraties")
+    .select("training_id, speler_id, status")
+    .in("training_id", trainingIds);
+  const alIngevuld = new Set(
+    ((bestaand ?? []) as { training_id: string; speler_id: string; status: string | null }[])
+      .filter((r) => r.status)
+      .map((r) => `${r.training_id}:${r.speler_id}`),
+  );
+
+  const gezet: { training_id: string; speler_id: string }[] = [];
+  for (const training_id of trainingIds) {
+    for (const speler_id of spelerIds) {
+      if (!alIngevuld.has(`${training_id}:${speler_id}`)) gezet.push({ training_id, speler_id });
+    }
+  }
+  if (gezet.length > 0) {
+    const { error } = await supabase
+      .from("training_registraties")
+      .upsert(gezet.map((g) => ({ ...g, status: "aanwezig", aanwezig: true })) as never, { onConflict: "training_id,speler_id" });
+    if (error) return { ok: false, gezet: leeg };
+  }
+  revalidatePath("/staf/trainingen");
+  return { ok: true, gezet };
+}
+
 // Genereer alle dinsdag- en donderdagtrainingen voor een maand (YYYY-MM),
 // zonder dubbele data aan te maken.
 export async function genereerMaand(formData: FormData) {

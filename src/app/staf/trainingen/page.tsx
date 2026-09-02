@@ -26,12 +26,11 @@ export default async function TrainingenPage({
 
   const trainLijst = ((trainingen ?? []) as { id: string; datum: string }[]);
 
-  // Startmaand: uit de URL, anders de eerste maand met trainingen, anders de
-  // seizoensstart (augustus). Nooit vóór augustus.
-  let startMaand = maand ?? "";
-  if (!startMaand) {
-    startMaand = trainLijst[0]?.datum.slice(0, 7) ?? "2026-08";
-  }
+  // Startmaand: uit de URL, anders de maand van vandaag (Nederlandse tijd),
+  // zodat je in september meteen september ziet. Nooit vóór augustus, de
+  // start van het seizoen.
+  const vandaag = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Amsterdam" }); // YYYY-MM-DD
+  let startMaand = maand ?? vandaag.slice(0, 7);
   if (startMaand < "2026-08") startMaand = "2026-08";
 
   const begin: Record<string, string> = {};
@@ -57,6 +56,7 @@ export default async function TrainingenPage({
         trainingen={trainLijst}
         begin={begin}
         startMaand={startMaand}
+        vandaag={vandaag}
         onVerwijder={verwijderTraining}
       />
     </main>
