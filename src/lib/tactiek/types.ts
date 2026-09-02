@@ -8,14 +8,25 @@
  * verbeteringen tussen beide apps één op één over te zetten zijn.
  */
 
-export type Tool = 'select' | 'player' | 'trainer' | 'ball' | 'arrow' | 'lob' | 'run' | 'option' | 'zone' | 'text' | 'pen' | 'eraser'
+export type Tool =
+  | 'select' | 'player' | 'trainer' | 'ball'
+  | 'cone' | 'cone_big' | 'goal' | 'goal_big'
+  | 'arrow' | 'lob' | 'run' | 'option' | 'zone' | 'text' | 'pen' | 'eraser'
 
 export interface TBObject {
   id: string
-  type: 'player' | 'trainer' | 'ball'
+  /** cone en goal zijn markeringen: een pion of een doeltje, klein of groot. */
+  type: 'player' | 'trainer' | 'ball' | 'cone' | 'goal'
   color: string
   /** Rugnummer of korte naam op het magneetje. */
   label?: string
+  /** Alleen bij markeringen; ontbreekt betekent klein. */
+  size?: 'small' | 'large'
+}
+
+/** Pionnen en doeltjes: staan op het veld, bewegen niet mee en zitten nergens aan vast. */
+export function isMarker(obj: TBObject) {
+  return obj.type === 'cone' || obj.type === 'goal'
 }
 
 export interface Frame {

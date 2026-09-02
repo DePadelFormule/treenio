@@ -40,6 +40,17 @@ export const FRAME_FADE_MS = 300
 /** Straal van een magneetje in canvas-pixels. */
 export const MAGNET_R = 20
 export const BALL_R = 11
+/** Pionnen: halve breedte van de voet. Doeltjes: halve breedte en halve diepte van het frame. */
+export const CONE_R = { small: 9, large: 14 } as const
+export const GOAL_HALF = { small: { w: 18, d: 7 }, large: { w: 34, d: 11 } } as const
+
+/** Hoe ver van het midden je iets nog aanklikt of raakt. */
+export function objectRadius(obj: TBObject): number {
+  if (obj.type === 'ball') return BALL_R
+  if (obj.type === 'cone') return CONE_R[obj.size ?? 'small']
+  if (obj.type === 'goal') { const g = GOAL_HALF[obj.size ?? 'small']; return Math.hypot(g.w, g.d) }
+  return MAGNET_R
+}
 
 /** Maatvoering van een tekstballon, gedeeld door tekenen en aanklikken. */
 export const LABEL_FONT = 'bold 30px ui-sans-serif, system-ui, sans-serif'
@@ -487,6 +498,54 @@ export function drawBall(ctx: CanvasRenderingContext2D, x: number, y: number, sc
   ctx.restore()
 }
 
+/** Een pion van bovenaf: een driehoekje met een lichte band, in de gekozen kleur. */
+export function drawCone(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, size: 'small' | 'large') {
+  const r = CONE_R[size]
+  const outline = isLightColor(color) ? '#111111' : 'rgba(255,255,255,0.85)'
+  ctx.save()
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)'
+  ctx.beginPath(); ctx.ellipse(x + 1, y + r * 0.9, r * 1.1, r * 0.4, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.lineJoin = 'round'
+  ctx.fillStyle = color
+  ctx.strokeStyle = outline
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(x, y - r * 1.15)
+  ctx.lineTo(x + r, y + r * 0.75)
+  ctx.lineTo(x - r, y + r * 0.75)
+  ctx.closePath()
+  ctx.fill(); ctx.stroke()
+  // Lichte band, zoals op een echte pion.
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)'
+  ctx.lineWidth = Math.max(2, r * 0.22)
+  ctx.beginPath(); ctx.moveTo(x - r * 0.45, y + r * 0.05); ctx.lineTo(x + r * 0.45, y + r * 0.05); ctx.stroke()
+  ctx.restore()
+}
+
+/** Een doeltje van bovenaf: wit frame met een net, de opening naar beneden op het scherm. */
+export function drawGoal(ctx: CanvasRenderingContext2D, x: number, y: number, size: 'small' | 'large') {
+  const { w, d } = GOAL_HALF[size]
+  ctx.save()
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.22)'
+  ctx.fillRect(x - w, y - d, 2 * w, 2 * d)
+  // Net: fijne ruitjes.
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)'
+  ctx.lineWidth = 1
+  const stap = Math.max(4, d / 2)
+  ctx.beginPath()
+  for (let gx = x - w; gx <= x + w; gx += stap) { ctx.moveTo(gx, y - d); ctx.lineTo(gx, y + d) }
+  for (let gy = y - d; gy <= y + d; gy += stap) { ctx.moveTo(x - w, gy); ctx.lineTo(x + w, gy) }
+  ctx.stroke()
+  // Frame: achterkant en twee palen, de voorkant blijft open.
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = size === 'large' ? 4 : 3
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(x - w, y + d); ctx.lineTo(x - w, y - d); ctx.lineTo(x + w, y - d); ctx.lineTo(x + w, y + d)
+  ctx.stroke()
+  ctx.restore()
+}
+
 export const PULSE_DURATION_MS = 900
 
 /** Uitdijende ringen om een object, om de aandacht ernaartoe te trekken. `phase` loopt van 0 tot 1. */
@@ -527,10 +586,12 @@ export function drawTBObject(ctx: CanvasRenderingContext2D, obj: TBObject, x: nu
   if (obj.type === 'player') drawMagnet(ctx, x, y, obj.color, obj.label ?? '')
   else if (obj.type === 'trainer') drawMagnet(ctx, x, y, obj.color, 'T', MAGNET_R * 0.9)
   else if (obj.type === 'ball') drawBall(ctx, x, y, scale)
+  else if (obj.type === 'cone') drawCone(ctx, x, y, obj.color, obj.size ?? 'small')
+  else if (obj.type === 'goal') drawGoal(ctx, x, y, obj.size ?? 'small')
   if (selected && !recording) {
     ctx.save()
     ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4])
-    const r = obj.type === 'ball' ? BALL_R + 8 : MAGNET_R + 8
+    const r = objectRadius(obj) + 8
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke()
     ctx.setLineDash([])
     ctx.restore()
