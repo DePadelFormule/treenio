@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { genereerLes, bewaarLes } from "@/app/staf/lesgenerator/actions";
 import type { LesInvoer } from "@/app/staf/lesgenerator/actions";
 import type { Les } from "@/lib/lesgenerator/schema";
+import { SpelsituatieInLes } from "@/components/SpelsituatieInLes";
 
 export function LesGenerator() {
   const sport = "voetbal" as const;
@@ -198,8 +199,9 @@ export function Lesblad({ les }: { les: Les }) {
 
               {b.tekening && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={b.tekening} alt={`Tekening bij ${b.naam}`} className="mt-2 max-w-xs rounded-lg border border-neutral-200" />
+                <img src={b.tekening} alt={`Tekening bij ${b.naam}`} className={`mt-2 rounded-lg border border-neutral-200 ${b.spelsituatie_id ? "max-w-md" : "max-w-xs"}`} />
               )}
+              {b.spelsituatie_id && <SpelsituatieInLes id={b.spelsituatie_id} />}
               {b.organisatie && <p className="mt-2 whitespace-pre-wrap rounded bg-green-50 px-2 py-1.5 text-sm text-green-900">{b.organisatie}</p>}
 
               {(b.coaching_verdedigers || b.coaching_aanvallers) && (

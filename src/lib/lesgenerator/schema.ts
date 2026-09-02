@@ -16,6 +16,9 @@ export interface LesBlok {
   // het digitale lesformulier — de AI genereert dit niet, dus niet in het
   // JSON-schema hieronder.
   tekening?: string;
+  // Komt de tekening uit een spelsituatie (tactiekbord), dan staat hier het id,
+  // zodat het archief de animatie kan afspelen. Ook alleen van het formulier.
+  spelsituatie_id?: string;
   // Coachpunten per doelgroep en variaties op de vorm. Ook alleen van het
   // digitale lesformulier, niet in het AI-schema.
   coaching_verdedigers?: string;

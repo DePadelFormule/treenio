@@ -244,7 +244,8 @@ export interface HandLesBlok {
   vorm: string;
   minuten: number;
   uitleg: string;
-  tekening?: string; // data-URL (PNG) van het tekenveld
+  tekening?: string; // data-URL (PNG) van het tekenveld of van een stap uit een spelsituatie
+  spelsituatie_id?: string; // gezet als de tekening uit een spelsituatie komt
   coaching_verdedigers: string;
   coaching_aanvallers: string;
   variaties: string;
@@ -275,6 +276,7 @@ export async function bewaarHandmatigeLes(
       minuten: Number.isFinite(b.minuten) && b.minuten > 0 ? Math.min(b.minuten, 120) : 0,
       uitleg: b.uitleg.trim().slice(0, 2000),
       tekening: b.tekening?.startsWith("data:image/") && b.tekening.length < 1_500_000 ? b.tekening : undefined,
+      spelsituatie_id: b.spelsituatie_id && /^[0-9a-f-]{36}$/i.test(b.spelsituatie_id) ? b.spelsituatie_id : undefined,
       coaching_verdedigers: b.coaching_verdedigers.trim().slice(0, 1000),
       coaching_aanvallers: b.coaching_aanvallers.trim().slice(0, 1000),
       variaties: b.variaties.trim().slice(0, 1000),
@@ -302,6 +304,7 @@ export async function bewaarHandmatigeLes(
       progressie_makkelijker: "",
       progressie_moeilijker: "",
       tekening: b.tekening,
+      spelsituatie_id: b.spelsituatie_id,
       coaching_verdedigers: b.coaching_verdedigers || undefined,
       coaching_aanvallers: b.coaching_aanvallers || undefined,
       variaties: b.variaties || undefined,
