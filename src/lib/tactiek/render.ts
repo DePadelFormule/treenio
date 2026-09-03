@@ -277,7 +277,7 @@ export function drawZone(ctx: CanvasRenderingContext2D, zone: Zone, selected: bo
   roundRectPath(ctx, x, y, w, h, 12)
   ctx.fill()
   ctx.strokeStyle = style.stroke
-  ctx.lineWidth = selected ? 5 : 3.5
+  ctx.lineWidth = selected ? 3.5 : 2.5
   if (selected) ctx.setLineDash([8, 5])
   roundRectPath(ctx, x, y, w, h, 12)
   ctx.stroke()
@@ -289,7 +289,7 @@ export function drawZonePreview(ctx: CanvasRenderingContext2D, x: number, y: num
   ctx.save()
   ctx.fillStyle = style.fill
   roundRectPath(ctx, x, y, w, h, 12); ctx.fill()
-  ctx.strokeStyle = style.stroke; ctx.lineWidth = 3; ctx.setLineDash([8, 5])
+  ctx.strokeStyle = style.stroke; ctx.lineWidth = 2.5; ctx.setLineDash([8, 5])
   roundRectPath(ctx, x, y, w, h, 12); ctx.stroke()
   ctx.restore()
 }
@@ -311,25 +311,27 @@ export function lobControlPoint(x1: number, y1: number, x2: number, y2: number) 
 export function drawArrow(ctx: CanvasRenderingContext2D, arrow: Arrow, selected: boolean, alpha = 1) {
   if (alpha <= 0) return
   const { x1, y1, x2, y2, color, style } = arrow
-  const headLen = 30
+  // Fijne lijnen: een pijl is een aanwijzing, geen balk over het veld.
+  const headLen = 20
+  const headHoek = 0.38
   ctx.save()
   ctx.globalAlpha = style === 'option' ? alpha * OPTION_ALPHA : alpha
   ctx.strokeStyle = color
   ctx.fillStyle = color
-  ctx.lineWidth = 8
+  ctx.lineWidth = 4
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
 
   let tipAngle: number
   if (style === 'option') {
     // Dunne egale lijn met een open punt: dit is een mogelijkheid, geen actie.
-    ctx.lineWidth = 5
+    ctx.lineWidth = 3
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
     tipAngle = Math.atan2(y2 - y1, x2 - x1)
     ctx.beginPath()
-    ctx.moveTo(x2 - headLen * Math.cos(tipAngle - 0.42), y2 - headLen * Math.sin(tipAngle - 0.42))
+    ctx.moveTo(x2 - headLen * Math.cos(tipAngle - headHoek), y2 - headLen * Math.sin(tipAngle - headHoek))
     ctx.lineTo(x2, y2)
-    ctx.lineTo(x2 - headLen * Math.cos(tipAngle + 0.42), y2 - headLen * Math.sin(tipAngle + 0.42))
+    ctx.lineTo(x2 - headLen * Math.cos(tipAngle + headHoek), y2 - headLen * Math.sin(tipAngle + headHoek))
     ctx.stroke()
     ctx.restore()
     if (selected) drawArrowSelection(ctx, arrow)
@@ -337,7 +339,7 @@ export function drawArrow(ctx: CanvasRenderingContext2D, arrow: Arrow, selected:
   }
   if (style === 'lob') {
     const { cpX, cpY } = lobControlPoint(x1, y1, x2, y2)
-    ctx.setLineDash([20, 12])
+    ctx.setLineDash([12, 9])
     ctx.beginPath()
     ctx.moveTo(x1, y1)
     ctx.quadraticCurveTo(cpX, cpY, x2, y2)
@@ -345,11 +347,11 @@ export function drawArrow(ctx: CanvasRenderingContext2D, arrow: Arrow, selected:
     ctx.setLineDash([])
     tipAngle = Math.atan2(y2 - cpY, x2 - cpX)
     ctx.beginPath()
-    ctx.arc(cpX, cpY, 6, 0, Math.PI * 2)
+    ctx.arc(cpX, cpY, 4, 0, Math.PI * 2)
     ctx.fill()
   } else {
     // Een looplijn is gestippeld: lopen, geen bal.
-    if (style === 'run') ctx.setLineDash([16, 16])
+    if (style === 'run') ctx.setLineDash([10, 9])
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
     ctx.setLineDash([])
     tipAngle = Math.atan2(y2 - y1, x2 - x1)
@@ -357,8 +359,8 @@ export function drawArrow(ctx: CanvasRenderingContext2D, arrow: Arrow, selected:
 
   ctx.beginPath()
   ctx.moveTo(x2, y2)
-  ctx.lineTo(x2 - headLen * Math.cos(tipAngle - 0.42), y2 - headLen * Math.sin(tipAngle - 0.42))
-  ctx.lineTo(x2 - headLen * Math.cos(tipAngle + 0.42), y2 - headLen * Math.sin(tipAngle + 0.42))
+  ctx.lineTo(x2 - headLen * Math.cos(tipAngle - headHoek), y2 - headLen * Math.sin(tipAngle - headHoek))
+  ctx.lineTo(x2 - headLen * Math.cos(tipAngle + headHoek), y2 - headLen * Math.sin(tipAngle + headHoek))
   ctx.closePath(); ctx.fill()
   ctx.restore()
   if (selected && alpha >= 0.5) drawArrowSelection(ctx, arrow)
@@ -400,7 +402,7 @@ export function drawTextLabel(ctx: CanvasRenderingContext2D, label: TextLabel, s
   roundRectPath(ctx, x - w / 2, y - h / 2, w, h, 16)
   ctx.fill()
   ctx.strokeStyle = label.color
-  ctx.lineWidth = 3
+  ctx.lineWidth = 2
   roundRectPath(ctx, x - w / 2, y - h / 2, w, h, 16)
   ctx.stroke()
   if (label.tail) drawBalloonTail(ctx, x, y, w, h, label.tail, label.color)
@@ -456,7 +458,7 @@ export function drawBalloonTail(
   ctx.closePath()
   ctx.fill()
   ctx.strokeStyle = color
-  ctx.lineWidth = 3
+  ctx.lineWidth = 2
   ctx.lineCap = 'round'
   ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(tail.x, tail.y); ctx.stroke()
   ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tail.x, tail.y); ctx.stroke()
@@ -471,7 +473,7 @@ export function drawMagnet(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.beginPath(); ctx.ellipse(x + 2, y + 4, r * 1.05, r * 0.9, 0, 0, Math.PI * 2); ctx.fill()
   ctx.fillStyle = color
   ctx.strokeStyle = outline
-  ctx.lineWidth = 2.5
+  ctx.lineWidth = 2
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke()
   if (label) {
     ctx.fillStyle = outline
@@ -632,7 +634,7 @@ export function drawMotionTrail(ctx: CanvasRenderingContext2D, points: { x: numb
     const t = i / points.length
     ctx.strokeStyle = color
     ctx.globalAlpha = 0.18 + 0.45 * t
-    ctx.lineWidth = 3; ctx.setLineDash([5, 6])
+    ctx.lineWidth = 2; ctx.setLineDash([4, 6])
     ctx.beginPath(); ctx.moveTo(points[i - 1].x, points[i - 1].y); ctx.lineTo(points[i].x, points[i].y); ctx.stroke()
   }
   ctx.restore()

@@ -53,7 +53,7 @@ function afterFrameDeleted<T extends FrameBound>(items: T[], deleted: number): T
 const PLAYER_COLORS = ['#C8102E', '#111111', '#ffffff', '#facc15', '#f97316', '#3b82f6', '#ff0099', '#d4af37']
 const ZONE_COLORS: ZoneColor[] = ['red', 'green', 'orange']
 /** Dikte van de stift en bereik van de veger, in canvas-pixels. */
-const STROKE_WIDTH = 8
+const STROKE_WIDTH = 5
 const ERASER_RADIUS = 22
 
 function pickMimeType(): { mime: string; ext: 'mp4' | 'webm' } | null {
