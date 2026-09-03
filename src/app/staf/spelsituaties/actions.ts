@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import type { PlayData } from "@/lib/tactiek/types";
+import { alsCategorie } from "@/lib/tactiek/categorieen";
 
 export async function nieuweSpelsituatie(formData: FormData) {
   const gebruiker = await getHuidigeGebruiker();
@@ -12,17 +13,18 @@ export async function nieuweSpelsituatie(formData: FormData) {
 
   const titel = String(formData.get("titel") ?? "").trim();
   const half_veld = String(formData.get("half_veld") ?? "") === "half";
+  const categorie = alsCategorie(formData.get("categorie"));
   if (!titel) return;
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("spelsituaties")
-    .insert({ titel, half_veld } as never)
+    .insert({ titel, half_veld, categorie } as never)
     .select("id")
     .single();
 
   if (error || !data) {
-    redirect("/staf/spelsituaties");
+    redirect(`/staf/spelsituaties?categorie=${encodeURIComponent(categorie)}`);
   }
   redirect(`/staf/spelsituaties/${(data as { id: string }).id}`);
 }
@@ -32,6 +34,7 @@ export interface BewaarPayload {
   titel: string;
   uitleg: string | null;
   half_veld: boolean;
+  categorie: string;
   data: PlayData;
 }
 
@@ -46,6 +49,7 @@ export async function bewaarSpelsituatie(payload: BewaarPayload) {
       titel: payload.titel,
       uitleg: payload.uitleg,
       half_veld: payload.half_veld,
+      categorie: alsCategorie(payload.categorie),
       data: payload.data,
     } as never)
     .eq("id", payload.id);
@@ -60,17 +64,19 @@ export interface SpelsituatieKort {
   titel: string;
   uitleg: string | null;
   half_veld: boolean;
+  categorie: string;
   data: unknown;
 }
 
-/** Alle spelsituaties, nieuwste eerst. Voor de kiezer in het lesformulier. */
+/** Alle spelsituaties, per categorie en dan nieuwste eerst. Voor de kiezer in het lesformulier. */
 export async function lijstSpelsituaties(): Promise<SpelsituatieKort[]> {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return [];
   const supabase = await createClient();
   const { data } = await supabase
     .from("spelsituaties")
-    .select("id, titel, uitleg, half_veld, data")
+    .select("id, titel, uitleg, half_veld, categorie, data")
+    .order("categorie", { ascending: true })
     .order("created_at", { ascending: false });
   return (data ?? []) as SpelsituatieKort[];
 }
@@ -82,7 +88,7 @@ export async function haalSpelsituatie(id: string): Promise<SpelsituatieKort | n
   const supabase = await createClient();
   const { data } = await supabase
     .from("spelsituaties")
-    .select("id, titel, uitleg, half_veld, data")
+    .select("id, titel, uitleg, half_veld, categorie, data")
     .eq("id", id)
     .maybeSingle();
   return (data as SpelsituatieKort | null) ?? null;

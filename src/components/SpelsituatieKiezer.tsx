@@ -65,7 +65,7 @@ export function SpelsituatieKiezer({ onKies, onSluit }: {
                   >
                     <span>
                       <span className="block font-medium text-neutral-800">{s.titel}</span>
-                      <span className="block text-xs text-neutral-400">{s.half_veld ? "half veld" : "heel veld"}{s.uitleg ? ` · ${s.uitleg}` : ""}</span>
+                      <span className="block text-xs text-neutral-400">{s.categorie} · {s.half_veld ? "half veld" : "heel veld"}{s.uitleg ? ` · ${s.uitleg}` : ""}</span>
                     </span>
                     <span className="text-sm font-semibold text-sparta">Kies →</span>
                   </button>

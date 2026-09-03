@@ -118,6 +118,8 @@ export interface Spelsituatie {
   titel: string;
   uitleg: string | null;
   half_veld: boolean;
+  /** Een van de categorieën uit lib/tactiek/categorieen; "Overig" als vangnet. */
+  categorie: string;
   /** PlayData in meters, of het oude BordData bij situaties van voor het nieuwe tekenbord. */
   data: PlayData | BordData;
   created_at: string;
