@@ -14,6 +14,7 @@ import { bewaarSpelsituatie } from "@/app/staf/spelsituaties/actions";
 import PlayEditor from "@/components/tactiek/PlayEditor";
 import { naarPlayData } from "@/lib/tactiek/vanBordData";
 import type { PlayData } from "@/lib/tactiek/types";
+import { CATEGORIEEN, alsCategorie, type Categorie } from "@/lib/tactiek/categorieen";
 
 /** Wachttijd na de laatste wijziging voordat er automatisch wordt opgeslagen. */
 const AUTOSAVE_MS = 3000;
@@ -23,27 +24,29 @@ interface Props {
   beginTitel: string;
   beginUitleg: string | null;
   beginHalfVeld: boolean;
+  beginCategorie: string;
   beginData: unknown;
 }
 
 type Stand = "schoon" | "vuil" | "bezig" | "fout";
 
-export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginData }: Props) {
+export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginCategorie, beginData }: Props) {
   const [play, setPlay] = useState<PlayData>(() => naarPlayData(beginData, beginHalfVeld, beginTitel, beginUitleg ?? ""));
   const [halfVeld, setHalfVeld] = useState(beginHalfVeld);
+  const [categorie, setCategorie] = useState<Categorie>(() => alsCategorie(beginCategorie));
   const [stand, setStand] = useState<Stand>("schoon");
   const [laatstOpgeslagen, setLaatstOpgeslagen] = useState<string | null>(null);
   const [fout, setFout] = useState<string | null>(null);
 
   // Wat er nu op het bord staat, altijd actueel, ook binnen een timer.
-  const huidig = useRef({ play, halfVeld });
-  huidig.current = { play, halfVeld };
+  const huidig = useRef({ play, halfVeld, categorie });
+  huidig.current = { play, halfVeld, categorie };
   const vuil = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const opslaan = useCallback(async () => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null; }
-    const { play: p, halfVeld: hv } = huidig.current;
+    const { play: p, halfVeld: hv, categorie: cat } = huidig.current;
     setStand("bezig");
     setFout(null);
     const res = await bewaarSpelsituatie({
@@ -51,6 +54,7 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
       titel: p.title.trim() || beginTitel,
       uitleg: p.description.trim() || null,
       half_veld: hv,
+      categorie: cat,
       data: p,
     });
     if (!res.ok) {
@@ -59,7 +63,7 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
       return;
     }
     // Alleen schoon als er ondertussen niets meer veranderd is.
-    if (huidig.current.play === p && huidig.current.halfVeld === hv) {
+    if (huidig.current.play === p && huidig.current.halfVeld === hv && huidig.current.categorie === cat) {
       vuil.current = false;
       setStand("schoon");
     } else {
@@ -83,6 +87,11 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
 
   function wisselVeld(half: boolean) {
     setHalfVeld(half);
+    markeerVuil();
+  }
+
+  function wisselCategorie(waarde: string) {
+    setCategorie(alsCategorie(waarde));
     markeerVuil();
   }
 
@@ -150,6 +159,15 @@ export function TekenBord({ id, beginTitel, beginUitleg, beginHalfVeld, beginDat
                 />
                 half veld
               </label>
+              <select
+                value={categorie}
+                disabled={busy}
+                onChange={(e) => wisselCategorie(e.target.value)}
+                title="Categorie"
+                className="bg-neutral-800 border border-neutral-700 text-white rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-sparta max-w-[11rem]"
+              >
+                {CATEGORIEEN.map((c) => <option key={c.naam} value={c.naam}>{c.naam}</option>)}
+              </select>
               <Link href={`/staf/spelsituaties/${id}/print`} className={`${knop} text-neutral-300 hover:bg-neutral-800 hover:text-white`} title="Alle stappen als PDF">
                 <Printer className="w-4 h-4" /> PDF
               </Link>
