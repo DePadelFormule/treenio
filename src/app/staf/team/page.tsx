@@ -7,6 +7,7 @@ import type {
   Speler,
   WedstrijdTotalenView,
   TrainingOpkomstView,
+  TrainingOpkomstGecorrigeerdView,
 } from "@/lib/types/database";
 
 // Team-overzicht: alle spelers in één sorteerbare tabel.
@@ -16,10 +17,11 @@ export default async function TeamOverzichtPage() {
   if (gebruiker.rol !== "staf") redirect("/");
 
   const supabase = await createClient();
-  const [{ data: spelers }, { data: totalen }, { data: opkomst }] = await Promise.all([
+  const [{ data: spelers }, { data: totalen }, { data: opkomst }, { data: opkomstGecorrigeerd }] = await Promise.all([
     supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
     supabase.from("v_wedstrijd_totalen").select("*"),
     supabase.from("v_training_opkomst").select("*"),
+    supabase.from("v_training_opkomst_gecorrigeerd").select("*"),
   ]);
 
   const totaalMap = new Map<string, WedstrijdTotalenView>();
@@ -28,9 +30,13 @@ export default async function TeamOverzichtPage() {
   const opkomstMap = new Map<string, TrainingOpkomstView>();
   for (const o of (opkomst ?? []) as TrainingOpkomstView[]) opkomstMap.set(o.speler_id, o);
 
+  const opkomstGecorrigeerdMap = new Map<string, TrainingOpkomstGecorrigeerdView>();
+  for (const o of (opkomstGecorrigeerd ?? []) as TrainingOpkomstGecorrigeerdView[]) opkomstGecorrigeerdMap.set(o.speler_id, o);
+
   const rows: TeamRij[] = ((spelers ?? []) as Speler[]).map((s) => {
     const t = totaalMap.get(s.id);
     const o = opkomstMap.get(s.id);
+    const og = opkomstGecorrigeerdMap.get(s.id);
     return {
       id: s.id,
       rugnummer: s.rugnummer,
@@ -38,6 +44,7 @@ export default async function TeamOverzichtPage() {
       status: s.beschikbaarheid,
       positie: s.hoofdpositie,
       opkomst: o?.opkomst_pct ?? null,
+      opkomstGecorrigeerd: og?.opkomst_pct_gecorrigeerd ?? null,
       teLaat: o?.te_laat_gekomen ?? 0,
       minuten: t?.totaal_minuten ?? 0,
       goals: t?.goals ?? 0,

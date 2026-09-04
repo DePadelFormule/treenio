@@ -204,6 +204,8 @@ export interface TrainingRegistratie {
   afgemeld_op: string | null;
   inzet: number | null;
   opmerking: string | null;
+  // Scheenbeschermers/bidon niet in orde. Optioneel getypt (migratie 0029).
+  materiaal_ontbreekt?: boolean;
   created_at: string;
 }
 
@@ -212,7 +214,16 @@ export interface TrainingOpkomstMaandView {
   maand: string; // YYYY-MM
   geregistreerd: number;
   aanwezig: number;
+  te_laat: number;
   opkomst_pct: number | null;
+}
+
+// Seizoenstotaal met "2x te laat = 1x minder aanwezig" verrekend (migratie 0029).
+export interface TrainingOpkomstGecorrigeerdView {
+  speler_id: string;
+  geregistreerd: number;
+  aanwezig_gecorrigeerd: number;
+  opkomst_pct_gecorrigeerd: number | null;
 }
 
 export interface WedstrijdRegistratie {

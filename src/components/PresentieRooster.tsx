@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { setPresentie, genereerMaand, zetIedereenAanwezig } from "@/app/staf/trainingen/actions";
+import { setPresentie, genereerMaand, zetIedereenAanwezig, toggleMateriaal } from "@/app/staf/trainingen/actions";
 
 interface SpelerKort { id: string; naam: string; rugnummer: number | null; }
 interface TrainingKort { id: string; datum: string; }
@@ -10,6 +10,7 @@ interface Props {
   spelers: SpelerKort[];
   trainingen: TrainingKort[];
   begin: Record<string, string>; // "trainingId:spelerId" -> status
+  beginMateriaal?: Record<string, boolean>; // "trainingId:spelerId" -> ontbreekt
   startMaand: string; // YYYY-MM
   /** Vandaag als YYYY-MM-DD, voor de standaardkeuze bij "Iedereen aanwezig". */
   vandaag: string;
@@ -45,9 +46,10 @@ function dagLabel(datum: string) {
   return `${DAGEN[d.getUTCDay()]} ${d.getUTCDate()}-${d.getUTCMonth() + 1}`;
 }
 
-export function PresentieRooster({ spelers, trainingen, begin, startMaand, vandaag, onVerwijder }: Props) {
+export function PresentieRooster({ spelers, trainingen, begin, beginMateriaal, startMaand, vandaag, onVerwijder }: Props) {
   const [maand, setMaand] = useState(startMaand < MIN_MAAND ? MIN_MAAND : startMaand);
   const [status, setStatus] = useState<Record<string, string>>(begin);
+  const [materiaal, setMateriaal] = useState<Record<string, boolean>>(beginMateriaal ?? {});
   const [open, setOpen] = useState<{ t: string; s: string } | null>(null);
   const [allenOpen, setAllenOpen] = useState(false);
   const [allenVanaf, setAllenVanaf] = useState("");
@@ -104,6 +106,13 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, vanda
       return c;
     });
     start(() => { void setPresentie(trainingId, spelerId, nieuw); });
+  }
+
+  function wisselMateriaal(trainingId: string, spelerId: string) {
+    const key = `${trainingId}:${spelerId}`;
+    const nieuw = !materiaal[key];
+    setMateriaal((m) => ({ ...m, [key]: nieuw }));
+    start(() => { void toggleMateriaal(trainingId, spelerId, nieuw); });
   }
 
   function maandPct(spelerId: string) {
@@ -186,9 +195,17 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, vanda
                       <td key={t.id} className="px-0.5 py-1 text-center">
                         <button
                           onClick={() => setOpen({ t: t.id, s: sp.id })}
-                          className={`h-9 w-9 rounded-md border text-sm font-bold ${kleurVan(s)}`}
+                          className={`relative h-9 w-9 rounded-md border text-sm font-bold ${kleurVan(s)}`}
                           aria-label="status kiezen"
-                        >{kortVan(s)}</button>
+                        >
+                          {kortVan(s)}
+                          {materiaal[`${t.id}:${sp.id}`] && (
+                            <span
+                              className="absolute -right-1 -top-1 h-3 w-3 rounded-full border border-white bg-red-500"
+                              title="Materiaal niet in orde"
+                            />
+                          )}
+                        </button>
                       </td>
                     );
                   })}
@@ -211,6 +228,7 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, vanda
 
       <p className="mt-2 text-xs text-neutral-400">
         Tik een vakje → kies onderin de status. De %-kolom is de opkomst in deze maand.
+        <span className="ml-1 inline-block h-2.5 w-2.5 rounded-full bg-red-500 align-middle" /> = materiaal (scheenbeschermers/bidon) niet in orde.
       </p>
 
       {/* Iedereen aanwezig vanaf een training */}
@@ -272,6 +290,15 @@ export function PresentieRooster({ spelers, trainingen, begin, startMaand, vanda
                   Wissen
                 </button>
               </div>
+              <label className="mt-3 flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700">
+                <input
+                  type="checkbox"
+                  checked={materiaal[`${open.t}:${open.s}`] ?? false}
+                  onChange={() => wisselMateriaal(open.t, open.s)}
+                  className="h-4 w-4"
+                />
+                Scheenbeschermers/bidon niet in orde
+              </label>
             </div>
           </div>
         </>

@@ -21,7 +21,7 @@ export default async function TrainingenPage({
   const [{ data: spelers }, { data: trainingen }, { data: regs }] = await Promise.all([
     supabase.from("spelers").select("*").order("rugnummer", { ascending: true, nullsFirst: false }),
     supabase.from("trainingen").select("id, datum").order("datum", { ascending: true }),
-    supabase.from("training_registraties").select("training_id, speler_id, status"),
+    supabase.from("training_registraties").select("training_id, speler_id, status, materiaal_ontbreekt"),
   ]);
 
   const trainLijst = ((trainingen ?? []) as { id: string; datum: string }[]);
@@ -34,8 +34,10 @@ export default async function TrainingenPage({
   if (startMaand < "2026-08") startMaand = "2026-08";
 
   const begin: Record<string, string> = {};
-  for (const r of (regs ?? []) as Pick<TrainingRegistratie, "training_id" | "speler_id" | "status">[]) {
+  const beginMateriaal: Record<string, boolean> = {};
+  for (const r of (regs ?? []) as Pick<TrainingRegistratie, "training_id" | "speler_id" | "status" | "materiaal_ontbreekt">[]) {
     if (r.status) begin[`${r.training_id}:${r.speler_id}`] = r.status;
+    if (r.materiaal_ontbreekt) beginMateriaal[`${r.training_id}:${r.speler_id}`] = true;
   }
 
   return (
@@ -55,6 +57,7 @@ export default async function TrainingenPage({
           .map((s) => ({ id: s.id, naam: s.naam, rugnummer: s.rugnummer }))}
         trainingen={trainLijst}
         begin={begin}
+        beginMateriaal={beginMateriaal}
         startMaand={startMaand}
         vandaag={vandaag}
         onVerwijder={verwijderTraining}
