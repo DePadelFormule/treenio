@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
 
@@ -78,6 +77,5 @@ export async function genereerMateriaaldienst() {
 
   const { error } = await supabase.from("materiaaldienst_sessies").insert(rijen as never);
   if (error) return { ok: false };
-  revalidatePath("/staf/materiaaldienst");
   return { ok: true };
 }
