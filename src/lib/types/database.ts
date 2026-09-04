@@ -209,6 +209,18 @@ export interface TrainingRegistratie {
   created_at: string;
 }
 
+export interface MateriaaldienstSessie {
+  id: string;
+  training_id: string | null;
+  wedstrijd_id: string | null;
+  volgorde: number;
+  speler_1_id: string;
+  speler_2_id: string;
+  speler_1_gedaan: boolean;
+  speler_2_gedaan: boolean;
+  created_at: string;
+}
+
 export interface TrainingOpkomstMaandView {
   speler_id: string;
   maand: string; // YYYY-MM
