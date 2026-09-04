@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { genereerMateriaaldienst } from "./actions";
-import { MateriaaldienstLijst, type MateriaaldienstRij } from "@/components/MateriaaldienstLijst";
+import { MateriaaldienstLijst, type MateriaaldienstRij, type SpelerOptie } from "@/components/MateriaaldienstLijst";
 import type { MateriaaldienstSessie, Training, Wedstrijd, Speler } from "@/lib/types/database";
 
 const DAGEN = ["zo", "ma", "di", "wo", "do", "vr", "za"];
@@ -30,14 +30,16 @@ export default async function MateriaaldienstPage() {
       supabase.from("materiaaldienst_sessies").select("*").order("volgorde", { ascending: true }),
       supabase.from("trainingen").select("id, datum"),
       supabase.from("wedstrijden").select("id, datum, tegenstander"),
-      supabase.from("spelers").select("id, naam"),
+      supabase.from("spelers").select("id, naam, gast").order("naam", { ascending: true }),
     ]);
 
   const trainingMap = new Map(((trainingen ?? []) as Pick<Training, "id" | "datum">[]).map((t) => [t.id, t]));
   const wedstrijdMap = new Map(
     ((wedstrijden ?? []) as Pick<Wedstrijd, "id" | "datum" | "tegenstander">[]).map((w) => [w.id, w]),
   );
-  const spelerMap = new Map(((spelers ?? []) as Pick<Speler, "id" | "naam">[]).map((s) => [s.id, s.naam]));
+  const alleSpelers = ((spelers ?? []) as (Pick<Speler, "id" | "naam"> & { gast?: boolean | null })[]).filter((s) => !s.gast);
+  const spelerMap = new Map(alleSpelers.map((s) => [s.id, s.naam]));
+  const spelerOpties: SpelerOptie[] = alleSpelers.map((s) => ({ id: s.id, naam: s.naam }));
 
   const vandaag = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Amsterdam" });
 
@@ -54,7 +56,9 @@ export default async function MateriaaldienstPage() {
         soort: training ? "Training" : `Wedstrijd · ${wedstrijd?.tegenstander ?? "?"}`,
         vandaag: datum === vandaag,
         verleden: datum < vandaag,
+        speler1Id: s.speler_1_id,
         speler1Naam: spelerMap.get(s.speler_1_id) ?? "?",
+        speler2Id: s.speler_2_id,
         speler2Naam: spelerMap.get(s.speler_2_id) ?? "?",
         speler1Gedaan: s.speler_1_gedaan,
         speler2Gedaan: s.speler_2_gedaan,
@@ -73,10 +77,11 @@ export default async function MateriaaldienstPage() {
       <p className="mb-6 text-sm text-neutral-500">
         Per training en wedstrijd een duo dat de materialen verzorgt. Tik een naam aan zodra die
         speler het gedaan heeft — dat kan los per speler, bijvoorbeeld als iemand eerder wegging.
+        Met het potloodje kun je de naam vervangen als spelers onderling ruilen.
       </p>
 
       {rows.length > 0 ? (
-        <MateriaaldienstLijst rows={rows} />
+        <MateriaaldienstLijst rows={rows} spelers={spelerOpties} />
       ) : (
         <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400">
           Nog geen trainingen of wedstrijden om een dienst voor in te delen.

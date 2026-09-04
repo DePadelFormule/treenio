@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toggleMateriaaldienstGedaan } from "@/app/staf/materiaaldienst/actions";
+import { toggleMateriaaldienstGedaan, wijzigMateriaaldienstSpeler } from "@/app/staf/materiaaldienst/actions";
 
 export interface MateriaaldienstRij {
   id: string;
@@ -9,56 +9,111 @@ export interface MateriaaldienstRij {
   soort: string; // "Training" of "Wedstrijd · tegenstander"
   vandaag: boolean;
   verleden: boolean;
+  speler1Id: string;
   speler1Naam: string;
+  speler2Id: string;
   speler2Naam: string;
   speler1Gedaan: boolean;
   speler2Gedaan: boolean;
 }
 
-function Vinkje({
-  naam,
-  gedaan,
-  onWissel,
-}: {
+export interface SpelerOptie {
+  id: string;
   naam: string;
+}
+
+function SpelerVeld({
+  sessieId,
+  welke,
+  spelerId,
+  spelerNaam,
+  gedaan,
+  opties,
+}: {
+  sessieId: string;
+  welke: 1 | 2;
+  spelerId: string;
+  spelerNaam: string;
   gedaan: boolean;
-  onWissel: (waarde: boolean) => Promise<{ ok: boolean }>;
+  opties: SpelerOptie[];
 }) {
+  const [id, setId] = useState(spelerId);
+  const [naam, setNaam] = useState(spelerNaam);
   const [waarde, setWaarde] = useState(gedaan);
+  const [bewerken, setBewerken] = useState(false);
   const [, start] = useTransition();
 
-  function klik() {
+  function vinkAan() {
     const nieuw = !waarde;
     setWaarde(nieuw);
     start(async () => {
-      const res = await onWissel(nieuw);
+      const res = await toggleMateriaaldienstGedaan(sessieId, welke, nieuw);
       if (!res.ok) setWaarde(!nieuw);
     });
   }
 
+  function wisselSpeler(nieuweId: string) {
+    const oudeId = id;
+    const oudeNaam = naam;
+    setId(nieuweId);
+    setNaam(opties.find((o) => o.id === nieuweId)?.naam ?? "?");
+    setBewerken(false);
+    start(async () => {
+      const res = await wijzigMateriaaldienstSpeler(sessieId, welke, nieuweId);
+      if (!res.ok) {
+        setId(oudeId);
+        setNaam(oudeNaam);
+      }
+    });
+  }
+
+  if (bewerken) {
+    return (
+      <select
+        autoFocus
+        value={id}
+        onChange={(e) => wisselSpeler(e.target.value)}
+        onBlur={() => setBewerken(false)}
+        className="rounded-lg border border-sparta px-2 py-2 text-sm"
+      >
+        {opties.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.naam}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={klik}
-      className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-        waarde
-          ? "border-green-200 bg-green-50 text-green-700"
-          : "border-neutral-200 bg-white text-neutral-600 hover:border-sparta"
+    <span
+      className={`flex items-center gap-1 rounded-lg border px-1 py-1 text-sm font-medium transition ${
+        waarde ? "border-green-200 bg-green-50 text-green-700" : "border-neutral-200 bg-white text-neutral-600"
       }`}
     >
-      <span
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-          waarde ? "border-green-500 bg-green-500 text-white" : "border-neutral-300"
-        }`}
+      <button type="button" onClick={vinkAan} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-black/5">
+        <span
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+            waarde ? "border-green-500 bg-green-500 text-white" : "border-neutral-300"
+          }`}
+        >
+          {waarde && "✓"}
+        </span>
+        {naam}
+      </button>
+      <button
+        type="button"
+        onClick={() => setBewerken(true)}
+        title="Andere speler laten overnemen"
+        className="rounded-md px-1.5 py-1 text-xs text-neutral-400 hover:bg-black/5 hover:text-sparta"
       >
-        {waarde && "✓"}
-      </span>
-      {naam}
-    </button>
+        ✎
+      </button>
+    </span>
   );
 }
 
-export function MateriaaldienstLijst({ rows }: { rows: MateriaaldienstRij[] }) {
+export function MateriaaldienstLijst({ rows, spelers }: { rows: MateriaaldienstRij[]; spelers: SpelerOptie[] }) {
   return (
     <ul className="space-y-2">
       {rows.map((r) => (
@@ -76,16 +131,8 @@ export function MateriaaldienstLijst({ rows }: { rows: MateriaaldienstRij[] }) {
             <span className="text-xs text-neutral-500">{r.soort}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Vinkje
-              naam={r.speler1Naam}
-              gedaan={r.speler1Gedaan}
-              onWissel={(w) => toggleMateriaaldienstGedaan(r.id, 1, w)}
-            />
-            <Vinkje
-              naam={r.speler2Naam}
-              gedaan={r.speler2Gedaan}
-              onWissel={(w) => toggleMateriaaldienstGedaan(r.id, 2, w)}
-            />
+            <SpelerVeld sessieId={r.id} welke={1} spelerId={r.speler1Id} spelerNaam={r.speler1Naam} gedaan={r.speler1Gedaan} opties={spelers} />
+            <SpelerVeld sessieId={r.id} welke={2} spelerId={r.speler2Id} spelerNaam={r.speler2Naam} gedaan={r.speler2Gedaan} opties={spelers} />
           </div>
         </li>
       ))}
