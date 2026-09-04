@@ -10,11 +10,11 @@ export interface MateriaaldienstRij {
   vandaag: boolean;
   verleden: boolean;
   speler1Id: string;
-  speler1Naam: string;
   speler2Id: string;
-  speler2Naam: string;
-  speler1Gedaan: boolean;
-  speler2Gedaan: boolean;
+  speler1Halen: boolean;
+  speler1Opruimen: boolean;
+  speler2Halen: boolean;
+  speler2Opruimen: boolean;
 }
 
 export interface SpelerOptie {
@@ -26,55 +26,50 @@ function SpelerVeld({
   sessieId,
   welke,
   spelerId,
-  spelerNaam,
-  gedaan,
+  halen,
+  opruimen,
   opties,
 }: {
   sessieId: string;
   welke: 1 | 2;
   spelerId: string;
-  spelerNaam: string;
-  gedaan: boolean;
+  halen: boolean;
+  opruimen: boolean;
   opties: SpelerOptie[];
 }) {
   const [id, setId] = useState(spelerId);
-  const [naam, setNaam] = useState(spelerNaam);
-  const [waarde, setWaarde] = useState(gedaan);
-  const [bewerken, setBewerken] = useState(false);
+  const [halenWaarde, setHalenWaarde] = useState(halen);
+  const [opruimenWaarde, setOpruimenWaarde] = useState(opruimen);
   const [, start] = useTransition();
-
-  function vinkAan() {
-    const nieuw = !waarde;
-    setWaarde(nieuw);
-    start(async () => {
-      const res = await toggleMateriaaldienstGedaan(sessieId, welke, nieuw);
-      if (!res.ok) setWaarde(!nieuw);
-    });
-  }
 
   function wisselSpeler(nieuweId: string) {
     const oudeId = id;
-    const oudeNaam = naam;
     setId(nieuweId);
-    setNaam(opties.find((o) => o.id === nieuweId)?.naam ?? "?");
-    setBewerken(false);
     start(async () => {
       const res = await wijzigMateriaaldienstSpeler(sessieId, welke, nieuweId);
+      if (!res.ok) setId(oudeId);
+    });
+  }
+
+  function wisselTaak(taak: "halen" | "opruimen") {
+    const nieuw = taak === "halen" ? !halenWaarde : !opruimenWaarde;
+    if (taak === "halen") setHalenWaarde(nieuw);
+    else setOpruimenWaarde(nieuw);
+    start(async () => {
+      const res = await toggleMateriaaldienstGedaan(sessieId, welke, taak, nieuw);
       if (!res.ok) {
-        setId(oudeId);
-        setNaam(oudeNaam);
+        if (taak === "halen") setHalenWaarde(!nieuw);
+        else setOpruimenWaarde(!nieuw);
       }
     });
   }
 
-  if (bewerken) {
-    return (
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-2 py-1.5">
       <select
-        autoFocus
         value={id}
         onChange={(e) => wisselSpeler(e.target.value)}
-        onBlur={() => setBewerken(false)}
-        className="rounded-lg border border-sparta px-2 py-2 text-sm"
+        className="rounded-md border-none bg-transparent py-0.5 text-sm font-medium text-neutral-700 focus:outline-none focus:ring-1 focus:ring-sparta"
       >
         {opties.map((o) => (
           <option key={o.id} value={o.id}>
@@ -82,34 +77,25 @@ function SpelerVeld({
           </option>
         ))}
       </select>
-    );
-  }
-
-  return (
-    <span
-      className={`flex items-center gap-1 rounded-lg border px-1 py-1 text-sm font-medium transition ${
-        waarde ? "border-green-200 bg-green-50 text-green-700" : "border-neutral-200 bg-white text-neutral-600"
-      }`}
-    >
-      <button type="button" onClick={vinkAan} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-black/5">
-        <span
-          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-            waarde ? "border-green-500 bg-green-500 text-white" : "border-neutral-300"
-          }`}
-        >
-          {waarde && "✓"}
-        </span>
-        {naam}
-      </button>
-      <button
-        type="button"
-        onClick={() => setBewerken(true)}
-        title="Andere speler laten overnemen"
-        className="rounded-md px-1.5 py-1 text-xs text-neutral-400 hover:bg-black/5 hover:text-sparta"
-      >
-        ✎
-      </button>
-    </span>
+      <label className="flex items-center gap-1 text-xs text-neutral-600">
+        <input
+          type="checkbox"
+          checked={halenWaarde}
+          onChange={() => wisselTaak("halen")}
+          className="h-4 w-4 rounded border-neutral-300 text-sparta focus:ring-sparta"
+        />
+        Halen
+      </label>
+      <label className="flex items-center gap-1 text-xs text-neutral-600">
+        <input
+          type="checkbox"
+          checked={opruimenWaarde}
+          onChange={() => wisselTaak("opruimen")}
+          className="h-4 w-4 rounded border-neutral-300 text-sparta focus:ring-sparta"
+        />
+        Opruimen
+      </label>
+    </div>
   );
 }
 
@@ -131,8 +117,22 @@ export function MateriaaldienstLijst({ rows, spelers }: { rows: MateriaaldienstR
             <span className="text-xs text-neutral-500">{r.soort}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <SpelerVeld sessieId={r.id} welke={1} spelerId={r.speler1Id} spelerNaam={r.speler1Naam} gedaan={r.speler1Gedaan} opties={spelers} />
-            <SpelerVeld sessieId={r.id} welke={2} spelerId={r.speler2Id} spelerNaam={r.speler2Naam} gedaan={r.speler2Gedaan} opties={spelers} />
+            <SpelerVeld
+              sessieId={r.id}
+              welke={1}
+              spelerId={r.speler1Id}
+              halen={r.speler1Halen}
+              opruimen={r.speler1Opruimen}
+              opties={spelers}
+            />
+            <SpelerVeld
+              sessieId={r.id}
+              welke={2}
+              spelerId={r.speler2Id}
+              halen={r.speler2Halen}
+              opruimen={r.speler2Opruimen}
+              opties={spelers}
+            />
           </div>
         </li>
       ))}

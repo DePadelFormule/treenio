@@ -6,18 +6,20 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 // Rooster gaat pas vanaf deze datum in.
 const START_DATUM = "2026-09-01";
 
-// Eén vinkje (van speler 1 of 2) op een sessie zetten. Los per speler, zodat
-// bijv. een blessure tijdens de training niet de hele duo blokkeert.
+// Eén vinkje (halen of opruimen, van speler 1 of 2) op een sessie zetten.
+// Los per speler én los per taak, zodat bijv. een blessure tijdens de
+// training niet de hele duo blokkeert.
 export async function toggleMateriaaldienstGedaan(
   sessie_id: string,
   welke: 1 | 2,
+  taak: "halen" | "opruimen",
   waarde: boolean,
 ) {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return { ok: false };
 
   const supabase = await createClient();
-  const kolom = welke === 1 ? "speler_1_gedaan" : "speler_2_gedaan";
+  const kolom = `speler_${welke}_${taak}`;
   const { error } = await supabase
     .from("materiaaldienst_sessies")
     .update({ [kolom]: waarde } as never)

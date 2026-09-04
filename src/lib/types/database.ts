@@ -216,8 +216,10 @@ export interface MateriaaldienstSessie {
   volgorde: number;
   speler_1_id: string;
   speler_2_id: string;
-  speler_1_gedaan: boolean;
-  speler_2_gedaan: boolean;
+  speler_1_halen: boolean;
+  speler_1_opruimen: boolean;
+  speler_2_halen: boolean;
+  speler_2_opruimen: boolean;
   created_at: string;
 }
 

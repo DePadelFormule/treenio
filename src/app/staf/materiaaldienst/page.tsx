@@ -38,7 +38,6 @@ export default async function MateriaaldienstPage() {
     ((wedstrijden ?? []) as Pick<Wedstrijd, "id" | "datum" | "tegenstander">[]).map((w) => [w.id, w]),
   );
   const alleSpelers = ((spelers ?? []) as (Pick<Speler, "id" | "naam"> & { gast?: boolean | null })[]).filter((s) => !s.gast);
-  const spelerMap = new Map(alleSpelers.map((s) => [s.id, s.naam]));
   const spelerOpties: SpelerOptie[] = alleSpelers.map((s) => ({ id: s.id, naam: s.naam }));
 
   const vandaag = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Amsterdam" });
@@ -57,11 +56,11 @@ export default async function MateriaaldienstPage() {
         vandaag: datum === vandaag,
         verleden: datum < vandaag,
         speler1Id: s.speler_1_id,
-        speler1Naam: spelerMap.get(s.speler_1_id) ?? "?",
         speler2Id: s.speler_2_id,
-        speler2Naam: spelerMap.get(s.speler_2_id) ?? "?",
-        speler1Gedaan: s.speler_1_gedaan,
-        speler2Gedaan: s.speler_2_gedaan,
+        speler1Halen: s.speler_1_halen,
+        speler1Opruimen: s.speler_1_opruimen,
+        speler2Halen: s.speler_2_halen,
+        speler2Opruimen: s.speler_2_opruimen,
       };
     })
     .filter((r): r is MateriaaldienstRij & { datum: string } => r !== null)
@@ -75,9 +74,9 @@ export default async function MateriaaldienstPage() {
 
       <h1 className="mt-4 mb-2 text-2xl font-bold text-sparta">Materiaaldienst</h1>
       <p className="mb-6 text-sm text-neutral-500">
-        Per training en wedstrijd een duo dat de materialen verzorgt. Tik een naam aan zodra die
-        speler het gedaan heeft — dat kan los per speler, bijvoorbeeld als iemand eerder wegging.
-        Met het potloodje kun je de naam vervangen als spelers onderling ruilen.
+        Per training en wedstrijd een duo dat de materialen verzorgt: los aanvinken wie ze heeft
+        gehaald en wie ze heeft opgeruimd — dat kan per speler apart, bijvoorbeeld als iemand
+        eerder wegging. Met het keuzemenu kies je een andere speler als ze onderling ruilen.
       </p>
 
       {rows.length > 0 ? (
