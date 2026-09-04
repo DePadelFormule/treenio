@@ -13,6 +13,7 @@ import type {
   Speler,
   StafNotitie,
   TrainingOpkomstView,
+  TrainingOpkomstGecorrigeerdView,
   WedstrijdTotalenView,
   KeeperTotalenView,
   SpelerPositieView,
@@ -47,6 +48,7 @@ export default async function StafSpelerPage({
     { data: notities },
     { data: aandacht },
     { data: opkomstRows },
+    { data: opkomstGecorrigeerdRows },
     { data: wedstrijdRows },
     { data: keeperRows },
     { data: positieRows },
@@ -55,6 +57,7 @@ export default async function StafSpelerPage({
     supabase.from("staf_notities").select("*").eq("speler_id", id),
     supabase.from("aandachtspunten").select("*").eq("speler_id", id).order("created_at", { ascending: false }),
     supabase.from("v_training_opkomst").select("*").eq("speler_id", id),
+    supabase.from("v_training_opkomst_gecorrigeerd").select("*").eq("speler_id", id),
     supabase.from("v_wedstrijd_totalen").select("*").eq("speler_id", id),
     supabase.from("v_keeper_totalen").select("*").eq("speler_id", id),
     supabase.from("v_speler_posities").select("*").eq("speler_id", id),
@@ -78,6 +81,7 @@ export default async function StafSpelerPage({
     : [];
 
   const opkomst = (opkomstRows?.[0] ?? null) as TrainingOpkomstView | null;
+  const opkomstGecorrigeerd = (opkomstGecorrigeerdRows?.[0] ?? null) as TrainingOpkomstGecorrigeerdView | null;
   const wedstrijd = (wedstrijdRows?.[0] ?? null) as WedstrijdTotalenView | null;
   const keeper = (keeperRows?.[0] ?? null) as KeeperTotalenView | null;
   const posities = ((positieRows ?? []) as SpelerPositieView[])
@@ -234,12 +238,19 @@ export default async function StafSpelerPage({
             <h3 className="mb-3 text-sm font-semibold text-neutral-700">Trainingen</h3>
             <dl className="grid grid-cols-2 gap-y-2 text-sm">
               <Stat label="Opkomst" value={opkomst?.opkomst_pct != null ? `${opkomst.opkomst_pct}%` : "–"} />
+              <Stat
+                label="Opkomst (gecorrigeerd)"
+                value={opkomstGecorrigeerd?.opkomst_pct_gecorrigeerd != null ? `${opkomstGecorrigeerd.opkomst_pct_gecorrigeerd}%` : "–"}
+              />
               <Stat label="Aanwezig" value={`${opkomst?.aanwezig ?? 0}/${opkomst?.geregistreerd ?? 0}`} />
               <Stat label="Gem. inzet" value={opkomst?.gem_inzet != null ? `${opkomst.gem_inzet}/5` : "–"} />
               <Stat label="Te laat gekomen" value={opkomst?.te_laat_gekomen ?? 0} alert />
               <Stat label="Op tijd afgemeld" value={opkomst?.afgemeld_op_tijd ?? 0} />
               <Stat label="Te laat afgemeld" value={opkomst?.afgemeld_te_laat ?? 0} alert />
             </dl>
+            <p className="mt-3 text-xs text-neutral-400">
+              Gecorrigeerd: per maand telt elke 2x te laat als 1x minder aanwezig.
+            </p>
           </div>
 
           <div className="rounded-xl border border-neutral-200 bg-white p-4">

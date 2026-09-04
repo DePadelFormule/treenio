@@ -11,6 +11,7 @@ export interface TeamRij {
   status: "fit" | "twijfel" | "geblesseerd";
   positie: string | null;
   opkomst: number | null;
+  opkomstGecorrigeerd: number | null;
   teLaat: number;
   minuten: number;
   goals: number;
@@ -26,6 +27,7 @@ const KOLOMMEN: { key: keyof TeamRij; label: string; type: Type; center?: boolea
   { key: "naam", label: "Naam", type: "str" },
   { key: "positie", label: "Positie", type: "str" },
   { key: "opkomst", label: "Opkomst", type: "num", center: true },
+  { key: "opkomstGecorrigeerd", label: "Opk. gec.", type: "num", center: true },
   { key: "teLaat", label: "Te laat", type: "num", center: true },
   { key: "minuten", label: "Speelmin.", type: "num", center: true },
   { key: "goals", label: "Goals", type: "num", center: true },
@@ -134,6 +136,7 @@ export function TeamTabel({ rows: rowsProp }: { rows: TeamRij[] }) {
               </td>
               <td className="px-2 py-2.5 text-neutral-600">{r.positie ?? "—"}</td>
               <td className="px-2 py-2.5 text-center">{r.opkomst != null ? `${r.opkomst}%` : "—"}</td>
+              <td className="px-2 py-2.5 text-center text-neutral-500">{r.opkomstGecorrigeerd != null ? `${r.opkomstGecorrigeerd}%` : "—"}</td>
               <td className={`px-2 py-2.5 text-center ${r.teLaat > 0 ? "font-semibold text-sparta" : ""}`}>{r.teLaat}</td>
               <td className="px-2 py-2.5 text-center">{r.minuten}</td>
               <td className="px-2 py-2.5 text-center font-semibold">{r.goals}</td>

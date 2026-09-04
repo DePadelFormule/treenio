@@ -48,6 +48,26 @@ export async function setPresentie(
   return { ok: !error };
 }
 
+// Materiaal-check (scheenbeschermers/bidon) aan- of uitvinken voor één speler
+// op één training. Eén vinkje voor beide samen.
+export async function toggleMateriaal(
+  training_id: string,
+  speler_id: string,
+  ontbreekt: boolean,
+) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("training_registraties")
+    .upsert(
+      { training_id, speler_id, materiaal_ontbreekt: ontbreekt } as never,
+      { onConflict: "training_id,speler_id" },
+    );
+  return { ok: !error };
+}
+
 // Zet iedereen (geen gasten) op aanwezig voor alle trainingen in een maand
 // vanaf een datum, maar alleen waar nog niets is ingevuld. Zo hoef je daarna
 // alleen de afmeldingen nog aan te tikken. Geeft terug wat er gezet is,
