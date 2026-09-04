@@ -21,9 +21,9 @@ select
   to_char(t.datum, 'YYYY-MM')                                        as maand,
   count(*) filter (where tr.status is not null)                      as geregistreerd,
   count(*) filter (where tr.status in ('aanwezig', 'te_laat', 'te_laat_met')) as aanwezig,
-  count(*) filter (where tr.status in ('te_laat', 'te_laat_met'))     as te_laat,
   round(100.0 * count(*) filter (where tr.status in ('aanwezig', 'te_laat', 'te_laat_met'))
-        / nullif(count(*) filter (where tr.status is not null), 0))  as opkomst_pct
+        / nullif(count(*) filter (where tr.status is not null), 0))  as opkomst_pct,
+  count(*) filter (where tr.status in ('te_laat', 'te_laat_met'))     as te_laat
 from public.training_registraties tr
 join public.trainingen t on t.id = tr.training_id
 where tr.status is not null
