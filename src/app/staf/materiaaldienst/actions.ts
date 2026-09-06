@@ -89,6 +89,14 @@ export async function genereerMateriaaldienst() {
     .filter((s) => s.id !== rayhan?.id && s.id !== amir?.id)
     .sort((a, b) => a.naam.localeCompare(b.naam, "nl"));
   const rotatie = rayhan && amir ? [rayhan, amir, ...rest] : alleSpelers.sort((a, b) => a.naam.localeCompare(b.naam, "nl"));
+
+  // Amin ruilt van plek met Teun: Amin is pas over een aantal weken voor het
+  // eerst aan de beurt in plaats van als tweede al.
+  const aminIdx = rotatie.findIndex((s) => voornaam(s.naam) === "amin");
+  const teunIdx = rotatie.findIndex((s) => voornaam(s.naam) === "teun");
+  if (aminIdx !== -1 && teunIdx !== -1) {
+    [rotatie[aminIdx], rotatie[teunIdx]] = [rotatie[teunIdx], rotatie[aminIdx]];
+  }
   const n = rotatie.length;
 
   const trainingenLijst = (trainingen ?? []) as { id: string; datum: string }[];
