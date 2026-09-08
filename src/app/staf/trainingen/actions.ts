@@ -151,7 +151,10 @@ export async function genereerMaand(formData: FormData) {
     .map((dt) => ({ datum: dt, type: "training" }));
 
   if (nieuw.length > 0) {
-    await supabase.from("trainingen").insert(nieuw as never);
+    // Op datum: als er (bijv. door twee keer klikken) toch een race
+    // optreedt, wint de database-constraint gewoon stil in plaats van
+    // dubbele trainingen aan te maken.
+    await supabase.from("trainingen").upsert(nieuw as never, { onConflict: "datum", ignoreDuplicates: true });
   }
   revalidatePath("/staf/trainingen");
 }
