@@ -94,6 +94,30 @@ export async function logEvent(p: EventPayload): Promise<{ ok: boolean; id?: str
   return { ok: true, id: (data as { id: string }).id };
 }
 
+// Minuut en/of speler van een al gelogd event corrigeren — voor als er in
+// het heetst van de strijd een verkeerde naam of tijdstip is ingetikt.
+export async function wijzigEvent(
+  id: string,
+  wedstrijd_id: string,
+  updates: { speler_id?: string | null; minuut?: number },
+): Promise<{ ok: boolean }> {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("wedstrijd_events")
+    .update(updates as never)
+    .eq("id", id);
+  if (error) return { ok: false };
+
+  await herbereken(supabase, wedstrijd_id);
+  revalidatePath(`/staf/wedstrijd/${wedstrijd_id}/live`);
+  revalidatePath("/staf/team");
+  revalidatePath("/staf/wedstrijden");
+  return { ok: true };
+}
+
 export async function verwijderEvent(id: string, wedstrijd_id: string): Promise<{ ok: boolean }> {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return { ok: false };
