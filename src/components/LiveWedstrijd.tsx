@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { logEvent, verwijderEvent } from "@/app/staf/wedstrijd/[id]/live/actions";
+import { logEvent, verwijderEvent, wijzigEvent } from "@/app/staf/wedstrijd/[id]/live/actions";
 
 interface SpelerKort { id: string; naam: string; rugnummer: number | null; }
 interface Ev { id: string; type: string; speler_id: string | null; minuut: number; }
@@ -26,6 +26,9 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
   const [events, setEvents] = useState<Ev[]>(beginEvents);
   const [picker, setPicker] = useState<{ type: string; groep: "selectie" | "veld" | "bank" } | null>(null);
   const [melding, setMelding] = useState<string | null>(null);
+  const [bewerken, setBewerken] = useState<string | null>(null);
+  const [bewerkMinuut, setBewerkMinuut] = useState("");
+  const [bewerkSpeler, setBewerkSpeler] = useState("");
   const [, start] = useTransition();
 
   const naamVan = useMemo(() => {
@@ -181,6 +184,21 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
     start(() => { void verwijderEvent(id, wedstrijdId); });
   }
 
+  function beginBewerken(e: Ev) {
+    setBewerken(e.id);
+    setBewerkMinuut(String(e.minuut));
+    setBewerkSpeler(e.speler_id ?? "");
+  }
+
+  function opslaanBewerken(id: string) {
+    const minuut = Number(bewerkMinuut);
+    if (!Number.isFinite(minuut) || minuut < 0) return;
+    const speler_id = bewerkSpeler || null;
+    setEvents((e) => e.map((x) => (x.id === id ? { ...x, minuut, speler_id } : x)));
+    setBewerken(null);
+    start(() => { void wijzigEvent(id, wedstrijdId, { minuut, speler_id }); });
+  }
+
   function open(type: string) {
     if (type === "tegengoal") return log("tegengoal", null);
     if (type === "einde") { if (running) startPauze(); return log("einde", null); }
@@ -263,16 +281,46 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
         </p>
       ) : (
         <ul className="space-y-1.5">
-          {tijdlijn.map((e) => (
-            <li key={e.id} className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-2.5 text-sm">
-              <span className="w-10 text-center font-bold tabular-nums text-sparta">{e.minuut}&apos;</span>
-              <span className="flex-1">
-                {LABEL[e.type] ?? e.type}
-                {e.speler_id && <span className="ml-1 font-medium text-neutral-800">· {naamVan.get(e.speler_id)?.naam ?? "?"}</span>}
-              </span>
-              <button onClick={() => wis(e.id)} className="text-xs text-neutral-400 hover:text-red-600">wis</button>
-            </li>
-          ))}
+          {tijdlijn.map((e) =>
+            bewerken === e.id ? (
+              <li key={e.id} className="rounded-lg border border-sparta bg-sparta/5 p-2.5 text-sm">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={bewerkMinuut}
+                    onChange={(ev) => setBewerkMinuut(ev.target.value)}
+                    className="w-16 rounded border border-neutral-300 px-2 py-1 text-center"
+                  />
+                  <span className="text-neutral-400">&apos;</span>
+                  {e.speler_id !== null && (
+                    <select
+                      value={bewerkSpeler}
+                      onChange={(ev) => setBewerkSpeler(ev.target.value)}
+                      className="flex-1 rounded border border-neutral-300 px-2 py-1"
+                    >
+                      {spelers.map((s) => (
+                        <option key={s.id} value={s.id}>{s.naam}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className="mt-2 flex justify-end gap-2">
+                  <button onClick={() => setBewerken(null)} className="rounded-md px-2 py-1 text-xs text-neutral-500">Annuleer</button>
+                  <button onClick={() => opslaanBewerken(e.id)} className="rounded-md bg-sparta px-3 py-1 text-xs font-semibold text-white">Opslaan</button>
+                </div>
+              </li>
+            ) : (
+              <li key={e.id} className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-2.5 text-sm">
+                <span className="w-10 text-center font-bold tabular-nums text-sparta">{e.minuut}&apos;</span>
+                <span className="flex-1">
+                  {LABEL[e.type] ?? e.type}
+                  {e.speler_id && <span className="ml-1 font-medium text-neutral-800">· {naamVan.get(e.speler_id)?.naam ?? "?"}</span>}
+                </span>
+                <button onClick={() => beginBewerken(e)} className="text-xs text-neutral-400 hover:text-sparta">wijzig</button>
+                <button onClick={() => wis(e.id)} className="text-xs text-neutral-400 hover:text-red-600">wis</button>
+              </li>
+            ),
+          )}
         </ul>
       )}
 
