@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { FORMATIES, FORMATIE_NAMEN } from "@/lib/formaties";
-import { bewaarOpstelling } from "@/app/staf/wedstrijd/[id]/opstelling/actions";
+import { bewaarOpstelling, stelOpstellingVoor } from "@/app/staf/wedstrijd/[id]/opstelling/actions";
 
 interface SpelerKort {
   id: string;
@@ -33,6 +33,8 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
   const [bank, setBank] = useState<string[]>(begin.bank ?? []);
   const [bezig, start] = useTransition();
   const [status, setStatus] = useState<"idle" | "ok" | "fout">("idle");
+  const [voorstelBezig, setVoorstelBezig] = useState(false);
+  const [voorstelMelding, setVoorstelMelding] = useState<string | null>(null);
 
   const spelerById = useMemo(() => {
     const m = new Map<string, SpelerKort>();
@@ -73,6 +75,35 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
     setBank((b) => b.filter((id) => id !== spelerId));
   }
 
+  function verplaatsInBank(index: number, richting: -1 | 1) {
+    setBank((b) => {
+      const doel = index + richting;
+      if (doel < 0 || doel >= b.length) return b;
+      const next = [...b];
+      [next[index], next[doel]] = [next[doel], next[index]];
+      return next;
+    });
+  }
+
+  async function voorstelOpstelling() {
+    const heeftAlIets = Object.values(veld).some(Boolean) || bank.length > 0;
+    if (heeftAlIets && !confirm("Dit vervangt de huidige opstelling en bank door een voorstel op basis van opkomst en speelminuten. Doorgaan?")) {
+      return;
+    }
+    setVoorstelBezig(true);
+    setVoorstelMelding(null);
+    setStatus("idle");
+    const res = await stelOpstellingVoor(wedstrijdId, formatie);
+    setVoorstelBezig(false);
+    if (!res.ok || !res.veld || !res.bank) {
+      setVoorstelMelding("Voorstel maken is niet gelukt.");
+      return;
+    }
+    setVeld(res.veld);
+    setBank(res.bank);
+    setVoorstelMelding("Voorstel ingevuld op basis van opkomst (week/maand/all-time) en speelminuten — controleer en pas aan waar nodig, en sla daarna op.");
+  }
+
   const opgesteld = new Set(Object.values(veld).filter(Boolean));
   const beschikbaar = spelers.filter((s) => !opgesteld.has(s.id) && !bank.includes(s.id));
 
@@ -100,7 +131,18 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
             {f}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={voorstelOpstelling}
+          disabled={voorstelBezig}
+          className="ml-auto rounded-lg border border-sparta px-3 py-1.5 text-sm font-semibold text-sparta hover:bg-sparta/5 disabled:opacity-40"
+        >
+          {voorstelBezig ? "Bezig…" : "Stel voorstel op"}
+        </button>
       </div>
+      {voorstelMelding && (
+        <p className="mb-3 text-xs text-neutral-500">{voorstelMelding}</p>
+      )}
 
       {/* Het veld */}
       <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-2xl border-2 border-white/40 bg-gradient-to-b from-green-700 to-green-800 shadow-inner" style={{ aspectRatio: "2 / 3" }}>
@@ -150,16 +192,27 @@ export function OpstellingBord({ wedstrijdId, spelers, begin }: Props) {
       {/* Bank */}
       <div className="mt-6">
         <h3 className="mb-2 text-sm font-semibold text-neutral-700">Bank / wissels</h3>
-        <div className="flex flex-wrap items-center gap-2">
+        <p className="mb-2 text-xs text-neutral-400">
+          Volgorde = wisselvolgorde: wissel 1 heeft het meeste recht om in te vallen. Zet met de
+          pijltjes om.
+        </p>
+        <div className="space-y-1.5">
           {bank.length === 0 && <span className="text-sm text-neutral-400">Niemand op de bank.</span>}
-          {bank.map((id) => {
+          {bank.map((id, i) => {
             const sp = spelerById.get(id);
             if (!sp) return null;
             return (
-              <span key={id} className="flex items-center gap-1 rounded-full bg-sparta/10 px-3 py-1 text-sm text-sparta">
-                {sp.rugnummer ? `${sp.rugnummer} · ` : ""}{voornaam(sp.naam)}
-                <button type="button" onClick={() => haalUitBank(id)} className="ml-1 text-sparta/70 hover:text-sparta" title="Naar afwezig">×</button>
-              </span>
+              <div key={id} className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-sm">
+                <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-sparta/10 px-1.5 text-xs font-bold text-sparta">
+                  {i + 1}
+                </span>
+                <span className="flex-1 font-medium text-neutral-800">
+                  {sp.rugnummer ? `${sp.rugnummer} · ` : ""}{voornaam(sp.naam)}
+                </span>
+                <button type="button" onClick={() => verplaatsInBank(i, -1)} disabled={i === 0} className="text-neutral-400 hover:text-sparta disabled:opacity-30" title="Naar boven">↑</button>
+                <button type="button" onClick={() => verplaatsInBank(i, 1)} disabled={i === bank.length - 1} className="text-neutral-400 hover:text-sparta disabled:opacity-30" title="Naar beneden">↓</button>
+                <button type="button" onClick={() => haalUitBank(id)} className="text-neutral-400 hover:text-red-600" title="Naar afwezig">×</button>
+              </div>
             );
           })}
         </div>
