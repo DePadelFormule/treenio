@@ -4,6 +4,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getHuidigeGebruiker } from "@/lib/auth";
+import { FORMATIES } from "@/lib/formaties";
+import { stelOpstellingSamen, type VoorstelSpeler } from "@/lib/opstellingVoorstel";
 
 export interface OpstellingPayload {
   wedstrijd_id: string;
@@ -281,6 +283,106 @@ export async function leesOpstellingFoto(formData: FormData): Promise<Opstelling
   if (taken.length > 0) delen.push(`${taken.length} teamtaken overgenomen`);
   if (nietHerkend.length > 0) delen.push(`niet herkend: ${nietHerkend.join(", ")}`);
   return { ok: true, bericht: delen.join(" · ") + ". Controleer het bord en sla op waar nodig." };
+}
+
+function maandagVan(datum: string) {
+  const d = new Date(`${datum}T12:00:00Z`);
+  const dag = d.getUTCDay(); // 0 = zondag
+  const diff = dag === 0 ? -6 : 1 - dag;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+function plusDagen(datum: string, n: number) {
+  const d = new Date(`${datum}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+const TELT_ALS_AANWEZIG = new Set(["aanwezig", "te_laat", "te_laat_met"]);
+
+// Voorgestelde opstelling op basis van trainingsopkomst (week van de
+// wedstrijd, die maand, all-time) en speelminuten — zie lib/opstellingVoorstel
+// voor de rangschikking zelf. Slaat niets op; de coach controleert en drukt
+// zelf op "Opstelling opslaan".
+export async function stelOpstellingVoor(
+  wedstrijd_id: string,
+  formatie: string,
+): Promise<{ ok: boolean; veld?: Record<string, string>; bank?: string[] }> {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false };
+  const slots = FORMATIES[formatie];
+  if (!slots) return { ok: false };
+
+  const supabase = await createClient();
+  const { data: wedstrijdRij } = await supabase
+    .from("wedstrijden").select("datum").eq("id", wedstrijd_id).maybeSingle();
+  const datum = (wedstrijdRij as { datum: string } | null)?.datum;
+  if (!datum) return { ok: false };
+
+  const maand = datum.slice(0, 7);
+  const weekStart = maandagVan(datum);
+  const weekEind = plusDagen(weekStart, 6);
+
+  const [{ data: spelers }, { data: trainingen }, { data: regs }, { data: wedRegs }, { data: totalen }] =
+    await Promise.all([
+      supabase.from("spelers").select("id, hoofdpositie, alt_positie_1, alt_positie_2, beschikbaarheid, gast"),
+      supabase.from("trainingen").select("id, datum"),
+      supabase.from("training_registraties").select("training_id, speler_id, status"),
+      supabase.from("wedstrijd_registraties").select("speler_id, afmeld_status").eq("wedstrijd_id", wedstrijd_id),
+      supabase.from("v_wedstrijd_totalen").select("speler_id, totaal_minuten"),
+    ]);
+
+  const datumPerTraining = new Map(
+    ((trainingen ?? []) as { id: string; datum: string }[]).map((t) => [t.id, t.datum]),
+  );
+  const afgemeld = new Set(
+    ((wedRegs ?? []) as { speler_id: string; afmeld_status: string }[])
+      .filter((r) => r.afmeld_status && r.afmeld_status !== "nvt")
+      .map((r) => r.speler_id),
+  );
+  const minutenPerSpeler = new Map(
+    ((totalen ?? []) as { speler_id: string; totaal_minuten: number }[]).map((t) => [t.speler_id, t.totaal_minuten]),
+  );
+
+  interface Teller { weekA: number; weekT: number; maandA: number; maandT: number; allA: number; allT: number; }
+  const tellers = new Map<string, Teller>();
+  function teller(id: string) {
+    if (!tellers.has(id)) tellers.set(id, { weekA: 0, weekT: 0, maandA: 0, maandT: 0, allA: 0, allT: 0 });
+    return tellers.get(id)!;
+  }
+  for (const r of (regs ?? []) as { training_id: string; speler_id: string; status: string | null }[]) {
+    if (!r.status) continue;
+    const datumT = datumPerTraining.get(r.training_id);
+    if (!datumT) continue;
+    const t = teller(r.speler_id);
+    const telt = TELT_ALS_AANWEZIG.has(r.status);
+    t.allT++; if (telt) t.allA++;
+    if (datumT.slice(0, 7) === maand) { t.maandT++; if (telt) t.maandA++; }
+    if (datumT >= weekStart && datumT <= weekEind) { t.weekT++; if (telt) t.weekA++; }
+  }
+
+  const eligible: VoorstelSpeler[] = ((spelers ?? []) as {
+    id: string; hoofdpositie: string | null; alt_positie_1: string | null; alt_positie_2: string | null;
+    beschikbaarheid: string; gast?: boolean | null;
+  }[])
+    .filter((s) => !s.gast && s.beschikbaarheid !== "geblesseerd" && !afgemeld.has(s.id))
+    .map((s) => {
+      const t = tellers.get(s.id);
+      const pct = (a: number, tot: number) => (tot > 0 ? (100 * a) / tot : 0);
+      return {
+        id: s.id,
+        hoofdpositie: s.hoofdpositie,
+        alt_positie_1: s.alt_positie_1,
+        alt_positie_2: s.alt_positie_2,
+        weekPct: t ? pct(t.weekA, t.weekT) : 0,
+        maandPct: t ? pct(t.maandA, t.maandT) : 0,
+        allTimePct: t ? pct(t.allA, t.allT) : 0,
+        minuten: minutenPerSpeler.get(s.id) ?? 0,
+      };
+    });
+
+  const { veld, bank } = stelOpstellingSamen(eligible, slots);
+  return { ok: true, veld, bank };
 }
 
 // Gastspeler toevoegen (bijv. een JO16-speler die meedoet). Komt direct
