@@ -132,5 +132,5 @@ export async function setWedstrijdType(id: string, type: string) {
   await supabase.from("wedstrijden").update({ type } as never).eq("id", id);
   revalidatePath("/staf/wedstrijden");
   revalidatePath("/staf/team");
-  revalidatePath("/staf/spelers");
+  revalidatePath("/staf/team");
 }

@@ -117,7 +117,7 @@ export async function zetConclusieInSpelerskaarten(): Promise<{
       .not(kolom, "in", geldig);
   }
 
-  revalidatePath("/staf/spelers");
+  revalidatePath("/staf/team");
   revalidatePath("/staf/team");
   return {
     ok: true,
