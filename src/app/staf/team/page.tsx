@@ -10,11 +10,19 @@ import type {
   TrainingOpkomstGecorrigeerdView,
 } from "@/lib/types/database";
 
-// Team-overzicht: alle spelers in één sorteerbare tabel.
-export default async function TeamOverzichtPage() {
+// Team: alle spelers, als sorteerbare tabel of als spelerskaarten — dezelfde
+// onderliggende cijfers, twee weergaven achter één schakelaar.
+export default async function TeamOverzichtPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ weergave?: string }>;
+}) {
   const gebruiker = await getHuidigeGebruiker();
   if (!gebruiker) redirect("/login");
   if (gebruiker.rol !== "staf") redirect("/");
+
+  const { weergave: weergaveParam } = await searchParams;
+  const weergave = weergaveParam === "kaarten" ? "kaarten" : "tabel";
 
   const supabase = await createClient();
   const [{ data: spelers }, { data: totalen }, { data: opkomst }, { data: opkomstGecorrigeerd }] = await Promise.all([
@@ -60,18 +68,74 @@ export default async function TeamOverzichtPage() {
         ← Terug naar dashboard
       </Link>
 
-      <h1 className="mt-4 mb-2 text-2xl font-bold text-sparta">Team-overzicht</h1>
-      <p className="mb-6 text-sm text-neutral-500">
-        Tik op een kolomkop om te sorteren (nog eens tikken draait de volgorde om). Tik op een
-        rugnummer om het aan te passen.
-      </p>
+      <div className="mt-4 mb-2 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-sparta">Team</h1>
+        <div className="flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm">
+          <Link
+            href="/staf/team?weergave=tabel"
+            className={`rounded-md px-3 py-1 font-medium ${weergave === "tabel" ? "bg-white text-sparta shadow-sm" : "text-neutral-500"}`}
+          >
+            Tabel
+          </Link>
+          <Link
+            href="/staf/team?weergave=kaarten"
+            className={`rounded-md px-3 py-1 font-medium ${weergave === "kaarten" ? "bg-white text-sparta shadow-sm" : "text-neutral-500"}`}
+          >
+            Kaarten
+          </Link>
+        </div>
+      </div>
 
-      {rows.length > 0 ? (
-        <TeamTabel rows={rows} />
+      {weergave === "tabel" ? (
+        <>
+          <p className="mb-6 text-sm text-neutral-500">
+            Tik op een kolomkop om te sorteren (nog eens tikken draait de volgorde om). Tik op een
+            rugnummer om het aan te passen.
+          </p>
+          {rows.length > 0 ? (
+            <TeamTabel rows={rows} />
+          ) : (
+            <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400">
+              Nog geen spelers.
+            </p>
+          )}
+        </>
       ) : (
-        <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400">
-          Nog geen spelers.
-        </p>
+        <>
+          <p className="mb-6 text-sm text-neutral-500">Tik op een speler voor de volledige kaart.</p>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {((spelers ?? []) as Speler[]).map((s) => {
+              const t = totaalMap.get(s.id);
+              return (
+                <li key={s.id} className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sparta/10 font-bold text-sparta">
+                    {s.rugnummer ?? "–"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/staf/speler/${s.id}`} className="font-medium text-neutral-800 hover:text-sparta hover:underline">
+                      {s.naam}
+                    </Link>
+                    <p className="text-xs text-neutral-400">
+                      {s.hoofdpositie ?? "positie onbekend"}
+                      {[s.alt_positie_1, s.alt_positie_2].filter(Boolean).length > 0 &&
+                        ` · ${[s.alt_positie_1, s.alt_positie_2].filter(Boolean).join("/")}`}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-neutral-500">
+                    <span className="font-semibold text-neutral-800">{t?.goals ?? 0}</span> G
+                    {" · "}
+                    <span className="font-semibold text-neutral-800">{t?.assists ?? 0}</span> A
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {(!spelers || spelers.length === 0) && (
+            <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-400">
+              Nog geen spelers.
+            </p>
+          )}
+        </>
       )}
     </main>
   );

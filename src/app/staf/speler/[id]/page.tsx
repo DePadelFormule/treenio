@@ -90,7 +90,7 @@ export default async function StafSpelerPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <Link href="/staf/spelers" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
+      <Link href="/staf/team?weergave=kaarten" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
         ← Terug naar spelerskaarten
       </Link>
 
