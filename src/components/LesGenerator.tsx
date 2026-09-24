@@ -5,6 +5,7 @@ import { genereerLes, bewaarLes } from "@/app/staf/lesgenerator/actions";
 import type { LesInvoer } from "@/app/staf/lesgenerator/actions";
 import type { Les } from "@/lib/lesgenerator/schema";
 import { SpelsituatieInLes } from "@/components/SpelsituatieInLes";
+import { PrintKnop } from "@/components/PrintKnop";
 
 export function LesGenerator() {
   const sport = "voetbal" as const;
@@ -154,9 +155,7 @@ export function Lesblad({ les }: { les: Les }) {
     <div className="mt-6">
       <div className="mb-3 flex items-center justify-between print:hidden">
         <h2 className="text-lg font-bold text-neutral-800">Gegenereerd lesblad</h2>
-        <button onClick={() => window.print()} className="rounded-lg border border-sparta px-3 py-2 text-sm font-semibold text-sparta hover:bg-sparta hover:text-white">
-          🖨 Uitdraai maken
-        </button>
+        <PrintKnop label="🖨 Print / bewaar als PDF" />
       </div>
 
       <article className="rounded-xl border border-neutral-200 bg-white p-5 print:border-0 print:p-0">
@@ -171,9 +170,9 @@ export function Lesblad({ les }: { les: Les }) {
 
         <ol className="space-y-4">
           {les.blokken.map((b, i) => (
-            <li key={i} className="rounded-lg border border-neutral-200 p-3 print:break-inside-avoid">
-              <div className="flex items-baseline justify-between gap-2">
-                <h3 className="font-semibold text-neutral-800">
+            <li key={i} className="break-words rounded-lg border border-neutral-200 p-3 print:break-inside-avoid">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="min-w-0 break-words font-semibold text-neutral-800">
                   <span className="text-sparta">{i + 1}.</span> {b.naam}
                   <span className="ml-2 text-xs font-normal uppercase tracking-wide text-neutral-400">{b.type}</span>
                 </h3>
