@@ -2,6 +2,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { LES_INSTRUCTIE } from "@/lib/lesgenerator/instructie";
@@ -340,4 +341,59 @@ export async function verwijderLes(formData: FormData) {
   const supabase = await createClient();
   await supabase.from("lessen").delete().eq("id", id);
   revalidatePath("/staf/lessen");
+  redirect("/staf/lessen");
+}
+
+// Een bewaarde les volledig bewerken (titel, blokken, leeskaart, datum).
+// Werkt op de canonieke Les-vorm, dus ongeacht of de les origineel door de
+// AI, handmatig of via een foto is aangemaakt. Tekeningen per blok worden
+// hier niet bewerkt — die blijven gewoon staan zoals ze waren.
+export interface LesUpdateInvoer {
+  titel: string;
+  sport: Sport;
+  onderwerp: string;
+  fase: number;
+  niveau: string;
+  totale_duur_minuten: number;
+  aantal_spelers: number;
+  materiaal: string;
+  blokken: Les["blokken"];
+  leeskaart: Les["leeskaart"];
+  datum: string | null;
+}
+
+export async function bewaarLesWijziging(
+  id: string,
+  invoer: LesUpdateInvoer,
+): Promise<{ ok: boolean; fout?: string }> {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false, fout: "Geen toegang." };
+
+  const titel = invoer.titel.trim().slice(0, 120);
+  if (!titel) return { ok: false, fout: "Vul een titel in." };
+
+  const les: Les = {
+    titel,
+    sport: invoer.sport,
+    onderwerp: invoer.onderwerp.trim().slice(0, 200) || titel,
+    fase: invoer.fase,
+    niveau: invoer.niveau.trim().slice(0, 60),
+    totale_duur_minuten: Number.isFinite(invoer.totale_duur_minuten) ? Math.max(0, Math.min(invoer.totale_duur_minuten, 240)) : 0,
+    aantal_spelers: Number.isFinite(invoer.aantal_spelers) ? Math.max(0, Math.min(invoer.aantal_spelers, 40)) : 0,
+    materiaal: invoer.materiaal.trim().slice(0, 300),
+    blokken: invoer.blokken,
+    leeskaart: invoer.leeskaart,
+  };
+  const datum = invoer.datum && /^\d{4}-\d{2}-\d{2}$/.test(invoer.datum) ? invoer.datum : null;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("lessen")
+    .update({ titel: les.titel, sport: les.sport, onderwerp: les.onderwerp, datum, les } as never)
+    .eq("id", id);
+  if (error) return { ok: false, fout: "Opslaan mislukt: " + error.message };
+
+  revalidatePath(`/staf/lessen/${id}`);
+  revalidatePath("/staf/lessen");
+  return { ok: true };
 }
