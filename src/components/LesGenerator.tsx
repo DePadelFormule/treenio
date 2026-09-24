@@ -198,7 +198,11 @@ export function Lesblad({ les }: { les: Les }) {
 
               {b.tekening && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={b.tekening} alt={`Tekening bij ${b.naam}`} className={`mt-2 rounded-lg border border-neutral-200 ${b.spelsituatie_id ? "max-w-md" : "max-w-xs"}`} />
+                <img
+                  src={b.tekening}
+                  alt={`Tekening bij ${b.naam}`}
+                  className={`mt-2 h-auto w-full rounded-lg border border-neutral-200 ${b.spelsituatie_id ? "sm:max-w-md" : "sm:max-w-xs"}`}
+                />
               )}
               {b.spelsituatie_id && <SpelsituatieInLes id={b.spelsituatie_id} />}
               {b.organisatie && <p className="mt-2 whitespace-pre-wrap rounded bg-green-50 px-2 py-1.5 text-sm text-green-900">{b.organisatie}</p>}
