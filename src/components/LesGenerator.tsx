@@ -170,9 +170,9 @@ export function Lesblad({ les }: { les: Les }) {
 
         <ol className="space-y-4">
           {les.blokken.map((b, i) => (
-            <li key={i} className="rounded-lg border border-neutral-200 p-3 print:break-inside-avoid">
-              <div className="flex items-baseline justify-between gap-2">
-                <h3 className="font-semibold text-neutral-800">
+            <li key={i} className="break-words rounded-lg border border-neutral-200 p-3 print:break-inside-avoid">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="min-w-0 break-words font-semibold text-neutral-800">
                   <span className="text-sparta">{i + 1}.</span> {b.naam}
                   <span className="ml-2 text-xs font-normal uppercase tracking-wide text-neutral-400">{b.type}</span>
                 </h3>
