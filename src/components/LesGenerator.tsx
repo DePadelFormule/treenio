@@ -153,7 +153,7 @@ export function Lesblad({ les }: { les: Les }) {
 
   return (
     <div className="mt-6">
-      <div className="mb-3 flex items-center justify-between print:hidden">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 print:hidden">
         <h2 className="text-lg font-bold text-neutral-800">Gegenereerd lesblad</h2>
         <PrintKnop label="🖨 Print / bewaar als PDF" />
       </div>
