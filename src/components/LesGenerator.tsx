@@ -5,6 +5,7 @@ import { genereerLes, bewaarLes } from "@/app/staf/lesgenerator/actions";
 import type { LesInvoer } from "@/app/staf/lesgenerator/actions";
 import type { Les } from "@/lib/lesgenerator/schema";
 import { SpelsituatieInLes } from "@/components/SpelsituatieInLes";
+import { PrintKnop } from "@/components/PrintKnop";
 
 export function LesGenerator() {
   const sport = "voetbal" as const;
@@ -154,9 +155,7 @@ export function Lesblad({ les }: { les: Les }) {
     <div className="mt-6">
       <div className="mb-3 flex items-center justify-between print:hidden">
         <h2 className="text-lg font-bold text-neutral-800">Gegenereerd lesblad</h2>
-        <button onClick={() => window.print()} className="rounded-lg border border-sparta px-3 py-2 text-sm font-semibold text-sparta hover:bg-sparta hover:text-white">
-          🖨 Uitdraai maken
-        </button>
+        <PrintKnop label="🖨 Print / bewaar als PDF" />
       </div>
 
       <article className="rounded-xl border border-neutral-200 bg-white p-5 print:border-0 print:p-0">
