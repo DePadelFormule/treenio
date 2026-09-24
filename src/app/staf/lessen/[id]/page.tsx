@@ -24,7 +24,7 @@ export default async function LesDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 print:py-2">
-      <div className="mb-4 flex items-center justify-between print:hidden">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
         <Link href="/staf/lessen" className="text-sm text-neutral-500 hover:text-sparta hover:underline">
           ← Terug naar archief
         </Link>
