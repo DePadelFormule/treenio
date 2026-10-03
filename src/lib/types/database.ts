@@ -102,7 +102,11 @@ export interface BordData {
 }
 export type EventType =
   | "goal" | "assist" | "geel" | "rood"
-  | "wissel_in" | "wissel_uit" | "tegengoal" | "einde";
+  | "wissel_in" | "wissel_uit" | "tegengoal" | "einde"
+  | "eigen_doelpunt_voor" | "eigen_doelpunt_tegen";
+
+// Hoe een doelpunt tot stand kwam. Ontbreekt (null) bij open spel.
+export type Aanleiding = "corner" | "vrije_trap" | "penalty";
 
 export interface WedstrijdEvent {
   id: string;
@@ -110,6 +114,8 @@ export interface WedstrijdEvent {
   speler_id: string | null;
   type: EventType;
   minuut: number;
+  // Optioneel getypt zodat de app ook werkt vóórdat migratie 0036 is gedraaid.
+  aanleiding?: Aanleiding | null;
   created_at: string;
 }
 

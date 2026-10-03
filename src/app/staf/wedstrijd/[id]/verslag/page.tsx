@@ -17,6 +17,12 @@ const LABEL: Record<string, string> = {
   wissel_uit: "🔻 Wissel uit",
   tegengoal: "⚽ Tegengoal",
   einde: "⏱️ Einde wedstrijd",
+  eigen_doelpunt_voor: "⚽ Eigen doelpunt (voor ons)",
+  eigen_doelpunt_tegen: "⚽ Eigen doelpunt (tegen ons)",
+};
+
+const AANLEIDING_LABEL: Record<string, string> = {
+  corner: "corner", vrije_trap: "vrije trap", penalty: "penalty",
 };
 
 export default async function VerslagPage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,15 +58,18 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
 
   // Tijdlijn met tussenstand na elke goal.
   let voor = 0, tegen = 0;
+  const DOELPUNT_VOOR = new Set(["goal", "eigen_doelpunt_voor"]);
+  const DOELPUNT_TEGEN = new Set(["tegengoal", "eigen_doelpunt_tegen"]);
   const tijdlijn = ev.map((e) => {
-    if (e.type === "goal") voor++;
-    if (e.type === "tegengoal") tegen++;
+    if (DOELPUNT_VOOR.has(e.type)) voor++;
+    if (DOELPUNT_TEGEN.has(e.type)) tegen++;
     return {
       id: e.id,
       minuut: e.minuut,
       type: e.type,
       speler: e.speler_id ? naamVan.get(e.speler_id)?.naam ?? "?" : null,
-      stand: e.type === "goal" || e.type === "tegengoal" ? `${voor}-${tegen}` : null,
+      aanleiding: e.aanleiding ? AANLEIDING_LABEL[e.aanleiding] ?? e.aanleiding : null,
+      stand: DOELPUNT_VOOR.has(e.type) || DOELPUNT_TEGEN.has(e.type) ? `${voor}-${tegen}` : null,
     };
   });
 
@@ -142,6 +151,7 @@ export default async function VerslagPage({ params }: { params: Promise<{ id: st
                 <span className="flex-1">
                   {LABEL[e.type] ?? e.type}
                   {e.speler && <span className="ml-1 font-medium text-neutral-800">· {e.speler}</span>}
+                  {e.aanleiding && <span className="ml-1 text-xs text-neutral-400">({e.aanleiding})</span>}
                 </span>
                 {e.stand && (
                   <span className="rounded bg-neutral-100 px-2 py-0.5 font-bold tabular-nums text-neutral-700">{e.stand}</span>

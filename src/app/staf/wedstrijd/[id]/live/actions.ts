@@ -59,8 +59,8 @@ async function herbereken(supabase: SupaClient, wedstrijdId: string) {
   // wedstrijden zichzelf in via de live-registratie.
   const heeftEinde = ev.some((e) => e.type === "einde");
   if (heeftEinde) {
-    const wij = ev.filter((e) => e.type === "goal").length;
-    const tegen = ev.filter((e) => e.type === "tegengoal").length;
+    const wij = ev.filter((e) => e.type === "goal" || e.type === "eigen_doelpunt_voor").length;
+    const tegen = ev.filter((e) => e.type === "tegengoal" || e.type === "eigen_doelpunt_tegen").length;
     await supabase
       .from("wedstrijden")
       .update({ uitslag: `${wij}-${tegen}` } as never)
@@ -73,6 +73,7 @@ export interface EventPayload {
   speler_id: string | null;
   type: string;
   minuut: number;
+  aanleiding?: string | null;
 }
 
 export async function logEvent(p: EventPayload): Promise<{ ok: boolean; id?: string }> {
@@ -82,7 +83,13 @@ export async function logEvent(p: EventPayload): Promise<{ ok: boolean; id?: str
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("wedstrijd_events")
-    .insert({ wedstrijd_id: p.wedstrijd_id, speler_id: p.speler_id, type: p.type, minuut: p.minuut } as never)
+    .insert({
+      wedstrijd_id: p.wedstrijd_id,
+      speler_id: p.speler_id,
+      type: p.type,
+      minuut: p.minuut,
+      aanleiding: p.aanleiding ?? null,
+    } as never)
     .select("id")
     .single();
   if (error || !data) return { ok: false };
@@ -94,12 +101,13 @@ export async function logEvent(p: EventPayload): Promise<{ ok: boolean; id?: str
   return { ok: true, id: (data as { id: string }).id };
 }
 
-// Minuut en/of speler van een al gelogd event corrigeren — voor als er in
-// het heetst van de strijd een verkeerde naam of tijdstip is ingetikt.
+// Minuut, speler en/of aanleiding van een al gelogd event corrigeren — voor
+// als er in het heetst van de strijd een verkeerde naam of tijdstip is
+// ingetikt.
 export async function wijzigEvent(
   id: string,
   wedstrijd_id: string,
-  updates: { speler_id?: string | null; minuut?: number },
+  updates: { speler_id?: string | null; minuut?: number; aanleiding?: string | null },
 ): Promise<{ ok: boolean }> {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return { ok: false };

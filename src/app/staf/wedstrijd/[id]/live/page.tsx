@@ -49,7 +49,7 @@ export default async function LivePage({
   const bankIds = o?.bank ?? [];
 
   const beginEvents = ((events ?? []) as WedstrijdEvent[]).map((e) => ({
-    id: e.id, type: e.type, speler_id: e.speler_id, minuut: e.minuut,
+    id: e.id, type: e.type, speler_id: e.speler_id, minuut: e.minuut, aanleiding: e.aanleiding ?? null,
   }));
 
   return (
