@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { logEvent, verwijderEvent, wijzigEvent } from "@/app/staf/wedstrijd/[id]/live/actions";
 
 interface SpelerKort { id: string; naam: string; rugnummer: number | null; }
-interface Ev { id: string; type: string; speler_id: string | null; minuut: number; }
+interface Ev { id: string; type: string; speler_id: string | null; minuut: number; aanleiding?: string | null; }
 
 interface Props {
   wedstrijdId: string;
@@ -20,15 +20,28 @@ interface Props {
 const LABEL: Record<string, string> = {
   goal: "⚽ Goal", assist: "🅰️ Assist", geel: "🟨 Geel", rood: "🟥 Rood",
   wissel_in: "🔺 Wissel in", wissel_uit: "🔻 Wissel uit", tegengoal: "⚽ Tegen", einde: "⏱️ Einde",
+  eigen_doelpunt_voor: "⚽ Eigen doelpunt (voor ons)", eigen_doelpunt_tegen: "⚽ Eigen doelpunt (tegen ons)",
 };
+
+const AANLEIDING_LABEL: Record<string, string> = {
+  corner: "Corner", vrije_trap: "Vrije trap", penalty: "Penalty",
+};
+
+// Voor welke events je een aanleiding (corner/vrije trap/penalty) kunt taggen.
+const HEEFT_AANLEIDING = new Set(["goal", "tegengoal", "eigen_doelpunt_voor", "eigen_doelpunt_tegen"]);
+// Events zonder eigen-team-speler: direct loggen vanuit een lichte kiezer
+// (alleen de aanleiding, geen spelerkeuze).
+const GEEN_SPELER = new Set(["tegengoal", "eigen_doelpunt_voor"]);
 
 export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, beginEvents, minutenSeizoen = {} }: Props) {
   const [events, setEvents] = useState<Ev[]>(beginEvents);
-  const [picker, setPicker] = useState<{ type: string; groep: "selectie" | "veld" | "bank" } | null>(null);
+  const [picker, setPicker] = useState<{ type: string; groep: "selectie" | "veld" | "bank" | "geen" } | null>(null);
+  const [aanleiding, setAanleiding] = useState<string | null>(null);
   const [melding, setMelding] = useState<string | null>(null);
   const [bewerken, setBewerken] = useState<string | null>(null);
   const [bewerkMinuut, setBewerkMinuut] = useState("");
   const [bewerkSpeler, setBewerkSpeler] = useState("");
+  const [bewerkAanleiding, setBewerkAanleiding] = useState<string | null>(null);
   const [, start] = useTransition();
 
   const naamVan = useMemo(() => {
@@ -44,7 +57,7 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
   // worden gaan in een wachtrij (ook bewaard in de browser, dus een app-herstart
   // overleeft het) en worden automatisch alsnog verstuurd zodra er verbinding is.
   const QKEY = `treenio-eventqueue-${wedstrijdId}`;
-  interface WachtItem { tempId: string; type: string; speler_id: string | null; minuut: number; }
+  interface WachtItem { tempId: string; type: string; speler_id: string | null; minuut: number; aanleiding: string | null; }
   const wachtrijRef = useRef<WachtItem[]>([]);
   const [wachtAantal, setWachtAantal] = useState(0);
   const bezigMetVersturen = useRef(false);
@@ -65,7 +78,7 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
         const item = wachtrijRef.current[0];
         let res: { ok: boolean; id?: string };
         try {
-          res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id: item.speler_id, type: item.type, minuut: item.minuut });
+          res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id: item.speler_id, type: item.type, minuut: item.minuut, aanleiding: item.aanleiding });
         } catch {
           break; // nog steeds geen verbinding; later opnieuw proberen
         }
@@ -95,7 +108,7 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
         if (items.length) {
           wachtrijRef.current = items;
           setWachtAantal(items.length);
-          setEvents((e) => [...e, ...items.map((i) => ({ id: i.tempId, type: i.type, speler_id: i.speler_id, minuut: i.minuut }))]);
+          setEvents((e) => [...e, ...items.map((i) => ({ id: i.tempId, type: i.type, speler_id: i.speler_id, minuut: i.minuut, aanleiding: i.aanleiding }))]);
         }
       }
     } catch {}
@@ -139,26 +152,26 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
     return set;
   }, [events, basisIds]);
 
-  const goalsVoor = events.filter((e) => e.type === "goal").length;
-  const goalsTegen = events.filter((e) => e.type === "tegengoal").length;
+  const goalsVoor = events.filter((e) => e.type === "goal" || e.type === "eigen_doelpunt_voor").length;
+  const goalsTegen = events.filter((e) => e.type === "tegengoal" || e.type === "eigen_doelpunt_tegen").length;
 
-  function log(type: string, speler_id: string | null) {
+  function log(type: string, speler_id: string | null, aanleidingWaarde: string | null = null) {
     const m = minuut;
     setMelding(null);
     // Direct tonen (optimistisch); daarna versturen of in de wachtrij zetten.
     const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    setEvents((e) => [...e, { id: tempId, type, speler_id, minuut: m }]);
+    setEvents((e) => [...e, { id: tempId, type, speler_id, minuut: m, aanleiding: aanleidingWaarde }]);
     start(async () => {
       // Staat er al iets in de wachtrij, dan sluit dit event achteraan aan
       // zodat de volgorde op de server klopt.
       if (wachtrijRef.current.length > 0) {
-        wachtrijRef.current = [...wachtrijRef.current, { tempId, type, speler_id, minuut: m }];
+        wachtrijRef.current = [...wachtrijRef.current, { tempId, type, speler_id, minuut: m, aanleiding: aanleidingWaarde }];
         syncWachtrij();
         void verstuurWachtrij();
         return;
       }
       try {
-        const res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id, type, minuut: m });
+        const res = await logEvent({ wedstrijd_id: wedstrijdId, speler_id, type, minuut: m, aanleiding: aanleidingWaarde });
         if (res.ok && res.id) {
           const nieuwId = res.id;
           setEvents((e) => e.map((x) => (x.id === tempId ? { ...x, id: nieuwId } : x)));
@@ -168,7 +181,7 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
         }
       } catch {
         // Geen verbinding: in de wachtrij; wordt automatisch alsnog verstuurd.
-        wachtrijRef.current = [...wachtrijRef.current, { tempId, type, speler_id, minuut: m }];
+        wachtrijRef.current = [...wachtrijRef.current, { tempId, type, speler_id, minuut: m, aanleiding: aanleidingWaarde }];
         syncWachtrij();
       }
     });
@@ -188,21 +201,26 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
     setBewerken(e.id);
     setBewerkMinuut(String(e.minuut));
     setBewerkSpeler(e.speler_id ?? "");
+    setBewerkAanleiding(e.aanleiding ?? null);
   }
 
   function opslaanBewerken(id: string) {
     const minuut = Number(bewerkMinuut);
     if (!Number.isFinite(minuut) || minuut < 0) return;
     const speler_id = bewerkSpeler || null;
-    setEvents((e) => e.map((x) => (x.id === id ? { ...x, minuut, speler_id } : x)));
+    setEvents((e) => e.map((x) => (x.id === id ? { ...x, minuut, speler_id, aanleiding: bewerkAanleiding } : x)));
     setBewerken(null);
-    start(() => { void wijzigEvent(id, wedstrijdId, { minuut, speler_id }); });
+    start(() => { void wijzigEvent(id, wedstrijdId, { minuut, speler_id, aanleiding: bewerkAanleiding }); });
   }
 
   function open(type: string) {
-    if (type === "tegengoal") return log("tegengoal", null);
     if (type === "einde") { if (running) startPauze(); return log("einde", null); }
-    const groep = type === "wissel_uit" || type === "rood" || type === "geel" ? "veld" : type === "wissel_in" ? "bank" : "selectie";
+    setAanleiding(null);
+    if (GEEN_SPELER.has(type)) {
+      setPicker({ type, groep: "geen" });
+      return;
+    }
+    const groep = type === "wissel_uit" || type === "rood" || type === "geel" || type === "eigen_doelpunt_tegen" ? "veld" : type === "wissel_in" ? "bank" : "selectie";
     setPicker({ type, groep });
   }
 
@@ -270,6 +288,8 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
         <button onClick={() => open("wissel_uit")} className="rounded-xl bg-neutral-700 px-4 py-4 text-base font-bold text-white">🔻 Wissel uit</button>
         <button onClick={() => open("wissel_in")} className="rounded-xl bg-neutral-700 px-4 py-4 text-base font-bold text-white">🔺 Wissel in</button>
         <button onClick={() => open("tegengoal")} className="rounded-xl bg-neutral-300 px-4 py-4 text-base font-bold text-neutral-800">⚽ Tegen</button>
+        <button onClick={() => open("eigen_doelpunt_voor")} className="rounded-xl bg-neutral-300 px-3 py-4 text-sm font-bold text-neutral-800">⚽ Eigen doelpunt (voor ons)</button>
+        <button onClick={() => open("eigen_doelpunt_tegen")} className="rounded-xl bg-neutral-300 px-3 py-4 text-sm font-bold text-neutral-800">⚽ Eigen doelpunt (tegen ons)</button>
         <button onClick={() => open("einde")} className="rounded-xl border-2 border-neutral-400 px-4 py-4 text-base font-bold text-neutral-700">⏱️ Einde</button>
       </div>
 
@@ -304,6 +324,18 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
                     </select>
                   )}
                 </div>
+                {HEEFT_AANLEIDING.has(e.type) && (
+                  <select
+                    value={bewerkAanleiding ?? ""}
+                    onChange={(ev) => setBewerkAanleiding(ev.target.value || null)}
+                    className="mt-2 w-full rounded border border-neutral-300 px-2 py-1 text-sm"
+                  >
+                    <option value="">Open spel</option>
+                    {Object.entries(AANLEIDING_LABEL).map(([k, l]) => (
+                      <option key={k} value={k}>{l}</option>
+                    ))}
+                  </select>
+                )}
                 <div className="mt-2 flex justify-end gap-2">
                   <button onClick={() => setBewerken(null)} className="rounded-md px-2 py-1 text-xs text-neutral-500">Annuleer</button>
                   <button onClick={() => opslaanBewerken(e.id)} className="rounded-md bg-sparta px-3 py-1 text-xs font-semibold text-white">Opslaan</button>
@@ -315,6 +347,7 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
                 <span className="flex-1">
                   {LABEL[e.type] ?? e.type}
                   {e.speler_id && <span className="ml-1 font-medium text-neutral-800">· {naamVan.get(e.speler_id)?.naam ?? "?"}</span>}
+                  {e.aanleiding && <span className="ml-1 text-xs text-neutral-400">({AANLEIDING_LABEL[e.aanleiding] ?? e.aanleiding})</span>}
                 </span>
                 <button onClick={() => beginBewerken(e)} className="text-xs text-neutral-400 hover:text-sparta">wijzig</button>
                 <button onClick={() => wis(e.id)} className="text-xs text-neutral-400 hover:text-red-600">wis</button>
@@ -331,29 +364,62 @@ export function LiveWedstrijd({ wedstrijdId, kop, spelers, basisIds, bankIds, be
           <div className="fixed inset-x-0 bottom-0 z-50 max-h-[75vh] overflow-auto rounded-t-2xl border-t border-neutral-200 bg-white p-4 shadow-2xl">
             <div className="mx-auto max-w-md">
               <p className="mb-3 text-sm font-semibold text-neutral-700">
-                {LABEL[picker.type]} · {minuut}&apos; — kies speler
+                {LABEL[picker.type]} · {minuut}&apos;{picker.groep !== "geen" && " — kies speler"}
               </p>
               {isWisselPicker && (
                 <p className="-mt-2 mb-3 text-xs text-neutral-400">
                   Gesorteerd op speelminuten dit seizoen — {picker.type === "wissel_in" ? "minste" : "meeste"} eerst.
                 </p>
               )}
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {pickerSpelers().map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => { log(picker.type, s.id); setPicker(null); }}
-                    className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-3 text-left text-sm"
-                  >
-                    <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-sparta/10 text-xs font-bold text-sparta">{s.rugnummer ?? "–"}</span>
-                    <span className="truncate">{s.naam.split(" ")[0]}</span>
-                    {isWisselPicker && (
-                      <span className="ml-auto flex-none text-xs tabular-nums text-neutral-400">{minVan(s.id)}&apos;</span>
-                    )}
-                  </button>
-                ))}
-                {pickerSpelers().length === 0 && <p className="col-span-2 text-sm text-neutral-400 sm:col-span-3">Geen spelers beschikbaar voor deze actie.</p>}
-              </div>
+              {HEEFT_AANLEIDING.has(picker.type) && (
+                <div className="mb-3">
+                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-400">Aanleiding (optioneel)</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAanleiding(null)}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium ${aanleiding === null ? "bg-sparta text-white" : "bg-neutral-100 text-neutral-600"}`}
+                    >
+                      Open spel
+                    </button>
+                    {Object.entries(AANLEIDING_LABEL).map(([k, l]) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setAanleiding(k)}
+                        className={`rounded-full px-3 py-1.5 text-sm font-medium ${aanleiding === k ? "bg-sparta text-white" : "bg-neutral-100 text-neutral-600"}`}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {picker.groep === "geen" ? (
+                <button
+                  onClick={() => { log(picker.type, null, aanleiding); setPicker(null); }}
+                  className="w-full rounded-lg bg-sparta px-4 py-3 text-sm font-semibold text-white"
+                >
+                  Doelpunt noteren
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {pickerSpelers().map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => { log(picker.type, s.id, aanleiding); setPicker(null); }}
+                      className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-3 text-left text-sm"
+                    >
+                      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-sparta/10 text-xs font-bold text-sparta">{s.rugnummer ?? "–"}</span>
+                      <span className="truncate">{s.naam.split(" ")[0]}</span>
+                      {isWisselPicker && (
+                        <span className="ml-auto flex-none text-xs tabular-nums text-neutral-400">{minVan(s.id)}&apos;</span>
+                      )}
+                    </button>
+                  ))}
+                  {pickerSpelers().length === 0 && <p className="col-span-2 text-sm text-neutral-400 sm:col-span-3">Geen spelers beschikbaar voor deze actie.</p>}
+                </div>
+              )}
               <button onClick={() => setPicker(null)} className="mt-3 w-full rounded-lg bg-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700">Annuleren</button>
             </div>
           </div>
