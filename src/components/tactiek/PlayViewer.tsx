@@ -151,6 +151,8 @@ export default function PlayViewer({ play, veld }: { play: PlayData; veld: VeldS
   const [looplijnen, setLooplijnen] = useState(true)
   const [balbaan, setBalbaan] = useState(true)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const lastAudioFrameRef = useRef(-1)
 
   const stappen = useMemo(
     () => frames
@@ -198,12 +200,32 @@ export default function PlayViewer({ play, veld }: { play: PlayData; veld: VeldS
     tekenBeeld(ctx, layout, data, posities, looplijnen, balbaan, tijd, timeline)
   }, [tijd, timeline, layout, data, frames, objects, arrows, looplijnen, balbaan])
 
+  // Audio per stap: zodra de tijdlijn een nieuwe stap ingaat tijdens afspelen,
+  // start het bijbehorende fragment (als die stap er een heeft).
+  useEffect(() => {
+    if (!speelt) {
+      lastAudioFrameRef.current = -1
+      audioRef.current?.pause()
+      return
+    }
+    let idx = 0
+    for (let i = 0; i < timeline.length; i++) if (tijd >= timeline[i].start) idx = i
+    if (idx === lastAudioFrameRef.current) return
+    lastAudioFrameRef.current = idx
+    const clip = frames[idx]?.audio
+    const el = audioRef.current
+    if (!el) return
+    if (clip) { el.src = clip; el.currentTime = 0; void el.play().catch(() => {}) }
+    else el.pause()
+  }, [tijd, speelt, timeline, frames])
+
   const knop = 'h-9 px-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5'
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
       <div>
         <canvas ref={canvasRef} width={layout.canvasW} height={layout.canvasH} className="w-full h-auto rounded-xl" />
+        <audio ref={audioRef} className="hidden" />
 
         <div className="mt-3 flex items-center gap-3 flex-wrap">
           <button

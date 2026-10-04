@@ -11,7 +11,7 @@ import {
   ArrowRight, ArrowUpRight, Route, MoveRight, Type,
   Play, Pause, Square as StopIcon, Plus, Trash2, RotateCcw, ChevronLeft, ChevronRight,
   Video, Circle, Loader2, Unlink, Sparkles, Image as ImageIcon, Footprints, Pin, PinOff,
-  Pencil, Eraser, Cone, Goal,
+  Pencil, Eraser, Cone, Goal, Mic, ChevronsLeft, ChevronsRight,
 } from 'lucide-react'
 
 import type {
@@ -73,6 +73,38 @@ function emptyFrame(): Frame {
   return { id: genId(), positions: {}, hold_ms: 0 }
 }
 
+/** Audio-opname: eerst audio/mp4 (iPhone/Safari), anders webm/opus (Chrome). */
+function pickAudioMimeType(): { mime: string; ext: string } | null {
+  if (typeof MediaRecorder === 'undefined') return null
+  const candidates = [
+    { mime: 'audio/mp4', ext: 'mp4' },
+    { mime: 'audio/webm;codecs=opus', ext: 'webm' },
+    { mime: 'audio/webm', ext: 'webm' },
+  ]
+  for (const c of candidates) if (MediaRecorder.isTypeSupported(c.mime)) return c
+  return null
+}
+
+/** Lengte van een opname lezen. Chrome geeft bij webm-opnames eerst Infinity
+ * terug; de bekende omweg is heel ver vooruitspoelen en dan terug. */
+function leesAudioDuur(audio: HTMLAudioElement): Promise<number> {
+  return new Promise(resolve => {
+    const klaar = () => resolve(Number.isFinite(audio.duration) ? audio.duration * 1000 : 3000)
+    audio.addEventListener('loadedmetadata', () => {
+      if (audio.duration === Infinity) {
+        audio.currentTime = 1e101
+        audio.addEventListener('timeupdate', function eenmalig() {
+          audio.removeEventListener('timeupdate', eenmalig)
+          audio.currentTime = 0
+          klaar()
+        })
+      } else {
+        klaar()
+      }
+    }, { once: true })
+  })
+}
+
 /** De tekenstaat van het bord, in pixels van het canvas. */
 interface Board {
   title: string
@@ -119,6 +151,13 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
   const recCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const animFrameRef = useRef<number | null>(null)
   const playStartRef = useRef<number>(0)
+  const previewAudioRef = useRef<HTMLAudioElement>(null)
+  const lastAudioFrameRef = useRef<number>(-1)
+  const audioMediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioStreamRef = useRef<MediaStream | null>(null)
+  const audioChunksRef = useRef<BlobPart[]>([])
+  const recordAudioElsRef = useRef<Record<string, HTMLAudioElement>>({})
+  const audioCtxRef = useRef<AudioContext | null>(null)
 
   const [initial] = useState(() => toBoard(value, layout))
 
@@ -146,6 +185,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
   const [showTrails, setShowTrails] = useState(true)
   const [recording, setRecording] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [audioRecording, setAudioRecording] = useState(false)
   const [zoneDraft, setZoneDraft] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const [arrowDraft, setArrowDraft] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null)
   const [strokeDraft, setStrokeDraft] = useState<Stroke | null>(null)
@@ -410,6 +450,39 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing])
+
+  // Audio per stap afspelen tijdens voorbeeld afspelen of opnemen: zodra de
+  // tijdlijn een nieuwe stap ingaat, start het bijbehorende fragment. Tijdens
+  // het opnemen van een video spelen de audio-elementen die op het
+  // opname-kanaal zijn aangesloten (zie startRecording), anders het gewone
+  // onzichtbare audio-element.
+  useEffect(() => {
+    if (!playing) {
+      lastAudioFrameRef.current = -1
+      previewAudioRef.current?.pause()
+      return
+    }
+    const timeline = computeTimeline()
+    const total = timeline[timeline.length - 1]?.transitionEnd ?? 0
+    if (total <= 0) return
+    const wrapped = ((animTime % total) + total) % total
+    let idx = 0
+    for (let i = 0; i < timeline.length; i++) if (wrapped >= timeline[i].start) idx = i
+    if (idx === lastAudioFrameRef.current) return
+    lastAudioFrameRef.current = idx
+    const frame = frames[idx]
+    if (!frame?.audio) return
+    if (recording) {
+      const el = recordAudioElsRef.current[frame.id]
+      if (el) { el.currentTime = 0; void el.play().catch(() => {}) }
+    } else if (previewAudioRef.current) {
+      const el = previewAudioRef.current
+      el.src = frame.audio
+      el.currentTime = 0
+      void el.play().catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, animTime, recording])
 
   // ===== Pointer helpers =====
   function getPos(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -725,6 +798,28 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     setCurrentFrame(Math.max(0, currentFrame - 1))
   }
 
+  /** Wisselt deze stap met de vorige of de volgende, inclusief wat erbij hoort. */
+  function moveFrame(richting: -1 | 1) {
+    const doel = currentFrame + richting
+    if (doel < 0 || doel >= frames.length) return
+    setFrames(prev => {
+      const next = [...prev]
+      ;[next[currentFrame], next[doel]] = [next[doel], next[currentFrame]]
+      return next
+    })
+    const wissel = <T extends FrameBound>(items: T[]): T[] =>
+      items.map(it => {
+        if (it.frameIndex === currentFrame) return { ...it, frameIndex: doel }
+        if (it.frameIndex === doel) return { ...it, frameIndex: currentFrame }
+        return it
+      })
+    setZones(prev => wissel(prev))
+    setTexts(prev => wissel(prev))
+    setStrokes(prev => wissel(prev))
+    setArrows(prev => prev.map(a => a.style === 'option' ? wissel([a])[0] : a))
+    setCurrentFrame(doel)
+  }
+
   /** Zet de geselecteerde zone of ballon vast op alle frames, of juist alleen op dit frame. */
   function togglePinned() {
     if (selection?.kind === 'zone') {
@@ -732,6 +827,68 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     } else if (selection?.kind === 'text') {
       setTexts(prev => prev.map(t => t.id === selection.id ? { ...t, frameIndex: t.frameIndex === undefined ? currentFrame : undefined } : t))
     }
+  }
+
+  // ===== Audio per stap =====
+  async function startAudioRecording() {
+    if (audioRecording) return
+    const mime = pickAudioMimeType()
+    if (!mime) { alert('Je browser ondersteunt geen audio-opname. Probeer Chrome of Safari.'); return }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      audioStreamRef.current = stream
+      audioChunksRef.current = []
+      const rec = new MediaRecorder(stream, { mimeType: mime.mime })
+      rec.ondataavailable = e => { if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data) }
+      rec.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        audioStreamRef.current = null
+        const blob = new Blob(audioChunksRef.current, { type: mime.mime })
+        void verwerkOpname(blob)
+      }
+      audioMediaRecorderRef.current = rec
+      rec.start()
+      setAudioRecording(true)
+    } catch {
+      alert('Kon de microfoon niet gebruiken. Geef de browser toestemming en probeer opnieuw.')
+    }
+  }
+
+  function stopAudioRecording() {
+    audioMediaRecorderRef.current?.stop()
+    setAudioRecording(false)
+  }
+
+  async function verwerkOpname(blob: Blob) {
+    const dataUrl: string = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(blob)
+    }).catch(() => '')
+    if (!dataUrl) { alert('De opname kon niet verwerkt worden.'); return }
+
+    const meet = new Audio()
+    meet.preload = 'metadata'
+    meet.src = dataUrl
+    const duurMs = Math.round(await leesAudioDuur(meet))
+    const vastgezetteDuur = duurMs > 0 ? duurMs : 3000
+
+    setFrames(prev => prev.map((f, i) =>
+      i === currentFrame ? { ...f, audio: dataUrl, audio_duur_ms: vastgezetteDuur, hold_ms: vastgezetteDuur } : f,
+    ))
+  }
+
+  function speelAudioAf() {
+    const clip = frames[currentFrame]?.audio
+    if (!clip || !previewAudioRef.current) return
+    previewAudioRef.current.src = clip
+    previewAudioRef.current.currentTime = 0
+    void previewAudioRef.current.play().catch(() => {})
+  }
+
+  function wisAudio() {
+    setFrames(prev => prev.map((f, i) => i === currentFrame ? { ...f, audio: undefined, audio_duur_ms: undefined } : f))
   }
 
   function clearAll() {
@@ -797,6 +954,31 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
     const recCtx = rec.getContext('2d')!
     if (courtRef.current) recCtx.drawImage(courtRef.current, 0, 0)
     const stream = rec.captureStream(RECORD_FPS)
+
+    // Heeft een stap audio? Dan die stap-geluiden meenemen in het filmpje via
+    // een los audiokanaal, gevoed door een audio-element per stap.
+    const framesMetAudio = frames.filter(f => f.audio)
+    if (framesMetAudio.length > 0) {
+      try {
+        const AudioCtxKlasse = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+        if (AudioCtxKlasse) {
+          const audioCtx = new AudioCtxKlasse()
+          audioCtxRef.current = audioCtx
+          const dest = audioCtx.createMediaStreamDestination()
+          for (const f of framesMetAudio) {
+            const el = new Audio(f.audio)
+            const bron = audioCtx.createMediaElementSource(el)
+            bron.connect(dest)
+            bron.connect(audioCtx.destination)
+            recordAudioElsRef.current[f.id] = el
+          }
+          for (const track of dest.stream.getAudioTracks()) stream.addTrack(track)
+        }
+      } catch {
+        // Geen audio in het filmpje lukt niet — het beeld gaat gewoon door.
+      }
+    }
+
     const recorder = new MediaRecorder(stream, { mimeType: mime.mime, videoBitsPerSecond: 6_000_000 })
     const chunks: BlobPart[] = []
     recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data) }
@@ -810,6 +992,11 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
       URL.revokeObjectURL(url)
       recCanvasRef.current = null
       setRecording(false)
+      lastAudioFrameRef.current = -1
+      for (const el of Object.values(recordAudioElsRef.current)) el.pause()
+      recordAudioElsRef.current = {}
+      audioCtxRef.current?.close().catch(() => {})
+      audioCtxRef.current = null
     }
     setRecording(true)
     setSelection(null)
@@ -884,7 +1071,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
       <div className="bg-neutral-900 border-b border-neutral-800 px-3 py-2 flex items-center gap-2 flex-wrap flex-shrink-0">
         {toolbarStart && (
           <>
-            {toolbarStart({ busy: interactionDisabled })}
+            {toolbarStart({ busy: interactionDisabled || audioRecording })}
             <div className="w-px h-6 bg-neutral-800 hidden sm:block" />
           </>
         )}
@@ -924,7 +1111,7 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
           <button
             type="button"
             onClick={startRecording}
-            disabled={recording || frames.length < 2}
+            disabled={recording || frames.length < 2 || audioRecording}
             title="Video opnemen (mp4 of webm)"
             className={`flex items-center gap-1.5 px-2.5 h-9 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 ${recording ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300 hover:bg-red-600 hover:text-white'}`}
           >
@@ -1085,6 +1272,9 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
                   <span className="text-xs text-white font-semibold uppercase tracking-wide">Rec</span>
                 </div>
               )}
+              {/* Onzichtbaar: speelt de audio van een stap af bij voorbeeld
+                  afspelen en bij het terugluisteren van één opname. */}
+              <audio ref={previewAudioRef} className="hidden" />
             </div>
           </div>
 
@@ -1094,12 +1284,12 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
               <button
                 type="button"
                 onClick={togglePlay}
-                disabled={recording}
+                disabled={recording || audioRecording}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors disabled:opacity-40 flex-shrink-0 ${playing ? 'bg-amber-500 text-white' : 'bg-green-600 text-white hover:bg-green-700'}`}
               >
                 {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </button>
-              <button type="button" onClick={stopPlay} disabled={recording} title="Stoppen" className={`${knopklein} text-neutral-400 hover:bg-neutral-800 hover:text-white`}>
+              <button type="button" onClick={stopPlay} disabled={recording || audioRecording} title="Stoppen" className={`${knopklein} text-neutral-400 hover:bg-neutral-800 hover:text-white`}>
                 <StopIcon className="w-4 h-4" />
               </button>
               <select value={speed} onChange={e => setSpeed(Number(e.target.value))} disabled={interactionDisabled} title="Afspeelsnelheid" className="bg-neutral-800 border border-neutral-700 text-white rounded px-2 py-1 text-xs focus:outline-none focus:border-sparta">
@@ -1116,9 +1306,9 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
               <span>Pauze hier:</span>
               <span className="flex items-center gap-1">
                 <input
-                  type="number" min={0} max={5000} step={100} value={currentHold}
+                  type="number" min={0} max={60000} step={100} value={currentHold}
                   onChange={e => {
-                    const v = Math.max(0, Math.min(5000, Number(e.target.value) || 0))
+                    const v = Math.max(0, Math.min(60000, Number(e.target.value) || 0))
                     setFrames(prev => prev.map((f, i) => i === currentFrame ? { ...f, hold_ms: v } : f))
                   }}
                   disabled={interactionDisabled}
@@ -1158,6 +1348,35 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
               />
             </div>
 
+            <div className="flex items-center gap-1 text-xs text-neutral-400 lg:flex-col lg:items-stretch">
+              <span className="whitespace-nowrap">Audio bij deze stap:</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={audioRecording ? stopAudioRecording : startAudioRecording}
+                  disabled={(interactionDisabled && !audioRecording)}
+                  title={audioRecording ? 'Opname stoppen' : currentFrame !== undefined && frames[currentFrame]?.audio ? 'Opnieuw inspreken' : 'Inspreken'}
+                  className={`${knopklein} ${audioRecording ? 'bg-red-600 text-white' : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'}`}
+                >
+                  {audioRecording ? <StopIcon className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+                {frames[currentFrame]?.audio && !audioRecording && (
+                  <>
+                    <button type="button" onClick={speelAudioAf} disabled={interactionDisabled} title="Terugluisteren" className={`${knopklein} text-neutral-300 hover:bg-neutral-800`}>
+                      <Play className="w-4 h-4" />
+                    </button>
+                    <span className="text-[10px] text-neutral-500 tabular-nums">
+                      {((frames[currentFrame]?.audio_duur_ms ?? 0) / 1000).toFixed(1)}s
+                    </span>
+                    <button type="button" onClick={wisAudio} disabled={interactionDisabled} title="Audio verwijderen" className={`${knopklein} text-neutral-400 hover:bg-red-900/40 hover:text-red-300`}>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+                {audioRecording && <span className="text-[10px] text-red-400 animate-pulse">opname…</span>}
+              </div>
+            </div>
+
             {selection?.kind === 'object' && (
               <button
                 type="button"
@@ -1174,27 +1393,36 @@ export default function PlayEditor({ value, onChange, veld, toolbarStart }: Play
             <span className="hidden lg:block text-[10px] uppercase tracking-wider text-neutral-500">Frames</span>
 
             <div className="flex items-center gap-1 overflow-x-auto flex-1 lg:flex-none lg:flex-wrap lg:overflow-visible">
-              <button type="button" onClick={() => setCurrentFrame(Math.max(0, currentFrame - 1))} disabled={currentFrame === 0 || interactionDisabled} title="Vorig frame"
+              <button type="button" onClick={() => setCurrentFrame(Math.max(0, currentFrame - 1))} disabled={currentFrame === 0 || interactionDisabled || audioRecording} title="Vorig frame"
                 className="w-7 h-7 rounded flex items-center justify-center text-neutral-400 hover:bg-neutral-800 disabled:opacity-30 transition-colors flex-shrink-0">
                 <ChevronLeft className="w-4 h-4" />
               </button>
               {frames.map((f, i) => (
-                <button key={f.id} type="button" onClick={() => { setCurrentFrame(i); setSelection(null) }} disabled={interactionDisabled}
+                <button key={f.id} type="button" onClick={() => { setCurrentFrame(i); setSelection(null) }} disabled={interactionDisabled || audioRecording}
                   className={`min-w-[2rem] h-7 px-2 rounded-md text-xs font-semibold transition-colors flex-shrink-0 ${currentFrame === i ? 'bg-sparta text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'}`}>
-                  {i + 1}{f.text?.trim() ? '💬' : ''}{(f.hold_ms ?? 0) > 0 ? '⏱' : ''}{(f.slow_in ?? 1) < 1 ? '🐢' : ''}{(f.highlights?.length ?? 0) > 0 ? '✨' : ''}
+                  {i + 1}{f.text?.trim() ? '💬' : ''}{f.audio ? '🎙' : ''}{(f.hold_ms ?? 0) > 0 ? '⏱' : ''}{(f.slow_in ?? 1) < 1 ? '🐢' : ''}{(f.highlights?.length ?? 0) > 0 ? '✨' : ''}
                 </button>
               ))}
-              <button type="button" onClick={addFrame} disabled={interactionDisabled} title="Frame toevoegen"
+              <button type="button" onClick={addFrame} disabled={interactionDisabled || audioRecording} title="Frame toevoegen"
                 className="w-7 h-7 rounded flex items-center justify-center text-neutral-400 hover:bg-green-900/40 hover:text-green-300 disabled:opacity-30 transition-colors flex-shrink-0">
                 <Plus className="w-4 h-4" />
               </button>
-              <button type="button" onClick={() => setCurrentFrame(Math.min(frames.length - 1, currentFrame + 1))} disabled={currentFrame >= frames.length - 1 || interactionDisabled} title="Volgend frame"
+              <button type="button" onClick={() => setCurrentFrame(Math.min(frames.length - 1, currentFrame + 1))} disabled={currentFrame >= frames.length - 1 || interactionDisabled || audioRecording} title="Volgend frame"
                 className="w-7 h-7 rounded flex items-center justify-center text-neutral-400 hover:bg-neutral-800 disabled:opacity-30 transition-colors flex-shrink-0">
                 <ChevronRight className="w-4 h-4" />
               </button>
+              <div className="w-px h-5 bg-neutral-800 mx-0.5 flex-shrink-0" />
+              <button type="button" onClick={() => moveFrame(-1)} disabled={currentFrame === 0 || interactionDisabled || audioRecording} title="Stap naar voren"
+                className="w-7 h-7 rounded flex items-center justify-center text-neutral-400 hover:bg-neutral-800 disabled:opacity-30 transition-colors flex-shrink-0">
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+              <button type="button" onClick={() => moveFrame(1)} disabled={currentFrame >= frames.length - 1 || interactionDisabled || audioRecording} title="Stap naar achteren"
+                className="w-7 h-7 rounded flex items-center justify-center text-neutral-400 hover:bg-neutral-800 disabled:opacity-30 transition-colors flex-shrink-0">
+                <ChevronsRight className="w-4 h-4" />
+              </button>
             </div>
 
-            <button type="button" onClick={deleteFrame} disabled={frames.length === 1 || interactionDisabled} title="Frame verwijderen"
+            <button type="button" onClick={deleteFrame} disabled={frames.length === 1 || interactionDisabled || audioRecording} title="Frame verwijderen"
               className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:bg-red-900/40 hover:text-red-300 disabled:opacity-30 transition-colors flex-shrink-0 lg:self-start">
               <Trash2 className="w-4 h-4" />
             </button>
