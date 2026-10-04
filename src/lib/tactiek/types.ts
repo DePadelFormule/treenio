@@ -39,6 +39,10 @@ export interface Frame {
   highlights?: string[]
   /** Vertraging op de overgang naar dit frame (0,5 = twee keer zo langzaam). */
   slow_in?: number
+  /** Ingesproken uitleg bij deze stap, als data-URL (audio/webm of audio/mp4). */
+  audio?: string
+  /** Lengte van audio in milliseconden; hold_ms wordt hierop gezet zodat de stap lang genoeg stilstaat. */
+  audio_duur_ms?: number
 }
 
 export interface AnimPos {

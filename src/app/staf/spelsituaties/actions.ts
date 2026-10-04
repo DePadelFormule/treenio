@@ -42,6 +42,13 @@ export async function bewaarSpelsituatie(payload: BewaarPayload) {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return { ok: false, error: "Geen toegang." };
 
+  // Audio per stap zit als data-URL in payload.data; een ruime bovengrens
+  // (±8 MB, goed voor een flink aantal ingesproken stappen) voorkomt dat
+  // iets heel groots per ongeluk wordt opgeslagen.
+  if (JSON.stringify(payload.data).length > 8_000_000) {
+    return { ok: false, error: "Deze situatie is te groot om op te slaan (te veel of te lange audio). Verwijder een opname en probeer opnieuw." };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("spelsituaties")
