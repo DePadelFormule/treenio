@@ -92,10 +92,15 @@ export default async function FaseoverzichtPage({
       </Link>
 
       <h1 className="mt-4 mb-1 text-2xl font-bold text-sparta">Faseoverzicht</h1>
-      <p className="mb-5 text-sm text-neutral-500">
+      <p className="mb-1 text-sm text-neutral-500">
         Kies een periode (bijv. het begin en eind van een fase) voor een overzicht van opkomst,
         wedstrijdstatistieken en ontwikkeldoelen per speler. Tik op een kolomkop om te sorteren —
         bijv. op "Te laat" om te zien wie dat het vaakst deed.
+      </p>
+      <p className="mb-5 text-sm font-medium text-neutral-700">
+        {van === SEIZOEN_START
+          ? `Cijfers vanaf seizoensstart (${van}) t/m ${tot}.`
+          : `Cijfers van ${van} t/m ${tot} — alleen deze periode, niet cumulatief.`}
       </p>
 
       <form className="mb-3 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">
@@ -135,6 +140,13 @@ export default async function FaseoverzichtPage({
                   {f.naam}
                 </Link>
                 <span className="text-xs text-neutral-400">{f.van} t/m {f.tot}</span>
+                <Link
+                  href={`/staf/faseoverzicht?van=${SEIZOEN_START}&tot=${f.tot}`}
+                  title={`Cumulatief: alles vanaf ${SEIZOEN_START} t/m het eind van ${f.naam}`}
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${van === SEIZOEN_START && tot === f.tot && !vergelijkId ? "bg-neutral-800 text-white" : "bg-neutral-200 text-neutral-600 hover:bg-neutral-800 hover:text-white"}`}
+                >
+                  totaal t/m
+                </Link>
                 <Link
                   href={`/staf/faseoverzicht?van=${van}&tot=${tot}&vergelijk=${f.id}`}
                   className={`rounded-full px-2 py-0.5 text-xs font-semibold ${vergelijkId === f.id ? "bg-sparta text-white" : "bg-neutral-200 text-neutral-600 hover:bg-sparta hover:text-white"}`}
