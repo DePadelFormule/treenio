@@ -179,6 +179,14 @@ export interface Ontwikkeldoel {
   created_at: string;
 }
 
+export interface Fase {
+  id: string;
+  naam: string;
+  van: string;
+  tot: string;
+  created_at: string;
+}
+
 export interface StafNotitie {
   id: string;
   speler_id: string;
