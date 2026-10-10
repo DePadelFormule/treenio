@@ -7,6 +7,7 @@ import { VRAGENLIJST, VRAGENLIJST_BLOKKEN } from "@/lib/vragenlijst";
 import { nieuwAandachtspunt, toggleAandachtspunt, updatePosities } from "./actions";
 import { BeschikbaarheidVeld } from "@/components/BeschikbaarheidVeld";
 import { OntwikkeldoelenSectie } from "@/components/OntwikkeldoelenSectie";
+import { SpelerKop } from "@/components/SpelerKop";
 import type {
   Aandachtspunt,
   Ontwikkeldoel,
@@ -95,26 +96,24 @@ export default async function StafSpelerPage({
       </Link>
 
       {/* Speler-kop */}
-      <header className="mt-4 flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sparta/10 text-xl font-bold text-sparta">
-          {sp.rugnummer ?? "–"}
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-800">{sp.naam}</h1>
-          <p className="text-sm text-neutral-400">
-            {sp.hoofdpositie ? (
-              <>
-                <span className="font-semibold text-sparta">{sp.hoofdpositie}</span>
-                {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).length > 0 && (
-                  <span> · alt: {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).join(", ")}</span>
-                )}
-              </>
-            ) : (
-              "positie onbekend"
+      <SpelerKop
+        spelerId={sp.id}
+        beginNaam={sp.naam}
+        beginRugnummer={sp.rugnummer}
+        beginGeboortedatum={sp.geboortedatum}
+      />
+      <p className="mt-1 text-sm text-neutral-400">
+        {sp.hoofdpositie ? (
+          <>
+            <span className="font-semibold text-sparta">{sp.hoofdpositie}</span>
+            {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).length > 0 && (
+              <span> · alt: {[sp.alt_positie_1, sp.alt_positie_2].filter(Boolean).join(", ")}</span>
             )}
-          </p>
-        </div>
-      </header>
+          </>
+        ) : (
+          "positie onbekend"
+        )}
+      </p>
 
       {/* Positie-beheer */}
       <form action={updatePosities} className="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-white p-4">

@@ -86,6 +86,42 @@ export async function nieuwOntwikkeldoel(spelerId: string, doel: string) {
   return { ok: true as const, doel: data as import("@/lib/types/database").Ontwikkeldoel };
 }
 
+// Basisgegevens (naam, rugnummer, geboortedatum) bewerken. Directe aanroep
+// vanuit een client component (zelfde reden als updateBeschikbaarheid): de
+// nieuwe waarden staan al in de client-state, dus deze pagina hoeft niet
+// opnieuw opgehaald. Andere plekken waar de naam/het rugnummer getoond wordt
+// wel verversen.
+export async function updateSpelerGegevens(
+  spelerId: string,
+  gegevens: { naam: string; rugnummer: number | null; geboortedatum: string | null },
+) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return { ok: false };
+  if (!spelerId) return { ok: false };
+
+  const naam = gegevens.naam.trim().slice(0, 80);
+  if (!naam) return { ok: false, fout: "Naam mag niet leeg zijn." };
+  if (gegevens.rugnummer != null && (!Number.isFinite(gegevens.rugnummer) || gegevens.rugnummer < 0 || gegevens.rugnummer > 999)) {
+    return { ok: false, fout: "Ongeldig rugnummer." };
+  }
+  if (gegevens.geboortedatum && !/^\d{4}-\d{2}-\d{2}$/.test(gegevens.geboortedatum)) {
+    return { ok: false, fout: "Ongeldige geboortedatum." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("spelers")
+    .update({ naam, rugnummer: gegevens.rugnummer, geboortedatum: gegevens.geboortedatum } as never)
+    .eq("id", spelerId);
+  if (error) return { ok: false, fout: error.message };
+
+  revalidatePath("/staf/team");
+  revalidatePath("/staf");
+  revalidatePath("/vragenlijst");
+  revalidatePath("/academy");
+  return { ok: true };
+}
+
 export async function updatePosities(formData: FormData) {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return;
