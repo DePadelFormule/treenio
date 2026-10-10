@@ -117,6 +117,7 @@ export default async function StafPage() {
   // voor de hoofdtrainer.
   const basisMenu = [
     { href: "/staf/team", titel: "Team", uitleg: "Alle spelers: als tabel (opkomst, minuten, goals, assists, kaarten) of als spelerskaarten." },
+    { href: "/staf/faseoverzicht", titel: "Faseoverzicht", uitleg: "Opkomst, wedstrijdstats en doelen per speler over een zelfgekozen periode." },
     { href: "/staf/wedstrijden", titel: "Wedstrijden", uitleg: "Programma beheren en per wedstrijd registreren (stats, keeper, scouting)." },
     { href: "/staf/trainingen", titel: "Trainingen", uitleg: "Presentielijst bijhouden: wie was er, afmeldingen en inzet." },
     { href: "/staf/materiaaldienst", titel: "Materiaaldienst", uitleg: "Wie zorgt er bij welke training of wedstrijd voor de materialen." },
