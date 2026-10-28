@@ -26,7 +26,7 @@ export interface ImportResultaat {
 // Geplakt programma (voetbal.nl / club-app) verwerken: parse de tekst en voeg
 // alle herkende wedstrijden toe. Bestaande (zelfde datum + tegenstander)
 // worden overgeslagen, dus twee keer plakken kan geen kwaad.
-export async function plakProgramma(tekst: string): Promise<ImportResultaat> {
+export async function plakProgramma(tekst: string, fase: number | null = null): Promise<ImportResultaat> {
   const gebruiker = await getHuidigeGebruiker();
   if (gebruiker?.rol !== "staf") return { ok: false, bericht: "Geen toegang." };
 
@@ -54,13 +54,19 @@ export async function plakProgramma(tekst: string): Promise<ImportResultaat> {
   if (nieuw.length > 0) {
     const { error } = await supabase
       .from("wedstrijden")
-      .insert(nieuw.map((w) => ({ datum: w.datum, tegenstander: w.tegenstander, tijd: w.tijd })) as never);
+      .insert(nieuw.map((w) => ({ datum: w.datum, tegenstander: w.tegenstander, tijd: w.tijd, fase })) as never);
     if (error) {
-      // Vóór migratie 0023 bestaat de tijd-kolom nog niet; dan zonder tijd.
+      // Vóór migratie 0038 bestaat de fase-kolom nog niet; dan zonder fase.
       const { error: error2 } = await supabase
         .from("wedstrijden")
-        .insert(nieuw.map((w) => ({ datum: w.datum, tegenstander: w.tegenstander })) as never);
-      if (error2) return { ok: false, bericht: `Opslaan mislukt: ${error2.message}` };
+        .insert(nieuw.map((w) => ({ datum: w.datum, tegenstander: w.tegenstander, tijd: w.tijd })) as never);
+      if (error2) {
+        // Vóór migratie 0023 bestaat de tijd-kolom nog niet; dan zonder tijd.
+        const { error: error3 } = await supabase
+          .from("wedstrijden")
+          .insert(nieuw.map((w) => ({ datum: w.datum, tegenstander: w.tegenstander })) as never);
+        if (error3) return { ok: false, bericht: `Opslaan mislukt: ${error3.message}` };
+      }
     }
   }
 
@@ -96,16 +102,29 @@ export async function nieuweWedstrijd(formData: FormData) {
   const type = String(formData.get("type") ?? "competitie");
   const tijdRaw = String(formData.get("tijd") ?? "").trim();
   const tijd = /^([01]?\d|2[0-3]):[0-5]\d$/.test(tijdRaw) ? tijdRaw.padStart(5, "0") : null;
+  const faseRaw = String(formData.get("fase") ?? "").trim();
+  const fase = faseRaw && /^\d+$/.test(faseRaw) ? Number(faseRaw) : null;
   if (!datum || !tegenstander || !WEDSTRIJD_TYPES.includes(type)) return;
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("wedstrijden")
-    .insert({ datum, tegenstander, uitslag, type, tijd } as never);
+    .insert({ datum, tegenstander, uitslag, type, tijd, fase } as never);
   if (error) {
-    // Vóór migratie 0022/0023 bestaan de type/tijd-kolommen nog niet.
+    // Vóór migratie 0022/0023/0038 bestaan de type/tijd/fase-kolommen nog niet.
     await supabase.from("wedstrijden").insert({ datum, tegenstander, uitslag } as never);
   }
+  revalidatePath("/staf/wedstrijden");
+}
+
+// Fase van een bestaande wedstrijd wijzigen (chips op de wedstrijdenlijst).
+export async function setWedstrijdFase(id: string, fase: number | null) {
+  const gebruiker = await getHuidigeGebruiker();
+  if (gebruiker?.rol !== "staf") return;
+  if (!id) return;
+
+  const supabase = await createClient();
+  await supabase.from("wedstrijden").update({ fase } as never).eq("id", id);
   revalidatePath("/staf/wedstrijden");
 }
 

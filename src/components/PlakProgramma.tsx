@@ -5,8 +5,9 @@ import { plakProgramma } from "@/app/staf/wedstrijden/actions";
 
 // Tekstvak waar de trainer het programma van voetbal.nl in plakt; de server
 // haalt er de wedstrijden uit en voegt ze in één keer toe.
-export function PlakProgramma() {
+export function PlakProgramma({ volgendeFase }: { volgendeFase: number }) {
   const [tekst, setTekst] = useState("");
+  const [fase, setFase] = useState(String(volgendeFase));
   const [bezig, start] = useTransition();
   const [bericht, setBericht] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
@@ -14,8 +15,9 @@ export function PlakProgramma() {
   function verwerk() {
     if (!tekst.trim()) return;
     setBericht(null);
+    const faseWaarde = /^\d+$/.test(fase.trim()) ? Number(fase.trim()) : null;
     start(async () => {
-      const res = await plakProgramma(tekst);
+      const res = await plakProgramma(tekst, faseWaarde);
       setOk(res.ok);
       setBericht(res.bericht);
       if (res.ok) setTekst("");
@@ -42,6 +44,16 @@ export function PlakProgramma() {
           }
           className="w-full rounded-lg border border-neutral-300 px-3 py-2 font-mono text-sm"
         />
+        <label className="block text-sm text-neutral-600">
+          Fase <span className="text-neutral-400">(laat leeg voor geen fase)</span>
+          <input
+            type="number"
+            min={1}
+            value={fase}
+            onChange={(e) => setFase(e.target.value)}
+            className="ml-2 w-20 rounded-lg border border-neutral-300 px-2 py-1 text-sm"
+          />
+        </label>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"

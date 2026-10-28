@@ -166,6 +166,8 @@ export interface Wedstrijd {
   type?: WedstrijdType;
   // Aanvangstijd "HH:MM". Optioneel getypt (migratie 0023).
   tijd?: string | null;
+  // Fase-nummer (migratie 0038), zodat fase 1/2/... los te bekijken is.
+  fase?: number | null;
   created_at: string;
 }
 
