@@ -2,8 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { FORMATIES } from "@/lib/formaties";
-import { SITUATIES, situatieNaam } from "@/lib/positietaken";
+import { SITUATIES, situatieNaam, POSITIE_VOLGORDE } from "@/lib/positietaken";
 import { PrintKnop } from "@/components/PrintKnop";
 import type { PositieTaak } from "@/lib/types/database";
 
@@ -26,7 +25,7 @@ export default async function PositieTakenPrintPage({
   const { data } = await supabase.from("positie_taken").select("*").eq("situatie", situatie);
   const takenPerPositie = new Map(((data ?? []) as PositieTaak[]).map((t) => [t.positie_code, t.taken ?? ""]));
 
-  const posities = FORMATIES["4-3-3"];
+  const posities = POSITIE_VOLGORDE.map((p) => ({ key: p.code, label: `${p.nummer}. ${p.naam}` }));
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">

@@ -2,8 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { FORMATIES } from "@/lib/formaties";
-import { SITUATIES } from "@/lib/positietaken";
+import { SITUATIES, POSITIE_VOLGORDE } from "@/lib/positietaken";
 import { PositieTakenTabs } from "@/components/PositieTakenTabs";
 import type { PositieTaak } from "@/lib/types/database";
 
@@ -19,7 +18,7 @@ export default async function PositieTakenPage() {
     (takenPerSituatie[t.situatie] ??= {})[t.positie_code] = t.taken ?? "";
   }
 
-  const posities = FORMATIES["4-3-3"];
+  const posities = POSITIE_VOLGORDE.map((p) => ({ key: p.code, label: `${p.nummer}. ${p.naam}` }));
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
