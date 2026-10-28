@@ -23,9 +23,7 @@ export default async function PositieTakenPage({
   const { data } = await supabase.from("positie_taken").select("*").eq("situatie", situatie);
   const takenPerPositie = new Map(((data ?? []) as PositieTaak[]).map((t) => [t.positie_code, t.taken ?? ""]));
 
-  // Posities van het 4-3-3, zonder de keeper (keeper heeft geen rol bij
-  // balbezit van de tegenstander in deze kaartjes).
-  const posities = FORMATIES["4-3-3"].filter((s) => s.key !== "gk");
+  const posities = FORMATIES["4-3-3"];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">

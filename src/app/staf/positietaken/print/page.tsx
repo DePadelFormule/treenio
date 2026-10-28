@@ -26,7 +26,7 @@ export default async function PositieTakenPrintPage({
   const { data } = await supabase.from("positie_taken").select("*").eq("situatie", situatie);
   const takenPerPositie = new Map(((data ?? []) as PositieTaak[]).map((t) => [t.positie_code, t.taken ?? ""]));
 
-  const posities = FORMATIES["4-3-3"].filter((s) => s.key !== "gk");
+  const posities = FORMATIES["4-3-3"];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
