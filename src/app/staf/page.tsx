@@ -122,6 +122,7 @@ export default async function StafPage() {
     { href: "/staf/trainingen", titel: "Trainingen", uitleg: "Presentielijst bijhouden: wie was er, afmeldingen en inzet." },
     { href: "/staf/materiaaldienst", titel: "Materiaaldienst", uitleg: "Wie zorgt er bij welke training of wedstrijd voor de materialen." },
     { href: "/staf/spelsituaties", titel: "Spelsituaties", uitleg: "Tactisch tekenbord: magneetjes slepen, animatie maken en afspelen." },
+    { href: "/staf/positietaken", titel: "Taken per positie", uitleg: "Taken per positie (4-3-3) vastleggen en als printbare kaartjes uitdelen." },
     { href: "/staf/academy", titel: "Academy", uitleg: "Handboek voor spelers: begrippen, teamtaken en meer — met een leuke quiz." },
   ];
   const menu = magAlles
