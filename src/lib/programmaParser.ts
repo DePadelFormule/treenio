@@ -96,9 +96,9 @@ function vindDatum(regel: string, vandaag: Date): { datum: string; rest: string 
   return null;
 }
 
-// Zoekt een aanvangstijd in de regel: "09:45", "9.45" of "09.45 uur".
+// Zoekt een aanvangstijd in de regel: "09:45", "9.45", "09,45" of "09.45 uur".
 function vindTijd(regel: string): string | null {
-  const m = regel.match(/\b(\d{1,2})[:.](\d{2})\b/);
+  const m = regel.match(/\b(\d{1,2})[:.,](\d{2})\b/);
   if (!m) return null;
   const uur = Number(m[1]);
   const minuut = Number(m[2]);
@@ -107,21 +107,34 @@ function vindTijd(regel: string): string | null {
 }
 
 // Splitst een regel in twee teamnamen, of null als het geen wedstrijdregel is.
-// Scheiding is " - " (met spaties); beide kanten moeten letters bevatten.
+// Scheiding is " - " (met spaties) of "vs"/"vs." (met spaties eromheen);
+// beide kanten moeten letters bevatten.
 function vindTeams(regel: string): { thuis: string; uit: string } | null {
-  const idx = regel.indexOf(" - ");
+  let idx = regel.indexOf(" - ");
+  let sepLen = 3;
+  if (idx < 0) {
+    const m = regel.match(/\s+vs\.?\s+/i);
+    if (m && m.index !== undefined) {
+      idx = m.index;
+      sepLen = m[0].length;
+    }
+  }
   if (idx < 0) return null;
   const thuis = regel.slice(0, idx).trim();
-  const uit = regel.slice(idx + 3).trim();
+  const uit = regel.slice(idx + sepLen).trim();
   if (!/[A-Za-z]/.test(thuis) || !/[A-Za-z]/.test(uit)) return null;
   return { thuis, uit };
 }
 
-// Verwijdert tijden (09:00), weekdagen en los overgebleven leestekens.
+// Verwijdert tijden (09:00), weekdagen, het woord "uur", een losse "vs."
+// en los overgebleven leestekens.
 function schoonTeamdeel(s: string): string {
   return s
-    .replace(/\b\d{1,2}[:.]\d{2}\b/g, " ")
+    .replace(/\b\d{1,2}[:.,]\d{2}\b/g, " ")
     .replace(/\b(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag|ma|di|wo|do|vr|za|zo)\b\.?/gi, " ")
+    .replace(/\buur\b/gi, " ")
+    .replace(/^\s*vs\.?\s+/i, " ")
+    .replace(/\s+vs\.?\s*$/i, " ")
     .replace(/\s{2,}/g, " ")
     .replace(/^[\s·,;|-]+|[\s·,;|]+$/g, "")
     .trim();
