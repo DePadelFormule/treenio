@@ -171,6 +171,14 @@ export interface Wedstrijd {
   created_at: string;
 }
 
+export interface PositieTaak {
+  id: string;
+  positie_code: string;
+  situatie: string;
+  taken: string | null;
+  created_at: string;
+}
+
 export interface Ontwikkeldoel {
   id: string;
   speler_id: string;
