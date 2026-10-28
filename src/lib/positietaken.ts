@@ -3,7 +3,10 @@
 // aanbiedt — later makkelijk uit te breiden met bv. "balbezit_eigen_team" of
 // "omschakeling".
 export const SITUATIES = [
+  { key: "balbezit", naam: "Balbezit" },
   { key: "balbezit_tegenstander", naam: "Balbezit tegenstander" },
+  { key: "omschakeling_balverlies", naam: "Omschakeling balbezit naar balverlies" },
+  { key: "omschakeling_balwinst", naam: "Omschakeling balverlies naar balbezit" },
 ] as const;
 
 export function situatieNaam(key: string): string {
