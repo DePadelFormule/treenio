@@ -59,6 +59,7 @@ export function PositieTakenTabs({
               positieLabel={p.label}
               situatie={s.key}
               begin={takenPerSituatie[s.key]?.[p.key] ?? ""}
+              actief={actief === s.key}
             />
           ))}
         </div>
