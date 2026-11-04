@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { bewaarPositieTaken } from "@/app/staf/positietaken/actions";
 
 // Zelfde als PositieTaakVeld, maar als printbaar kaartje gestyled: op scherm
@@ -20,6 +20,16 @@ export function PositieKaartVeld({
   const [waarde, setWaarde] = useState(begin);
   const [bezig, start] = useTransition();
   const [status, setStatus] = useState<"idle" | "ok" | "fout">("idle");
+  const taRef = useRef<HTMLTextAreaElement>(null);
+
+  // Past de hoogte aan op de echt gerenderde inhoud (incl. woordafbreking),
+  // zodat je nooit in het vak zelf moet scrollen om alles te zien.
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [waarde]);
 
   function opslaan() {
     setStatus("idle");
@@ -29,17 +39,16 @@ export function PositieKaartVeld({
     });
   }
 
-  const rijen = Math.max(4, waarde.split("\n").length + 1);
-
   return (
     <div className="rounded-lg border-2 border-neutral-300 p-3 print:break-inside-avoid print:border print:border-neutral-400">
       <h2 className="mb-1.5 text-base font-bold text-sparta">{positieLabel}</h2>
       <textarea
+        ref={taRef}
         value={waarde}
         onChange={(e) => { setWaarde(e.target.value); setStatus("idle"); }}
-        rows={rijen}
+        rows={1}
         placeholder="Nog geen taken ingevuld."
-        className="w-full resize-none rounded-lg border border-neutral-300 px-2 py-1.5 text-sm text-neutral-800 print:border-0 print:p-0 print:text-black"
+        className="w-full resize-none overflow-hidden rounded-lg border border-neutral-300 px-2 py-1.5 text-sm text-neutral-800 print:border-0 print:p-0 print:text-black"
       />
       <div className="mt-2 flex items-center gap-3 print:hidden">
         <button
