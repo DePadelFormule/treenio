@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { bewaarPositieTaken } from "@/app/staf/positietaken/actions";
+import { BulletTextarea } from "@/components/BulletTextarea";
 
 // Zelfde als PositieTaakVeld, maar als printbaar kaartje gestyled: op scherm
 // bewerkbaar en opslaanbaar, bij printen vallen knoppen/rand weg en blijft
-// alleen de tekst over.
+// alleen de tekst (met bullets) over.
 export function PositieKaartVeld({
   positieCode,
   positieLabel,
@@ -20,16 +21,6 @@ export function PositieKaartVeld({
   const [waarde, setWaarde] = useState(begin);
   const [bezig, start] = useTransition();
   const [status, setStatus] = useState<"idle" | "ok" | "fout">("idle");
-  const taRef = useRef<HTMLTextAreaElement>(null);
-
-  // Past de hoogte aan op de echt gerenderde inhoud (incl. woordafbreking),
-  // zodat je nooit in het vak zelf moet scrollen om alles te zien.
-  useEffect(() => {
-    const el = taRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [waarde]);
 
   function opslaan() {
     setStatus("idle");
@@ -42,13 +33,12 @@ export function PositieKaartVeld({
   return (
     <div className="rounded-lg border-2 border-neutral-300 p-3 print:break-inside-avoid print:border print:border-neutral-400">
       <h2 className="mb-1.5 text-base font-bold text-sparta">{positieLabel}</h2>
-      <textarea
-        ref={taRef}
+      <BulletTextarea
         value={waarde}
-        onChange={(e) => { setWaarde(e.target.value); setStatus("idle"); }}
-        rows={1}
+        onChange={(v) => { setWaarde(v); setStatus("idle"); }}
         placeholder="Nog geen taken ingevuld."
-        className="w-full resize-none overflow-hidden rounded-lg border border-neutral-300 px-2 py-1.5 text-sm text-neutral-800 print:border-0 print:p-0 print:text-black"
+        wrapperClassName="w-full rounded-lg border border-neutral-300 print:border-0"
+        textClassName="px-2 py-1.5 text-sm text-neutral-800 print:px-0 print:py-0 print:text-black"
       />
       <div className="mt-2 flex items-center gap-3 print:hidden">
         <button
