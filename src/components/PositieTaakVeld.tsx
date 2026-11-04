@@ -27,6 +27,9 @@ export function PositieTaakVeld({
     });
   }
 
+  // Groeit mee met de inhoud, zodat je nooit hoeft te scrollen in het vak.
+  const rijen = Math.max(4, waarde.split("\n").length + 1);
+
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-sparta">{positieLabel}</h3>
@@ -34,7 +37,7 @@ export function PositieTaakVeld({
       <textarea
         value={waarde}
         onChange={(e) => { setWaarde(e.target.value); setStatus("idle"); }}
-        rows={4}
+        rows={rijen}
         placeholder={"bijv.\nAfstand houden tot directe tegenstander\nKopbal- en passlijn dichthouden"}
         className="w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
       />

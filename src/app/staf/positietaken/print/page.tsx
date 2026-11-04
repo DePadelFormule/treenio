@@ -4,11 +4,13 @@ import { getHuidigeGebruiker } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SITUATIES, situatieNaam, POSITIE_VOLGORDE } from "@/lib/positietaken";
 import { PrintKnop } from "@/components/PrintKnop";
+import { PositieKaartVeld } from "@/components/PositieKaartVeld";
 import type { PositieTaak } from "@/lib/types/database";
 
-// Printbare kaartjes: één per positie, met de taken als bullets. Via de
-// printdialoog ("Bewaar als PDF") te downloaden of direct te printen en
-// uit te delen.
+// Printbare kaartjes: één per positie. Op scherm direct bewerkbaar (volledige
+// tekst zichtbaar, vak groeit mee) zodat je nog kunt schrappen/aanvullen
+// voordat je print. Via de printdialoog ("Bewaar als PDF") te downloaden of
+// direct te printen en uit te delen.
 export default async function PositieTakenPrintPage({
   searchParams,
 }: {
@@ -41,25 +43,16 @@ export default async function PositieTakenPrintPage({
         <p className="mt-1 text-[11px] text-neutral-400">Nivo Sparta JO17-2 · 4-3-3</p>
       </header>
 
-      <div className="grid grid-cols-2 gap-4">
-        {posities.map((p) => {
-          const regels = (takenPerPositie.get(p.key) ?? "")
-            .split("\n")
-            .map((r) => r.trim())
-            .filter(Boolean);
-          return (
-            <div key={p.key} className="rounded-lg border-2 border-neutral-300 p-3 print:break-inside-avoid">
-              <h2 className="mb-1.5 text-base font-bold text-sparta">{p.label}</h2>
-              {regels.length > 0 ? (
-                <ul className="ml-4 list-disc text-sm text-neutral-800">
-                  {regels.map((r, i) => <li key={i}>{r}</li>)}
-                </ul>
-              ) : (
-                <p className="text-sm text-neutral-400">Nog geen taken ingevuld.</p>
-              )}
-            </div>
-          );
-        })}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {posities.map((p) => (
+          <PositieKaartVeld
+            key={p.key}
+            positieCode={p.key}
+            positieLabel={p.label}
+            situatie={situatie}
+            begin={takenPerPositie.get(p.key) ?? ""}
+          />
+        ))}
       </div>
 
       <p className="mt-4 text-[10px] text-neutral-400">Treenio · uitgeprint vanuit Taken per positie</p>
